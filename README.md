@@ -1,2 +1,2 @@
 # CROSS
-CROSS: an exChange oRder bOokS Service The Boggle" online video game written in C. Multi-threaded, POSIX, command line, client/server application. Project exam of programming laboratory course 2, University of Pisa, Computer Science BSc, summer session, academic year 2023-2024.  Topics
+CROSS: an exChange oRder bOokS Service online order book written in Java, Multi-threaded, command line, client/server application. Project exam of programming laboratory course 3, University of Pisa, Computer Science BSc, academic year 2024-2025.
