@@ -1,0 +1,15 @@
+package CROSS.Enums;
+
+public enum ClientActions {
+    REGISTER,
+    LOGIN,
+    UPDATE_CREDENTIALS,
+    LOGOUT,
+    INSERT_MARKET_ORDER,
+    INSERT_LIMIT_ORDER,
+    INSERT_STOP_ORDER,
+    CANCEL_ORDER,
+    GET_PRICE_HISTORY
+}
+
+
