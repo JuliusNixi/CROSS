@@ -126,7 +126,6 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
                 System.out.printf("Connection accepted from %s:%s.\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
                 executor.execute(new ClientThread(clientSocket));
-                System.out.printf("Active threads: %s.\n", executor.getActiveCount());
             }catch (IOException ex) {
                 System.err.printf("Error IOException accepting connection.\n");
             } catch (RejectedExecutionException ex) {

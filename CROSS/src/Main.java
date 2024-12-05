@@ -6,9 +6,6 @@ public class Main {
 
         System.out.println("Main ok!");
 
-        // Gson gson = new Gson();
-        // gson.toJson("Hello", System.out);
-
         final String pathToConfigPropertiesFile = "./CROSS/config.properties";
         Server server = new Server(pathToConfigPropertiesFile);
 
