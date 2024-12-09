@@ -1,17 +1,21 @@
+import CROSS.Client.Client;
 import CROSS.Server.Server;
 
 public class Main {
     public static void main(String[] args) throws Exception {
 
-        System.out.println("Main ok!");
-
-        final String pathToConfigPropertiesFile = "./CROSS/config.properties";
+        String pathToConfigPropertiesFile = "./CROSS/src/CROSS/Server/config.properties";
         Server server = new Server(pathToConfigPropertiesFile);
+        server.startServer();
+        @SuppressWarnings("unused")
+        Thread s = server.startAccept();
 
-        // TODO: Remove this.
-        if (server.getPathToConfigPropertiesFile() == "42") {
-        }
-
+        pathToConfigPropertiesFile = "./CROSS/src/CROSS/Client/config.properties";
+        @SuppressWarnings("unused")
+        Thread c = Client.CLI();
+        Client client = new Client(pathToConfigPropertiesFile);
+        client.connectClient();
+        
     }
 
 }
