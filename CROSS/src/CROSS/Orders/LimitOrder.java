@@ -1,6 +1,6 @@
 package CROSS.Orders;
 
-import CROSS.Market;
+import CROSS.Book.Market;
 import CROSS.Enums.Direction;
 import CROSS.Types.Price;
 import CROSS.Types.Quantity;

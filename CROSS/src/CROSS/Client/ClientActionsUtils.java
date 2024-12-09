@@ -1,4 +1,4 @@
-package CROSS;
+package CROSS.Client;
 import java.util.HashMap;
 import java.util.LinkedList;
 

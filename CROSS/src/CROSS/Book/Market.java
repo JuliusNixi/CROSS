@@ -1,4 +1,4 @@
-package CROSS;
+package CROSS.Book;
 
 import CROSS.Enums.Currency;
 import CROSS.Types.Price;

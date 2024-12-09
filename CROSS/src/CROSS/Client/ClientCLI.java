@@ -3,7 +3,6 @@ package CROSS.Client;
 import java.util.LinkedList;
 import java.util.Scanner;
 
-import CROSS.ClientActionsUtils;
 import CROSS.Enums.ClientActions;
 
 public class ClientCLI extends Thread {
