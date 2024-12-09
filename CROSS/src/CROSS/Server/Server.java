@@ -6,12 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import CROSS.Exceptions.InvalidIPOrPort;
 import CROSS.Exceptions.InvalidMaxConnections;
@@ -25,7 +21,7 @@ public class Server {
 
     private ServerSocket serverSocket = null;
 
-    private ThreadPoolExecutor executor = null;
+    private AcceptThread acceptThread = null;
 
     public Server(String pathToConfigPropertiesFile) {
 
@@ -62,8 +58,6 @@ public class Server {
             }
 
             this.pathToConfigPropertiesFile = pathToConfigPropertiesFile;
-
-            System.out.printf("Starting server with these following args...\n%s", this.toString());
 
         // Throwed by getByName.
         }catch (UnknownHostException ex) {
@@ -103,7 +97,11 @@ public class Server {
         catch (Exception ex) {
             System.err.printf("Generic error reading file %s.\n", pathToConfigPropertiesFile);
         }
+        
+    } // End of constructor.
 
+    public void startServer(){
+        System.out.printf("Starting server with these following args...\n%s", this.toString());
         try {
             // Start the server.
             serverSocket = new ServerSocket(portInt, maxConnectionsInt, serverAddress);
@@ -115,29 +113,18 @@ public class Server {
         catch (Exception ex) {
             System.err.printf("Generic error during the creation of the socket.\n");
         }
+    }
 
-        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-        System.out.printf("Server started a CACHED pool of max %s threads, but the max number of client connections is %s.\n", executor.getMaximumPoolSize(), maxConnectionsInt);
-
-        System.out.printf("Waiting for connections...\n");
-        while (true) {
-            try {
-                // Accept connections.
-                Socket clientSocket = serverSocket.accept();
-                System.out.printf("Connection accepted from %s:%s.\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
-                executor.execute(new ClientThread(clientSocket));
-            }catch (IOException ex) {
-                System.err.printf("Error IOException accepting connection.\n");
-            } catch (RejectedExecutionException ex) {
-                System.err.printf("Error RejectedExecutionException during the creation of a new client thread.\n");
-            }
-            // Generic exception.
-            catch (Exception ex) {
-                System.err.printf("Generic error reading during the acceptance of a new client or its thread creation.\n");
-            }
-        } // End of while.
-        
-    } // End of constructor.
+    // Returns the thread that accepts clients.
+    public AcceptThread startAccept() throws IOException {
+        if (serverSocket == null) {
+            throw new IOException("Server socket is null.");
+        }
+        AcceptThread acceptThread = new AcceptThread(this);
+        acceptThread.start();
+        this.acceptThread = acceptThread;
+        return acceptThread;
+    }
   
    public String getPathToConfigPropertiesFile() {
         return pathToConfigPropertiesFile;
@@ -158,9 +145,13 @@ public class Server {
     public ServerSocket getServerSocket() {
         return serverSocket;
     }
-    public ThreadPoolExecutor getExecutor() {
-        return executor;
-    } 
+
+    public Thread getAcceptThread() throws IOException {
+        if (acceptThread == null) {
+            throw new IOException("Accept thread is null.");
+        }
+        return acceptThread;
+    }
 
     @Override
     public String toString() {
