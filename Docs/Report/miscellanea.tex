@@ -1,0 +1,36 @@
+\chapter{Miscellanea}
+
+Le funzionalit\'a di cui sono pi\'u orgoglioso:
+\begin{itemize}
+\item Il server pu\'o far giocare potenzialmente infiniti giocatori.
+\item La matrice di gioco pu\'o essere N x N di dimensione arbitraria.
+\item Le parole del gioco possono avere lunghezza arbitraria.
+\item L'input dell'utente nel client pu\'o essere di lunghezza arbitraria (parole sottomesse e lunghezza nickname di registrazione).
+\item Le stampe nel client sono ben strutturate, la GUI non mostra mai stampe incoerenti.
+\item I tests eseguiti mostrano una buona resa e stabilit\'a di server e client.
+\item Il client \'e semplice poich\'e il grosso del lavoro lo esegue il server.
+\item Il server (e quindi l'intero gioco \'e abbastanza sicuro) perch\'e vengono eseguiti tutti i controlli server-side, nessuno dei quali \'e demandato al client. Quindi anche se qualcuno si collegasse malevolmente al socket server non usando il client non potrebbe far danni.
+\end{itemize}
+\leavevmode 
+Tutta la sincronizzazione \'e stata volutamente fatta solamente tramite mutex, dove talvolta le variabili di condizione o i semafori si sarebbero potuti utilizzare, per cercare di rendere il codice pi\'u semplice ed intuitivo possibile, seppur abbia ancora le sue complessit\'a.
+\\
+ \\
+ Le parole, indipendentemente da come arrivino dal client e da come siano scritte nei file dizionario vengono convertite in UPPERCASE dal server. Anche i caratteri componenti la matrice di gioco sono gestiti esclusivamente in UPPERCASE, sia nella generazione casuale, sia nella lettura da file (se scritte in lowercase in quest'ultimo vengono convertite in UPPERCASE). Gli unici caratteri ammessi per le parole, le matrici e i nicknames degli utenti sono: "abcdefghijklmnopqrstuvwxyz", contenuto nella definizione "ALPHABET" in "common.h". L'input del client, invece, viene tutto convertito a lowercase prima di essere elaborato ed inviato, quindi il comando inserito "MaTrIcE" sar\'a valido come "matrice".
+ \\
+ \\
+ A tutte le informazioni che possono essere espresse solamente con numeri interi positivi \'e stato assegnato il tipo "unsigned long int" abbreviato con il "typedef" ad "uli". Per le variabili booleane (o a carattere discreto) \'e stato utilizzato il tipo "char" poich\'e occupa solo un byte.
+ \\
+ \\
+ Perch\'e nel server le "read()" nella funzione "receiveMessage()", chiamata dai "clientHandler()" threads, viene interrotta tramite l'invio (da parte del "signalsThread()" thread) del segnale SIGUSR1, mentre nel client la "read()" dello STDIN viene interrotta autonomamente grazie alla libreria "fcntl"? Semplicemente perch\'e non sapevo si potesse fare con questa libreria quando ho sviluppato il server, che ho programmato per prima, quando successivamente, sviluppando il client l'ho scoperto durante la ricerca di una soluzione per pulire l'STDIN, sono rimasto deluso da tutta l'inutile complessit\'a aggiuntiva che ho dovuto gestire nel server, ma questo funziona ugualmente e mostra pi\'u attinenza agli argomenti trattati nel corso, quindi l'ho felicemente lasciato cos\'i.
+ \\
+ \\
+ Durante lo sviluppo del client, per tentare di risolvere il problema spiegato sulla sincronizzazione input/output e buffer STDIN, sono finito per sperimentare con una nota libreria chiamata "ncurses". Questa permette di gestire il terminale nel dettaglio, ma era inapropiata al mio use case. Risolveva il problema, ma generava una complessit\'a in tutto il resto insostenibile per le semplici stampe che dovevo fare. Questo mi ha insegnato che anche fare delle "presumibilmente semplici" interfacce grafiche testuali non \'e sempre cos\'i scontato come credessi.
+
+\iffalse
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{immagine.png}
+    \caption{Descrizione.}
+\end{figure}
+\fi
+

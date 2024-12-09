@@ -1,4 +1,5 @@
-package CROSS;
+package CROSS.Types;
+
 public class Quantity {
     Double quantity;
     public Quantity(Double quantity) {

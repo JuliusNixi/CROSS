@@ -1,9 +1,9 @@
 package CROSS.Orders;
 
 import CROSS.Market;
-import CROSS.Price;
-import CROSS.Quantity;
 import CROSS.Enums.Direction;
+import CROSS.Types.Price;
+import CROSS.Types.Quantity;
 
 public class LimitOrder extends Order {
     public LimitOrder(Market market, Price price, Direction direction, Quantity quantity) {

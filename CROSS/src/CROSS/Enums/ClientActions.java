@@ -1,5 +1,6 @@
 package CROSS.Enums;
 
+// Available actions for the client.
 public enum ClientActions {
     REGISTER,
     LOGIN,
@@ -11,5 +12,4 @@ public enum ClientActions {
     CANCEL_ORDER,
     GET_PRICE_HISTORY
 }
-
 
