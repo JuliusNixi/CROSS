@@ -1,7 +1,11 @@
 package CROSS.Orders;
+
 // Abstract class for Order, a order without a type is not allowed.
 import CROSS.*;
 import CROSS.Enums.Direction;
+import CROSS.Types.Price;
+import CROSS.Types.Quantity;
+
 public abstract class Order {
     Price price;
     Direction direction;

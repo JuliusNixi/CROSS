@@ -1,11 +1,14 @@
 package CROSS;
 
 import CROSS.Enums.Currency;
+import CROSS.Types.Price;
 
 public class Market {
+
     Currency primary_currency;
     Currency secondary_currency;
     Price price;
+    
     public Market(Currency primary_currency, Currency secondary_currency, Price price) {
         this.primary_currency = primary_currency;
         this.secondary_currency = secondary_currency;
@@ -24,4 +27,5 @@ public class Market {
     public String toString() {
         return primary_currency + "/" + secondary_currency + ": " + price;
     }
+
 }

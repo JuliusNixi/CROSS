@@ -1,42 +1,47 @@
 package CROSS.Client;
 
+import java.util.LinkedList;
 import java.util.Scanner;
 
+import CROSS.ClientActionsUtils;
 import CROSS.Enums.ClientActions;
 
 public class Client {
     
+    // Command Line Interface.
     public static void CLI(){
         Scanner scanner = new Scanner(System.in);
         while (true) {
-            System.out.println("Client CLI ->");
-
-            ClientActions action;
+            System.out.println("Client CLI -> ");
 
             String command = scanner.nextLine().toLowerCase().trim();
-            if (command.startsWith("register")){
-                action = ClientActions.REGISTER;
-            } else if (command.startsWith("login")){
-                action = ClientActions.LOGIN;
-            } else if (command.startsWith("updateCredentials")){
-                action = ClientActions.UPDATE_CREDENTIALS;
-            } else if (command.startsWith("logout")){
-                action = ClientActions.LOGOUT;
-            } else if (command.startsWith("insertMarketOrder")){
-                action = ClientActions.INSERT_MARKET_ORDER;
-            } else if (command.startsWith("insertLimitOrder")){
-                action = ClientActions.INSERT_LIMIT_ORDER;
-            } else if (command.startsWith("insertStopOrder")){
-                action = ClientActions.INSERT_STOP_ORDER;
-            } else if (command.startsWith("cancelOrder")){
-                action = ClientActions.CANCEL_ORDER;
-            } else if (command.startsWith("getPriceHistory")){
-                action = ClientActions.GET_PRICE_HISTORY;
-            }  else {
+
+            // Check if the command is valid.
+            ClientActions action = null;
+            try {
+                action = ClientActionsUtils.actionFromString(command);
+            } catch (IllegalArgumentException e) {
                 // TODO: ERROR.
             }
 
+            // Parse the arguments.
+            LinkedList<String> args = null;
+            try {
+                args = ClientActionsUtils.parseCommandFromString(command, action);
+            } catch (IllegalArgumentException e) {
+                // TODO: ERROR.
+            }
+
+            // Prepare the JSON request.
+
+            // TODO: Remove this.
+            if ("1"==args.get(0)) break;
+
         }
+
+        // Clean up.
+        scanner.close();
+
     }
 
 }

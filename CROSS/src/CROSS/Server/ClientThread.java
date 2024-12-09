@@ -8,6 +8,8 @@ import java.util.Scanner;
 
 import com.google.gson.Gson;
 
+// Client thread.
+// Each client has its own thread.
 public class ClientThread implements Runnable {
     
     private final Socket socket;
@@ -33,6 +35,7 @@ public class ClientThread implements Runnable {
         return String.format("Client thread ID: %s - IP: %s - Port: %s", Thread.currentThread().threadId(), getClientIP(), getClientPort());
     }
     
+    // Main loop logic.
     @Override
     public void run() {
         System.out.printf("%s started successfully.\n", this.toString());
@@ -47,8 +50,16 @@ public class ClientThread implements Runnable {
             while (true) {
                 String data = scanner.nextLine();
                 // TODO: Read API json java object request.
-                // gson.toJson("Hello", System.out);
+
+                // TODO: Remove this.
+                if ("42"==data) {
+                    gson.toJson("Hello", System.out);
+                    out.write("42".getBytes());
+                    break;
+                }
             }
+            // Clean up.
+            scanner.close();
         } catch (IOException e) {
                 // TODO: ERROR.
         }catch (Exception e) {
