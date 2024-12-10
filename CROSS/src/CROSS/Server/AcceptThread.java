@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
+// This thread is responsible for accepting new connections.
 public class AcceptThread extends Thread {
 
     private ThreadPoolExecutor executor = null;

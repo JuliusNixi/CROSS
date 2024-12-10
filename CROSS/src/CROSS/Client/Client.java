@@ -11,6 +11,7 @@ import java.net.Socket;
 
 import CROSS.Exceptions.InvalidIPOrPort;
 
+// The idea is i can have multiple instances of the client, but only one CLI.
 public class Client {
 
     // Thread for the CLI.
@@ -99,9 +100,12 @@ public class Client {
     // Command Line Interface.
     // Static, i cannot have multiple instances of the CLI.
     // Returns the CLI thread.
-    public static ClientCLI CLI(){
+    public static ClientCLI CLI() throws IOException {
         
         // Start the CLI.
+        if (clientCLI != null) {
+            throw new IOException("CLI already started.");
+        }
         ClientCLI clientCLI = new ClientCLI();
         clientCLI.start();
         Client.clientCLI = clientCLI; 
