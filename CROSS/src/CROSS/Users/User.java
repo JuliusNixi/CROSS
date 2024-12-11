@@ -14,6 +14,10 @@ public class User implements Comparable<User> {
         return this.username;
     }
 
+    // DISCLAIMER:
+    // This method and the toString() method are used for debugging.
+    // In a real application, the password should not be shown.
+    // The authentication should be done without handling the text plain password.
     public String getPassword() {
         return this.password;
     }
@@ -25,7 +29,7 @@ public class User implements Comparable<User> {
 
     @Override
     public String toString() {
-        return "User [username=" + username + ", password=" + password + "]";
+        return String.format("Username [%s] - Password [%s]", this.username, this.password);
     }
 
 }

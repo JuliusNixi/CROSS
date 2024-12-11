@@ -11,5 +11,9 @@ public class StopOrder extends Order {
         // TODO: Implement this constructor.
         super(market, price, direction, quantity);
     }
+
+    public String toString() {
+        return String.format("Order Type [%s] - Order [%s]", "Stop", super.toString());
+    }
     
 }

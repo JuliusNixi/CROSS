@@ -15,4 +15,8 @@ public class MarketOrder extends Order {
         super(market, price, direction, quantity);
     }
 
+    public String toString() {
+        return String.format("Order Type [%s] - Order [%s]", "Market", super.toString());
+    }
+
 }

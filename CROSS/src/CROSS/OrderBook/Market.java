@@ -38,7 +38,7 @@ public class Market {
     
     @Override
     public String toString() {
-        return primary_currency + "/" + secondary_currency + "[" + actualPrice + "]";
+        return String.format("Name [%s/%s] - Actual Price [%s]", primary_currency.name(), secondary_currency.name(), actualPrice.toString());
     }
 
 }

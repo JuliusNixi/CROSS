@@ -7,23 +7,30 @@ import CROSS.Types.SpecificPrice;
 
 public class OrderBook extends Market {
 
-    // Only for LIMITS orders.
-    // TODO: Change this to: Key: SpecificPrice, Value: Line. Line is a new class that contains quantity and users orders list.
-    // TODO: Impment a new data structure to store the STOP orders.
-    private TreeMap<SpecificPrice, OrderBookLine> book;
+    // By using a TreeMap, the order book is always sorted by price.
+    private TreeMap<SpecificPrice, OrderBookLine> limitBook;
+    // Technically the order book contains only the limit orders.
+    // The majority of the brokers not show the stop orders in the order book.
+    // The stop orders are hidden and are only executed when the price hits the stop price.
+    // So i will follow this philosophy.
+    // I will use the same data structure because i think that it fits well also for the stop orders.
+    // But, the OFFICIAL order book is the limit orders book, that contains only the limit orders.
+    // The stop orders book is "opaque".
+    // So, for example, the toString() method will show only the limit orders.
+    private TreeMap<SpecificPrice, OrderBookLine> stopBook;
     
     public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPrice) {
         super(primary_currency, secondary_currency, actualPrice);
-        book = new TreeMap<SpecificPrice, OrderBookLine>();
+        limitBook = new TreeMap<SpecificPrice, OrderBookLine>();
     }
 
     @Override
     public String toString() {
         String basicInfos = super.toString();
-        for (SpecificPrice price : book.keySet()) {
-            String line;
+        for (OrderBookLine line : limitBook.values()) {
+            String lineStr;
             // TODO: Finish toString().
-            line = price + " : " + book.get(price) + "\n";
+            //line = price + " : " + book.get(price) + "\n";
         }
         return basicInfos;
     }
