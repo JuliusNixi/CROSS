@@ -8,6 +8,7 @@ public class Market {
 
     Currency primary_currency;
     Currency secondary_currency;
+    // This is the actual price of the market, it's a ask price.
     SpecificPrice actualPrice;
     
     public Market(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPrice) throws IllegalArgumentException {
@@ -15,9 +16,10 @@ public class Market {
             throw new IllegalArgumentException("The actual price of a market must be an ask price.");
         this.primary_currency = primary_currency;
         this.secondary_currency = secondary_currency;
-        // This price is intended to be the actual price of the market.
+        // This price is intended to be the actual price of the market, it's a ask price.
         this.actualPrice = actualPrice;
     }
+    
     public Currency getPrimaryCurrency() {
         return primary_currency;
     }
@@ -27,11 +29,16 @@ public class Market {
     public SpecificPrice getActualPrice() {
         return actualPrice;
     }
-    public void setActualPrice(SpecificPrice actualPrice) {
+    
+    public void setActualPrice(SpecificPrice actualPrice) throws IllegalArgumentException {
+        if (actualPrice.getType() != PriceType.ASK)
+            throw new IllegalArgumentException("The actual price of a market must be an ask price.");
         this.actualPrice = actualPrice;
     }
+    
+    @Override
     public String toString() {
-        return primary_currency + "/" + secondary_currency + ": " + actualPrice;
+        return primary_currency + "/" + secondary_currency + "[" + actualPrice + "]";
     }
 
 }

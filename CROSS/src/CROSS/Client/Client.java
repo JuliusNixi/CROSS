@@ -15,7 +15,7 @@ import CROSS.Exceptions.InvalidIPOrPort;
 public class Client {
 
     // Thread for the CLI.
-    private static ClientCLI clientCLI;
+    private static ClientCLI clientCLI = null;
 
     private String pathToConfigPropertiesFile = null;
     private Integer portInt = null;
@@ -44,7 +44,7 @@ public class Client {
             if (portInt < 0 || portInt > 65535) {
                 throw new InvalidIPOrPort("Invalid port number.");
             }
-            serverAddress = InetAddress.getByName(server);
+            this.serverAddress = InetAddress.getByName(server);
 
             this.pathToConfigPropertiesFile = pathToConfigPropertiesFile;
 
@@ -85,6 +85,8 @@ public class Client {
 
     }
     
+    // Connect to the server.
+    // Does not return anything.
     public void connectClient() {
 
         try {
@@ -112,19 +114,16 @@ public class Client {
         return clientCLI;
 
     }
-
     public static ClientCLI getClientCLI() {
         return clientCLI;
     }    
   
-   public String getPathToConfigPropertiesFile() {
+    public String getPathToConfigPropertiesFile() {
         return pathToConfigPropertiesFile;
     }
-
     public Integer getPortInt() {
         return portInt;
     }
-
     public InetAddress getServerAddress() {
         return serverAddress;
     }

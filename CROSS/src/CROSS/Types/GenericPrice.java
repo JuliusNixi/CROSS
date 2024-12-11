@@ -16,6 +16,7 @@ public class GenericPrice implements Comparable<GenericPrice> {
     }
 
     // This method DOES NOT CHECK if the prices are of the same type.
+    // Use the SpecificPrice class to compare prices of the same type.
     @Override
     public int compareTo(GenericPrice p) {
         return this.value.compareTo(p.value);

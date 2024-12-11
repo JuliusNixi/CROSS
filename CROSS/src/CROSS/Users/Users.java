@@ -1,6 +1,9 @@
 package CROSS.Users;
 
 import java.util.TreeSet;
+
+import CROSS.Exceptions.InvalidUser;
+
 import java.util.Arrays;
 
 // Abstract class. I assume that i don't want to handle different users dabatases.
@@ -9,15 +12,15 @@ public abstract class Users {
     // Add and search in complexity O(log n).
     private static TreeSet<User> users = new TreeSet<User>();
 
-    public static void addUser(User user) throws Exception {
+    public static void addUser(User user) throws InvalidUser {
 
         if (users.contains(user)) {
-            throw new Exception("User already exists.");
+            throw new InvalidUser("User already exists.");
         }
 
         users.add(user);
 
-        // Prevent double file writes.
+        // Prevent double file writes when the method is called from DBUsersInterface.
         // That because:
         // loadUsers() read from file user X -> call addUser() to add it in RAM -> writeUserOnFile() write user X on file AGAIN.
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
@@ -26,7 +29,12 @@ public abstract class Users {
                 return;
             }
         }
-        DBUsersInterface.writeUserOnFile(user);
+        try {
+            DBUsersInterface.writeUserOnFile(user);
+        } catch (Exception e) {
+            users.remove(user);
+            throw new InvalidUser("Error writing user on file.");
+        }
 
     }
 

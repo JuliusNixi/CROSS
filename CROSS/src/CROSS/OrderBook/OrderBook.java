@@ -10,11 +10,11 @@ public class OrderBook extends Market {
     // Only for LIMITS orders.
     // TODO: Change this to: Key: SpecificPrice, Value: Line. Line is a new class that contains quantity and users orders list.
     // TODO: Impment a new data structure to store the STOP orders.
-    private TreeMap<SpecificPrice, Quantity> book;
+    private TreeMap<SpecificPrice, OrderBookLine> book;
     
     public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPrice) {
         super(primary_currency, secondary_currency, actualPrice);
-        book = new TreeMap<SpecificPrice, Quantity>();
+        book = new TreeMap<SpecificPrice, OrderBookLine>();
     }
 
     @Override

@@ -31,7 +31,7 @@ public abstract class ClientActionsUtils {
 
     // ACTIONS.
     // String from enum.
-    public static String getCommand(ClientActions action){
+    public static String getCommand(ClientActions action) {
         return commands.get(action);
     }
     // String from enum, but without the parenthesis, only the keyword, thus, the command.
@@ -39,6 +39,11 @@ public abstract class ClientActionsUtils {
         return commands.get(action).split("\\(")[0];
     }
     public static HashMap<ClientActions, String> getCommands(){
+        // Returns a copy.
+        HashMap<ClientActions, String> commands = new HashMap<>();
+        for (ClientActions action : ClientActions.values()) {
+            commands.put(action, getCommand(action));
+        }
         return commands;
     }
     // Action enum from string, ONLY CHECK THE COMMAND, NOT THE SYNTAX/PARAMETERS.
@@ -54,7 +59,8 @@ public abstract class ClientActionsUtils {
         
     }
 
-    // Direciton (order type).
+    // DIRECTIONS.
+    // Direction (order type).
     // String from enum.
     public static String getDirection(Direction direction){
         return directions.get(direction);
@@ -73,6 +79,7 @@ public abstract class ClientActionsUtils {
         throw new IllegalArgumentException("Invalid string direction (order type).");
     }
 
+    // PRICE.
     public static GenericPrice getPriceFromString(String price, Direction direction) throws IllegalArgumentException {
         try {
             Integer priceD = Integer.parseInt(price);
@@ -81,18 +88,23 @@ public abstract class ClientActionsUtils {
             throw new IllegalArgumentException("Invalid price.");
         }
     }
+
+    // QUANTITY.
     public static Quantity getSizeFromString(String size) throws IllegalArgumentException {
         try {
-            Double sizeD = Double.parseDouble(size);
+            Integer sizeD = Integer.parseInt(size);
             return new Quantity(sizeD);
         }catch (NumberFormatException e){
             throw new IllegalArgumentException("Invalid size.");
         }
     }
+    
+    // MONTH/YEAR.
     // Only parse the month/year string.
     // Does not returns anything, only throws an exception if the string is invalid.
     public static void parseMonthString(String monthyear) throws IllegalArgumentException {
         try {
+            // Format:
             // MMYYYY
             if (monthyear.length() != 2 + 4)
                 throw new NumberFormatException("Invalid month/year format.");
@@ -110,6 +122,8 @@ public abstract class ClientActionsUtils {
             throw new IllegalArgumentException("Invalid month/year format.");
         }
     }
+    
+    // ORDER ID.
     // Only parse the order ID string.
     // Does not returns anything, only throws an exception if the string is invalid.
     public static void parseOrderIDString(String orderID) throws IllegalArgumentException {
@@ -124,10 +138,11 @@ public abstract class ClientActionsUtils {
     }
 
     // Parse the command from a string input, checking the syntax and the parameters.
-    // Returns a list of strings with the parameters without the command.
+    // Returns a list of strings parsed with the parameters without the command.
     // The action should be the correct associated with the string, anyway it will be checked.
     public static LinkedList<String> parseCommandFromString(String command, ClientActions action) throws IllegalArgumentException {
         command = command.toLowerCase().trim();
+
         // Preliminary checks.
         ClientActions internal;
         try {
@@ -138,34 +153,41 @@ public abstract class ClientActionsUtils {
         if (internal != action){
             throw new IllegalArgumentException("Invalid string/action match.");
         }
+
         // Parsing syntax.
         // Checking parenthesis.
         if (command.charAt(getKeywordCommand(action).length()) != '(' || command.charAt(command.length() - 1) != ')'){
             throw new IllegalArgumentException("Invalid parenthesis.");
         }
+
         // Checking commas.
         Integer exactNumberOfCommas = getCommand(action).split(",").length - 1;
         Integer detectedCommas = command.split(",").length - 1;
         if (exactNumberOfCommas != detectedCommas){
             throw new IllegalArgumentException("Invalid number of commas.");
         }
+
         // Removing initial command and parenthesis.
         command = command.split("\\(")[1];
+
         // Removing final parenthesis.
         command = command.substring(0, command.length() - 1);
+
         command = command.trim();
+
         // Returning parameters.
-        LinkedList<String> parameters = new LinkedList<>();
+        LinkedList<String> parameters = new LinkedList<String>();
         for (String arg : command.split(",")){
             parameters.add(arg.trim());
         }
+
         return parameters;
     }
 
     // Parse the arguments from the list of strings.
     // Throws an exception if the arguments are invalid.
     // Otherwise, it will return nothing.
-    public static void parseArgs(LinkedList<String> args, ClientActions action) {
+    public static void parseArgs(LinkedList<String> args, ClientActions action) throws IllegalArgumentException {
 
         Integer neededArgsNumber = null;
         switch (action) {
@@ -199,7 +221,6 @@ public abstract class ClientActionsUtils {
             default:
                 throw new IllegalArgumentException("Invalid action.");
         }
-
         if (args.size() != neededArgsNumber){
             throw new IllegalArgumentException("Invalid number of arguments.");
         }
