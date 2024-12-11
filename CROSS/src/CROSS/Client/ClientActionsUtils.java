@@ -4,7 +4,7 @@ import java.util.LinkedList;
 
 import CROSS.Enums.ClientActions;
 import CROSS.Enums.Direction;
-import CROSS.Types.Price;
+import CROSS.Types.GenericPrice;
 import CROSS.Types.Quantity;
 
 // Not instantiable, only for the static things.
@@ -73,13 +73,10 @@ public abstract class ClientActionsUtils {
         throw new IllegalArgumentException("Invalid string direction (order type).");
     }
 
-    public static Price getPriceFromString(String price, Direction direction) throws IllegalArgumentException {
+    public static GenericPrice getPriceFromString(String price, Direction direction) throws IllegalArgumentException {
         try {
-            Double priceD = Double.parseDouble(price);
-            if (direction == Direction.BUY){
-                return new Price(0.0, priceD);
-            }
-            return new Price(priceD, 0.0);
+            Integer priceD = Integer.parseInt(price);
+            return new GenericPrice(priceD);
         }catch (NumberFormatException e){
             throw new IllegalArgumentException("Invalid price.");
         }
