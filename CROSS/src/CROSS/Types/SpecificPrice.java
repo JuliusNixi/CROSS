@@ -31,11 +31,13 @@ public class SpecificPrice extends GenericPrice {
         return type + ": " + super.getValue();
     }
 
-    public int compareTo(SpecificPrice p) throws IllegalArgumentException {
-        if (this.type != p.getType()) {
+    // This method is used to compare prices of the same type.
+    // On different types, it throws an exception.
+    public int compareTo(SpecificPrice price) throws IllegalArgumentException {
+        if (this.type != price.getType()) {
             throw new IllegalArgumentException("Cannot compare prices of different types.");
         }
-        return super.compareTo(p);
+        return super.compareTo(price);
     }
     
 }

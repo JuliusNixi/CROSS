@@ -27,7 +27,9 @@ public abstract class DBUsersInterface {
     private static final String fileReaded = "loaded";
     private static final String fileInit = "[\n]\n";
 
+    // Open the users DB file.
     public static void setFile(String filePath) throws IOException {
+
         if (!filePath.endsWith(".json")) {
             throw new IOException("File must be a JSON file.");
         }
@@ -54,6 +56,7 @@ public abstract class DBUsersInterface {
     }
 
     public static void readFile() throws IOException {
+
         if (fileIn == null) {
             throw new IOException("File not attached. Set file before.");
         }
@@ -69,14 +72,15 @@ public abstract class DBUsersInterface {
                 data = fileBuffered.read();
             }
             DBUsersInterface.fileContent = fileContentBuilder.toString();
+        } catch (IOException e) {
+            System.err.printf("Error reading file %s.\n", filePath);
         } catch (Exception e) {
             System.err.printf("Error reading file %s.\n", filePath);
         }
     }
 
+    // Populate Users (in RAM).
     public static void loadUsers() throws IOException {
-        // Populate Users.
-
 
         if (DBUsersInterface.fileContent == null) {
             throw new IOException("File not read. Read it before.");
@@ -125,11 +129,13 @@ public abstract class DBUsersInterface {
 
     }
 
-    // To remove last line from db users file.
+    // To remove last line from DB users file.
     // This to append a new user without rewriting all the file.
     // Private because it's not intended to be used outside this class.
+    // It's just an utility function.
     private static void removeLastLine() throws IOException {
         
+        // To open the file and truncate it.
         try (RandomAccessFile raf = new RandomAccessFile(file, "rw"))  {
 
             long length = raf.length();
@@ -146,16 +152,18 @@ public abstract class DBUsersInterface {
             }
             // Truncate the file at this point.
             raf.setLength(pointer + 1);
+        } catch (IOException e) {
+            System.err.printf("Error removing last line from file %s.\n", filePath);
         } catch (Exception e) {
             System.err.printf("Error removing last line from file %s.\n", filePath);
         }
 
     }
 
-    public static void writeUserOnFile(User user) throws RuntimeException {
+    public static void writeUserOnFile(User user) throws IOException {
 
         if (fileContent == null) {
-            throw new RuntimeException("File content is needed to write on file. Load users before.");
+            throw new IOException("File content is needed to write on file. Load users before.");
         }
 
         // Remove last line.
@@ -193,8 +201,9 @@ public abstract class DBUsersInterface {
             fileOutBuffered.close();
 
             fileOut = new FileOutputStream(file, true);
+        } catch (IOException e) {
+            System.err.printf("Error writing user on file %s.\n", filePath);
         } catch (Exception e) {
-            System.err.printf("Error: %s\n", e.getMessage());
             System.err.printf("Error writing user on file %s.\n", filePath);
         }
     }

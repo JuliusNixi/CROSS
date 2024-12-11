@@ -12,6 +12,7 @@ import com.google.gson.Gson;
 // Each client has its own thread.
 public class ClientThread implements Runnable {
     
+    // Specific client socket.
     private final Socket socket;
     
     public ClientThread(Socket socket) {

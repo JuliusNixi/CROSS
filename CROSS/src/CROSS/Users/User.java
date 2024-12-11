@@ -3,7 +3,7 @@ package CROSS.Users;
 public class User implements Comparable<User> {
     
     private String username;
-    private String password;
+    private String password; 
 
     public User(String username, String password) {
         this.username = username;

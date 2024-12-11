@@ -5,6 +5,7 @@ import java.util.Scanner;
 
 import CROSS.Enums.ClientActions;
 
+// This thread will handle the client CLI.
 public class ClientCLI extends Thread {
     
     @Override
@@ -22,7 +23,8 @@ public class ClientCLI extends Thread {
             try {
                 action = ClientActionsUtils.actionFromString(command);
             } catch (IllegalArgumentException e) {
-                System.out.println("Invalid command.");
+                // This is not a critical error, just a invalid command.
+                System.out.println("Invalid string command.");
                 continue;
             }
 
@@ -30,7 +32,9 @@ public class ClientCLI extends Thread {
             LinkedList<String> args = null;
             try {
                 args = ClientActionsUtils.parseCommandFromString(command, action);
+                ClientActionsUtils.parseArgs(args, action);
             } catch (IllegalArgumentException e) {
+                // This is not a critical error, just a invalid command.
                 System.out.println("Invalid arguments.");
                 continue;
             }

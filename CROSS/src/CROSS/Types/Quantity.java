@@ -1,14 +1,18 @@
 package CROSS.Types;
 
 public class Quantity {
-    Double quantity;
-    public Quantity(Double quantity) {
+
+    private Integer quantity;
+
+    public Quantity(Integer quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity cannot be negative or 0.");
         }
         this.quantity = quantity;
     }
-    public Double getQuantity() {
+
+    public Integer getQuantity() {
         return quantity;
     }
+    
 }

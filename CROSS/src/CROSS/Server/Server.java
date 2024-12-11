@@ -41,18 +41,18 @@ public class Server {
             }
 
             // Parsing IP and port.
-            portInt = Integer.parseInt(port);
+            this.portInt = Integer.parseInt(port);
             if (portInt < 0 || portInt > 65535) {
                 throw new InvalidIPOrPort("Invalid port number.");
             }
-            serverAddress = InetAddress.getByName(server);
+            this.serverAddress = InetAddress.getByName(server);
 
             // Max connections checks.
             if (maxConnections == null) {
                 maxConnections = "100";
                 System.out.printf("Max connections not set in %s file. Using the default one: %s.\n", pathToConfigPropertiesFile, maxConnections);
             }
-            maxConnectionsInt = Integer.parseInt(maxConnections);
+            this.maxConnectionsInt = Integer.parseInt(maxConnections);
             if (maxConnectionsInt < 1) {
                 throw new InvalidMaxConnections("Invalid max connections number.");
             }
@@ -101,10 +101,14 @@ public class Server {
     } // End of constructor.
 
     public void startServer(){
+        if (this.serverSocket != null) {
+            System.err.printf("Server already started.\n");
+            return;
+        }
         System.out.printf("Starting server with these following args...\n%s", this.toString());
         try {
             // Start the server.
-            serverSocket = new ServerSocket(portInt, maxConnectionsInt, serverAddress);
+            this.serverSocket = new ServerSocket(portInt, maxConnectionsInt, serverAddress);
             System.out.printf("Server started succesfully.\n");
         } catch (IOException ex) {
             System.err.printf("Error IOException starting server.\n");
@@ -117,8 +121,11 @@ public class Server {
 
     // Returns the thread that accepts clients.
     public AcceptThread startAccept() throws IOException {
-        if (serverSocket == null) {
+        if (this.serverSocket == null) {
             throw new IOException("Server socket is null.");
+        }
+        if (this.acceptThread != null) {
+            throw new IOException("Accept thread already started.");
         }
         AcceptThread acceptThread = new AcceptThread(this);
         acceptThread.start();
@@ -129,15 +136,12 @@ public class Server {
    public String getPathToConfigPropertiesFile() {
         return pathToConfigPropertiesFile;
     }
-
     public Integer getPortInt() {
         return portInt;
     }
-
     public Integer getMaxConnectionsInt() {
         return maxConnectionsInt;
     }
-
     public InetAddress getServerAddress() {
         return serverAddress;
     }
@@ -146,10 +150,7 @@ public class Server {
         return serverSocket;
     }
 
-    public Thread getAcceptThread() throws IOException {
-        if (acceptThread == null) {
-            throw new IOException("Accept thread is null.");
-        }
+    public Thread getAcceptThread()  {
         return acceptThread;
     }
 
