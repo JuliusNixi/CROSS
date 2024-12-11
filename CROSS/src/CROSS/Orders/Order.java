@@ -1,18 +1,18 @@
 package CROSS.Orders;
 
-import CROSS.Book.Market;
 import CROSS.Enums.Direction;
-import CROSS.Types.Price;
+import CROSS.OrderBook.Market;
 import CROSS.Types.Quantity;
+import CROSS.Types.SpecificPrice;
 
 // Abstract class for Order, a order without a type is not allowed.
 public abstract class Order {
-    Price price;
+    SpecificPrice price;
     Direction direction;
     Quantity quantity;
     Market market;
-    public Order(Market market, Price price, Direction direction, Quantity quantity) {
-        if ((direction == Direction.BUY && price.getAsk() <= 0) || (direction == Direction.SELL && price.getBid() <= 0)) {
+    public Order(Market market, SpecificPrice price, Direction direction, Quantity quantity) {
+        if ((direction == Direction.BUY && price.getValue() <= 0) || (direction == Direction.SELL && price.getValue() <= 0)) {
             throw new IllegalArgumentException("Price cannot be negative or 0.");
         }
         if (quantity.getQuantity() <= 0) {

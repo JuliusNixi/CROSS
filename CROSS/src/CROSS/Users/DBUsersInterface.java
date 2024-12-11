@@ -44,7 +44,7 @@ public abstract class DBUsersInterface {
         } catch (FileNotFoundException e) {
             System.err.printf("DB Users file %s not found.\n", filePath);
         }catch (Exception e) {
-            // TODO: Error
+            // TODO: Error handling.
         }
 
     }   

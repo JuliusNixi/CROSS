@@ -49,7 +49,7 @@ public class ClientThread implements Runnable {
             Gson gson = new Gson();
             while (true) {
                 String data = scanner.nextLine();
-                // TODO: Read API json java object request.
+                // TODO: Read API json java object request from the socket.
 
                 // TODO: Remove this.
                 if ("42"==data) {
@@ -61,9 +61,9 @@ public class ClientThread implements Runnable {
             // Clean up.
             scanner.close();
         } catch (IOException e) {
-                // TODO: ERROR.
+                // TODO: Error handling.
         }catch (Exception e) {
-                // TODO: ERROR.
+                // TODO: Error handling.
         }
 
 
