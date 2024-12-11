@@ -16,19 +16,8 @@ public class SpecificPrice extends GenericPrice {
     }
 
     @Override
-    public String toString() throws IllegalArgumentException {
-        String type = "";
-        switch (this.type) {
-            case ASK:
-                type = "Ask";
-                break;
-            case BID:
-                type = "Bid";
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid price type.");
-        }
-        return type + ": " + super.getValue();
+    public String toString() {
+        return String.format("Type [%s] - Price [%s]", this.getType().name(), super.toString());
     }
 
     // This method is used to compare prices of the same type.

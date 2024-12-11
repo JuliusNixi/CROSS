@@ -18,7 +18,7 @@ public class LimitOrder extends Order {
     } 
 
     public String toString() {
-        return "Limit " + super.toString();
+        return String.format("Order Type [%s] - Order [%s]", "Limit", super.toString());
     }
 
 }

@@ -49,6 +49,12 @@ public abstract class Order {
     public Market getMarket() {
         return market;
     }
+    public void setQuantity(Quantity quantity) throws IllegalArgumentException {
+        if (quantity.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative or 0.");
+        }
+        this.quantity = quantity;
+    }
 
     public Long getId() {
         return id;
@@ -56,7 +62,7 @@ public abstract class Order {
     
     @Override
     public String toString() {
-        return "Order [price=" + price + ", direction=" + direction + ", quantity=" + quantity + ", market=" + market + ", id=" + id + "]";
+        return String.format("Price [%s] - Direction [%s] - Quantity [%s] - Market [%s]", price.toString(), direction.name(), quantity.toString(), market.toString());
     }
 
 }

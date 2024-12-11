@@ -24,7 +24,7 @@ public class GenericPrice implements Comparable<GenericPrice> {
 
     @Override
     public String toString() {
-        return super.toString();
+        return this.value.toString();
     }
 
 }
