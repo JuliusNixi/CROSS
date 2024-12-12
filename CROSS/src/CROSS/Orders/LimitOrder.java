@@ -8,10 +8,10 @@ import CROSS.Types.SpecificPrice;
 public class LimitOrder extends Order {
 
     public LimitOrder(Market market, SpecificPrice price, Direction direction, Quantity quantity) {
-        if (direction == Direction.BUY && price.getValue() > market.getActualPrice().getValue()) {
+        if (direction == Direction.BUY && price.getValue() > market.getActualPriceAsk().getValue()) {
             throw new IllegalArgumentException("Buy limit order price is higher than the market ask price.");
         }
-        if (direction == Direction.SELL && price.getValue() < market.getActualPrice().getValue()) {
+        if (direction == Direction.SELL && price.getValue() < market.getActualPriceBid().getValue()) {
             throw new IllegalArgumentException("Sell limit order price is lower than the market bid price.");
         }
         super(market, price, direction, quantity);

@@ -19,22 +19,19 @@ public class OrderBook extends Market {
     // So, for example, the toString() method will show only the limit orders.
     private TreeMap<SpecificPrice, OrderBookLine> stopBook;
     
-    public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPrice) {
-        super(primary_currency, secondary_currency, actualPrice);
+    public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid) {
+        super(primary_currency, secondary_currency, actualPriceAsk, actualPriceBid);
         limitBook = new TreeMap<SpecificPrice, OrderBookLine>();
     }
 
     @Override
     public String toString() {
-        String basicInfos = super.toString();
+        String basicInfos = super.toString() + "\n";
         for (OrderBookLine line : limitBook.values()) {
-            String lineStr;
-            // TODO: Finish toString().
-            //line = price + " : " + book.get(price) + "\n";
+            String lineStr = line.toString();
+            basicInfos += lineStr;
         }
         return basicInfos;
     }
     
-
-
 }
