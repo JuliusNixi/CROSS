@@ -1,6 +1,6 @@
 package CROSS.Types;
 
-public class GenericPrice implements Comparable<GenericPrice> {
+public class GenericPrice {
     
     private Integer value;
 
@@ -14,17 +14,10 @@ public class GenericPrice implements Comparable<GenericPrice> {
     public Integer getValue() {
         return value;
     }
-
-    // This method DOES NOT CHECK if the prices are of the same type.
-    // Use the SpecificPrice class to compare prices of the same type.
-    @Override
-    public int compareTo(GenericPrice p) {
-        return this.value.compareTo(p.value);
-    }
-
+    
     @Override
     public String toString() {
-        return this.value.toString();
+        return this.getValue().toString();
     }
 
 }

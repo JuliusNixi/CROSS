@@ -13,21 +13,22 @@ public class Market {
     SpecificPrice actualPriceAsk;
     SpecificPrice actualPriceBid;
 
+    // Increment of the price between two consecutive prices.
     GenericPrice increment;
     
-    public Market(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid) throws IllegalArgumentException {
+    public Market(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid, GenericPrice increment) throws IllegalArgumentException {
         if (actualPriceAsk.getType() != PriceType.ASK)
             throw new IllegalArgumentException("The actual price ask of a market must be an ask price.");
         if (actualPriceBid.getType() != PriceType.BID)
             throw new IllegalArgumentException("The actual price bid of a market must be a bid price.");
-        if (this.increment.getValue() <= 0)
+        if (increment.getValue() <= 0)
             throw new IllegalArgumentException("The increment must be greater than 0.");
         this.primary_currency = primary_currency;
         this.secondary_currency = secondary_currency;
         // This price is intended to be the actual price of the market.
         this.actualPriceAsk = actualPriceAsk;
         this.actualPriceBid = actualPriceBid;
-        this.increment = new GenericPrice(1);
+        this.increment = increment;
     }
     
     public Currency getPrimaryCurrency() {
@@ -61,7 +62,7 @@ public class Market {
 
     @Override
     public String toString() {
-        return String.format("Name [%s/%s] - Actual Price Ask [%s] - Actual Price Bid [%s] - Increment [%s]", primary_currency.name(), secondary_currency.name(), actualPriceAsk.toString(), actualPriceBid.toString(), this.increment.toString());
+        return String.format("Name [%s/%s] - Actual Ask [%s] - Actual Bid [%s] - Price Increment [%s]", this.getPrimaryCurrency().name(), this.getSecondaryCurrency().name(), this.getActualPriceAsk().toString(), this.getActualPriceBid().toString(), this.getIncrement().toString());
     }
 
 }

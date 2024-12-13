@@ -2,7 +2,7 @@ package CROSS.Types;
 
 import CROSS.Enums.PriceType;
 
-public class SpecificPrice extends GenericPrice {
+public class SpecificPrice extends GenericPrice implements Comparable<SpecificPrice> {
     
     private PriceType type;
 
@@ -22,11 +22,12 @@ public class SpecificPrice extends GenericPrice {
 
     // This method is used to compare prices of the same type.
     // On different types, it throws an exception.
+    @Override
     public int compareTo(SpecificPrice price) throws IllegalArgumentException {
         if (this.type != price.getType()) {
             throw new IllegalArgumentException("Cannot compare prices of different types.");
         }
-        return super.compareTo(price);
+        return Integer.compare(price.getValue(), this.getValue());
     }
     
 }

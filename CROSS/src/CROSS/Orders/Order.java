@@ -1,12 +1,12 @@
 package CROSS.Orders;
 
-import java.time.Instant;
-
 import CROSS.Enums.Direction;
 import CROSS.Enums.PriceType;
 import CROSS.OrderBook.Market;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;
+import CROSS.Users.User;
+import CROSS.Users.Users;
 
 // Abstract class for Order, a order without a type is not allowed.
 public abstract class Order {
@@ -15,11 +15,12 @@ public abstract class Order {
     private Direction direction;
     private Quantity quantity;
     private Market market;
+    private User user;
 
     private Long id;
 
-    public Order(Market market, SpecificPrice price, Direction direction, Quantity quantity) throws IllegalArgumentException {
-        if ((direction == Direction.BUY && price.getValue() <= 0) || (direction == Direction.SELL && price.getValue() <= 0)) {
+    public Order(Market market, SpecificPrice price, Direction direction, Quantity quantity, String userUsername) throws IllegalArgumentException {
+        if (price.getValue() <= 0) {
             throw new IllegalArgumentException("Price cannot be negative or 0.");
         }
         if (quantity.getQuantity() <= 0) {
@@ -33,8 +34,18 @@ public abstract class Order {
         this.quantity = quantity;
         this.market = market;
 
-        // Time in seconds since epoch used as id.
-        this.id = Instant.now().getEpochSecond();
+        this.id = System.currentTimeMillis();
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        User u = Users.getUser(userUsername);
+        if (u == null) {
+            throw new IllegalArgumentException("User not found.");
+        }
+        this.user = u;
     }
 
     public SpecificPrice getPrice() {
@@ -44,11 +55,15 @@ public abstract class Order {
         return direction;
     }
     public Quantity getQuantity() {
-        return quantity;
+        return this.quantity;
     }
     public Market getMarket() {
         return market;
     }
+    public User getUser() {
+        return user;
+    }
+
     public void setQuantity(Quantity quantity) throws IllegalArgumentException {
         if (quantity.getQuantity() <= 0) {
             throw new IllegalArgumentException("Quantity cannot be negative or 0.");
@@ -62,7 +77,11 @@ public abstract class Order {
     
     @Override
     public String toString() {
-        return String.format("Price [%s] - Direction [%s] - Quantity [%s] - Market [%s]", price.toString(), direction.name(), quantity.toString(), market.toString());
+        return String.format("ID [%s] - User [%s] - Price [%s] - Direction [%s] - Quantity [%s] - Market [%s]", this.getId().toString(), this.getUser().toString(), this.getPrice().toString(), this.getDirection().name(), this.getQuantity().toString(), this.getMarket().toString());
+    }
+
+    public String toStringShort() {
+        return String.format("ID [%s] - Quantity [%s]", this.getId().toString(), this.getQuantity().toString());
     }
 
 }
