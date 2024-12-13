@@ -8,8 +8,8 @@ import CROSS.Enums.Currency;
 import CROSS.Enums.Direction;
 import CROSS.Orders.LimitOrder;
 import CROSS.Orders.MarketOrder;
-import CROSS.Orders.Order;
 import CROSS.Orders.StopMarketOrder;
+import CROSS.Types.GenericPrice;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;
 
@@ -27,40 +27,39 @@ public class OrderBook extends Market {
     // So, for example, the toString() method will show only the limit orders.
     private TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>> stopBook;
 
-    // The first order is also used to detect the line type.
-    public void addLine(SpecificPrice price, Order order) throws IllegalArgumentException {
-        if (order.getMarket() != this) {
+    // The first order is used to detect the correct book to use.
+    private void addLine(SpecificPrice price, LimitOrder order) throws IllegalArgumentException {
+        if (order.getMarket().getPrimaryCurrency() != super.getPrimaryCurrency() || order.getMarket().getSecondaryCurrency() != super.getSecondaryCurrency()) {
             throw new IllegalArgumentException("Order market not match with order book market.");
         }
-        if (order instanceof LimitOrder) {
-            OrderBookLine<LimitOrder> line = new OrderBookLine<LimitOrder>(price);
-            this.limitBook.put(price, line);
-            line.addOrder(order);
-        } else if (order instanceof StopMarketOrder) {
-            OrderBookLine<StopMarketOrder> line = new OrderBookLine<StopMarketOrder>(price);
-            this.stopBook.put(price, line);
-            line.addOrder(order);
-        } else {
-            throw new IllegalArgumentException("Order type not supported.");
+        OrderBookLine<LimitOrder> line = new OrderBookLine<LimitOrder>(price, LimitOrder.class);
+        this.limitBook.put(price, line);
+    }
+    private void addLine(SpecificPrice price, StopMarketOrder order) throws IllegalArgumentException {
+        if (order.getMarket().getPrimaryCurrency() != super.getPrimaryCurrency() || order.getMarket().getSecondaryCurrency() != super.getSecondaryCurrency()) {
+            throw new IllegalArgumentException("Order market not match with order book market.");
         }
+        OrderBookLine<StopMarketOrder> line = new OrderBookLine<StopMarketOrder>(price, StopMarketOrder.class);
+        this.stopBook.put(price, line);
     }
     
-    public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid) {
-        super(primary_currency, secondary_currency, actualPriceAsk, actualPriceBid);
+    public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid, GenericPrice increment) {
+        super(primary_currency, secondary_currency, actualPriceAsk, actualPriceBid, increment);
         limitBook = new TreeMap<SpecificPrice, OrderBookLine<LimitOrder>>();
         stopBook = new TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>>();
     }
 
     @Override
     public String toString() {
-        String basicInfos = super.toString() + "\n";
+        String sperarator = "----------------------------------------\n";
+        String basicInfos = sperarator + super.toString() + "\n" + sperarator;
         for (OrderBookLine<LimitOrder> line : limitBook.values()) {
-            String lineStr = line.toString();
+            String lineStr = line.toStringWithOrders();
             basicInfos += lineStr;
         }
         return basicInfos;
     }
-    
+
     private Boolean checkMarketOrderSatisfability(MarketOrder order) throws IllegalArgumentException, RuntimeException { 
 
         if (order.getMarket() != this) {
@@ -113,7 +112,6 @@ public class OrderBook extends Market {
 
     // Overloading the method to handle the different types of orders.
     public Boolean executeOrder(MarketOrder order) {
-
         if (this.checkMarketOrderSatisfability(order)) {
             Quantity currentRemainingQuantity = new Quantity(order.getQuantity().getQuantity());
             while (currentRemainingQuantity.getQuantity() > 0){
@@ -131,7 +129,7 @@ public class OrderBook extends Market {
                 }
 
                 while (true) {
-                    HashMap<Quantity, HashMap<LinkedList<Order>, Order>> executedOrders = limitLine.executeMarketOrderOnLine(order);
+                    HashMap<Quantity, HashMap<LinkedList<LimitOrder>, LimitOrder>> executedOrders = limitLine.executeMarketOrderOnLine(order);
                     currentRemainingQuantity.setQuantity(currentRemainingQuantity.getQuantity() - executedOrders.keySet().iterator().next().getQuantity());
                     if (currentRemainingQuantity.getQuantity() == 0) {
                         return true;
@@ -152,11 +150,12 @@ public class OrderBook extends Market {
         // New price line creation.
         if (limitLine == null) {
             this.addLine(price, order);
-            return;
+            limitLine = limitBook.get(price);
         }
 
         // Adding the order to the line.
         limitLine.addOrder(order);
+
     }
 
     public void executeOrder(StopMarketOrder order) {
@@ -166,11 +165,12 @@ public class OrderBook extends Market {
         // New price line creation.
         if (stopLine == null) {
             this.addLine(price, order);
-            return;
+            stopLine = stopBook.get(price);
         }
 
         // Adding the order to the line.
         stopLine.addOrder(order);
     }
 
+    // TODO: Implement the removeOrder method.
 }

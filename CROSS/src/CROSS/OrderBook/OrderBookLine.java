@@ -15,7 +15,7 @@ import CROSS.Types.SpecificPrice;
 public class OrderBookLine<T extends Order> {
  
     // This quantity is the sum of all orders in this line.
-    private Quantity quantity;
+    private Quantity totalQuantity;
 
     // LinkedList to keep the order in the order they were added.
     // To execute the orders (matching algoritmh) we use FIFO, so i give priority
@@ -24,33 +24,39 @@ public class OrderBookLine<T extends Order> {
     // Cancel an order is O(n) because we need to search for the order.
 
     // Generic order to handle both limit and stop orders.
-    private LinkedList<Order> orders;
+    private LinkedList<T> orders;
+
     private SpecificPrice price;
 
-    public OrderBookLine(SpecificPrice price) throws IllegalArgumentException {
-        T order = null;
-        if (order instanceof LimitOrder || order instanceof StopMarketOrder) {
+    private Class<T> lineType;
+
+    // I don't want to pass an order to the constructor.
+    // Because a line can be created without orders.
+    // For that i need Class<T> to check the line type.
+    public OrderBookLine(SpecificPrice price, Class<T> lineType) throws IllegalArgumentException {
+        this.lineType = lineType;
+        if (this.lineType.getSimpleName().compareTo(LimitOrder.class.getSimpleName()) == 0 || this.lineType.getSimpleName().compareTo(StopMarketOrder.class.getSimpleName()) == 0) {
             // OK.
             ;
         } else {
-            throw new IllegalArgumentException("Order type not supported.");
+            throw new IllegalArgumentException("Order (alias line) type not supported, LimitOrder or StopMarketOrder are the only admitted.");
         }
         // Empty line.
-        this.quantity = new Quantity(0);
-        this.orders = new LinkedList<Order>();
+        this.totalQuantity = new Quantity(0);
+        this.orders = new LinkedList<T>();
         this.price = price;
     }
 
     // Add an order to the line.
     // Stop or limit order, it doesn't matter.
     // The line is omogeneus, all orders must have the same type.
-    public void addOrder(Order order) throws IllegalArgumentException {
-        if (this.getClass().getTypeParameters()[0].getClass().equals(order.getClass())) {
+    public void addOrder(T order) throws IllegalArgumentException {
+        if (order.getClass().getSimpleName().compareTo(lineType.getSimpleName()) == 0) {
             orders.addFirst(order);
-            Quantity newQuantity = new Quantity(this.quantity.getQuantity() + order.getQuantity().getQuantity());
-            this.quantity = newQuantity;
+            Quantity newQuantity = new Quantity(this.getTotalQuantity().getQuantity() + order.getQuantity().getQuantity());
+            this.totalQuantity = newQuantity;
         } else {
-            throw new IllegalArgumentException("Order type not match with line type.");
+            throw new IllegalArgumentException("Order type doesn't match with line type.");
         }
     }
 
@@ -58,9 +64,9 @@ public class OrderBookLine<T extends Order> {
         Quantity satisfiableQuantity = new Quantity(0);
 
         Quantity orderQuantityCopy = new Quantity(order.getQuantity().getQuantity());
-        LinkedList<Order> ordersCopy = new LinkedList<Order>(orders);
+        LinkedList<T> ordersCopy = new LinkedList<T>(orders);
         while (orderQuantityCopy.getQuantity() > 0 && !ordersCopy.isEmpty()) {
-            Order tailOrder = ordersCopy.getLast();
+            T tailOrder = ordersCopy.getLast();
             if (tailOrder.getQuantity().getQuantity() <= orderQuantityCopy.getQuantity()) {
                 // Hitting the tail order, updating the executed quantity and the order quantity and continue hitting the next order.
                 satisfiableQuantity = new Quantity(satisfiableQuantity.getQuantity() + tailOrder.getQuantity().getQuantity());
@@ -76,28 +82,27 @@ public class OrderBookLine<T extends Order> {
         }
         return satisfiableQuantity;
     }
-
     // Returns an hash map with the quantity of the market order that was executed as key.
     // And as value an hash map with the executed orders list as key and the last order that was executed as value.
     // The last order is needed in case of partial execution.
     // If the order is not fully executed, the order is updated with the remaining quantity.
     // In this case we need to go on a different price/order book line from the caller.
-    public HashMap<Quantity, HashMap<LinkedList<Order>, Order>> executeMarketOrderOnLine(MarketOrder order) {
+    public HashMap<Quantity, HashMap<LinkedList<T>, T>> executeMarketOrderOnLine(MarketOrder order) {
 
-        HashMap<Quantity, HashMap<LinkedList<Order>, Order>> totalQuantityAndExecutedOrdesList = new HashMap<Quantity, HashMap<LinkedList<Order>, Order>>();
+        HashMap<Quantity, HashMap<LinkedList<T>, T>> totalQuantityAndExecutedOrdesList = new HashMap<Quantity, HashMap<LinkedList<T>, T>>();
         Quantity executedQuantity = new Quantity(0);
-        LinkedList<Order> executedOrders = new LinkedList<Order>();
-        Order lastOrderExecuted = null;
+        LinkedList<T> executedOrders = new LinkedList<T>();
+        T lastOrderExecuted = null;
 
         // While the order quantity is not 0 and there are orders in the line.
         while (order.getQuantity().getQuantity() > 0 && !orders.isEmpty()) {
             // Get last order in the line, the first arrived.
-            Order tailOrder = orders.getLast();
+            T tailOrder = orders.getLast();
             if (tailOrder.getQuantity().getQuantity() <= order.getQuantity().getQuantity()) {
                 // Hitting the tail order, removing it, updating the executed quantity and the order quantity and continue hitting the next order.
                 executedQuantity = new Quantity(executedQuantity.getQuantity() + tailOrder.getQuantity().getQuantity());
                 order.setQuantity(new Quantity(order.getQuantity().getQuantity() - tailOrder.getQuantity().getQuantity()));
-                Order o = orders.removeLast();
+                T o = orders.removeLast();
                 // Moved to the executed orders list.
                 executedOrders.addFirst(o);
                 // If order quantity is 0, we can stop the loop at the next iteration.
@@ -111,14 +116,14 @@ public class OrderBookLine<T extends Order> {
             }
         }
 
-        HashMap<LinkedList<Order>, Order> executedOrdersMap = new HashMap<LinkedList<Order>, Order>();
+        HashMap<LinkedList<T>, T> executedOrdersMap = new HashMap<LinkedList<T>, T>();
         executedOrdersMap.put(executedOrders, lastOrderExecuted);
 
         totalQuantityAndExecutedOrdesList.put(executedQuantity, executedOrdersMap);
 
         // Updating this class quantity.
-        Quantity newQuantity = new Quantity(this.quantity.getQuantity() - executedQuantity.getQuantity());
-        this.quantity = newQuantity;
+        Quantity newQuantity = new Quantity(this.getTotalQuantity().getQuantity() - executedQuantity.getQuantity());
+        this.totalQuantity = newQuantity;
 
         return totalQuantityAndExecutedOrdesList;
     }
@@ -126,15 +131,28 @@ public class OrderBookLine<T extends Order> {
     public Integer getOrdersNumber() {
         return orders.size();
     }
-  
-    public void cancelOrder(Order order) throws IllegalArgumentException {
+    public LinkedList<T> getOrders() {
+        LinkedList<T> ordersCopy = new LinkedList<T>(this.orders);
+        return ordersCopy;
+    }
+    public SpecificPrice getPrice() {
+        return price;
+    }
+    public Class<T> getLineType() {
+        return lineType;
+    }
+    public Quantity getTotalQuantity() {
+        return totalQuantity;
+    }
+
+    public void cancelOrder(T order) throws IllegalArgumentException {
         // Search for the order in the line.
-        for (Order lineOrder : orders) {
+        for (T lineOrder : orders) {
             if (lineOrder.getId() == order.getId()) {
                 // Remove the order from the line.
                 orders.remove(lineOrder);
-                Quantity newQuantity = new Quantity(this.quantity.getQuantity() - order.getQuantity().getQuantity());
-                this.quantity = newQuantity;
+                Quantity newQuantity = new Quantity(this.getTotalQuantity().getQuantity() - order.getQuantity().getQuantity());
+                this.totalQuantity = newQuantity;
                 return;
             }
         }
@@ -143,14 +161,14 @@ public class OrderBookLine<T extends Order> {
 
     @Override
     public String toString() {
-        return String.format("Price: [%s] - Size [%s] - Total [%d]\n", price.toString(), this.quantity.toString(), this.quantity.getQuantity() * price.getValue());
+        return String.format("Price [%s] - Size [%s] - Total [%d]\n", price.toString(), this.getTotalQuantity().toString(), this.getTotalQuantity().getQuantity() * price.getValue());
     }
 
     public String toStringWithOrders() {
         String lineStr = this.toString();
-        lineStr += "Orders:\n";
-        for (Order order : orders) {
-            lineStr += order.toString() + "\n";
+        lineStr += "\tOrders: -> ";
+        for (T order : orders) {
+            lineStr += order.toStringShort() + "\n";
         }
         return lineStr;
     }

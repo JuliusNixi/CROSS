@@ -48,6 +48,17 @@ public abstract class Users {
         return null;
         
     }
+    public static User getUser(String username) {
+        
+        User result = null;
+        User user = new User(username, null);
+        result = users.ceiling(user);
+        if (result != null && result.getUsername().equals(username)) {
+            return result;
+        }
+        return null;
+        
+    }
 
     public static Integer getUsersSize() {
         return users.size();
