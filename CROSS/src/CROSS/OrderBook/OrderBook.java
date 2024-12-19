@@ -12,6 +12,7 @@ import CROSS.Orders.StopMarketOrder;
 import CROSS.Types.GenericPrice;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;
+import CROSS.Utils.Separator;
 
 public class OrderBook extends Market {
 
@@ -51,13 +52,30 @@ public class OrderBook extends Market {
 
     @Override
     public String toString() {
-        String sperarator = "----------------------------------------\n";
-        String basicInfos = sperarator + super.toString() + "\n" + sperarator;
+        String separator = "";
+        String superInfo = super.toString();
+        separator = Separator.getSeparator("-", superInfo.length());
+        String result = separator + superInfo + "\n" + separator;
+        LinkedList<String> lines = new LinkedList<String>();
+        separator = Separator.getSeparator("*");
+        Integer beforeLineBidIndex = 0;
+        Integer counter = 0;
         for (OrderBookLine<LimitOrder> line : limitBook.values()) {
             String lineStr = line.toStringWithOrders();
-            basicInfos += lineStr;
+            if (line.getPrice().getValue() == actualPriceAsk.getValue()) {
+                lineStr += separator;
+            }
+            if (line.getPrice().getValue() == actualPriceBid.getValue()) {
+                beforeLineBidIndex = counter;
+            }
+            lines.add(lineStr);
+            counter++;
         }
-        return basicInfos;
+        lines.add(beforeLineBidIndex, separator);
+        for (String line : lines) {
+            result += line;
+        }
+        return result;
     }
 
     private Boolean checkMarketOrderSatisfability(MarketOrder order) throws IllegalArgumentException, RuntimeException { 
@@ -170,6 +188,14 @@ public class OrderBook extends Market {
 
         // Adding the order to the line.
         stopLine.addOrder(order);
+    }
+
+    public LinkedList<LimitOrder> getLimitOrders() {
+        LinkedList<LimitOrder> orders = new LinkedList<LimitOrder>();
+        for (OrderBookLine<LimitOrder> line : limitBook.values()) {
+            orders.addAll(line.getOrders());
+        }
+        return orders;
     }
 
     // TODO: Implement the removeOrder method.
