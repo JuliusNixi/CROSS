@@ -20,13 +20,8 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
         return String.format("Type [%s] - Price [%s]", this.getType().name(), super.toString());
     }
 
-    // This method is used to compare prices of the same type.
-    // On different types, it throws an exception.
     @Override
-    public int compareTo(SpecificPrice price) throws IllegalArgumentException {
-        if (this.type != price.getType()) {
-            throw new IllegalArgumentException("Cannot compare prices of different types.");
-        }
+    public int compareTo(SpecificPrice price)  {
         return Integer.compare(price.getValue(), this.getValue());
     }
     

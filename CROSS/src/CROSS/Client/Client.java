@@ -48,6 +48,8 @@ public class Client {
 
             this.pathToConfigPropertiesFile = pathToConfigPropertiesFile;
 
+            System.out.print(this);
+
         // Throwed by getByName.
         }catch (UnknownHostException ex) {
             System.err.printf("Unknown server host reading file %s.\n", pathToConfigPropertiesFile);
@@ -102,15 +104,18 @@ public class Client {
     // Command Line Interface.
     // Static, i cannot have multiple instances of the CLI.
     // Returns the CLI thread.
-    public static ClientCLI CLI() throws IOException {
+    public static ClientCLI CLI(Client client) throws IOException {
         
         // Start the CLI.
         if (clientCLI != null) {
             throw new IOException("CLI already started.");
         }
+
+        // Get and start a thread.
         ClientCLI clientCLI = new ClientCLI();
         clientCLI.start();
         Client.clientCLI = clientCLI; 
+
         return clientCLI;
 
     }
@@ -134,7 +139,7 @@ public class Client {
 
     @Override
     public String toString() {
-        return String.format("Server IP: %s.\nServer port: %s.\nConfig file path: %s.\n", this.getServerAddress(), this.getPortInt(), this.getPathToConfigPropertiesFile());
+        return String.format("Client Info's:\nServer IP: %s.\nServer port: %s.\nConfig file path: %s.\n", this.getServerAddress(), this.getPortInt(), this.getPathToConfigPropertiesFile());
     }
 
 }

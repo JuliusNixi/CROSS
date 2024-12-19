@@ -80,6 +80,7 @@ public abstract class Order {
         return String.format("ID [%s] - User [%s] - Price [%s] - Direction [%s] - Quantity [%s] - Market [%s]", this.getId().toString(), this.getUser().toString(), this.getPrice().toString(), this.getDirection().name(), this.getQuantity().toString(), this.getMarket().toString());
     }
 
+    // Used for the OrderBookLine class.
     public String toStringShort() {
         return String.format("ID [%s] - Quantity [%s]", this.getId().toString(), this.getQuantity().toString());
     }
