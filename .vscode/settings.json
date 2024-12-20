@@ -1,4 +1,6 @@
 // Voluntarily synchronized with GitHub, and not included in .gitignore.
+// This because if in the future i will work again on this project on another machine, 
+// i will not have to remember how to configure these paths.
 {
     "java.project.sourcePaths": [
         "CROSS/src"
