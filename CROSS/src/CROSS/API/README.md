@@ -1,1 +1,5 @@
-The idea is that all these classes convert the Java objects to the JSON format described in the assignment. For example, i used a custom class Quantity or Price that are too complex to be converted directly with gson, so these classes are interfaces between those to create the JSON strings to be used for requests/responses.
+The idea is that all these classes convert the Java objects to the JSON format described in the assignment. 
+
+In this way i can use arbitrary Java objects and decide what exponse and in which format through the API.
+
+So these classes are interfaces between Java objects to create the JSON strings to be used for requests/responses.

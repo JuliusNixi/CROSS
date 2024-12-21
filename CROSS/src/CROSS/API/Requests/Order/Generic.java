@@ -1,11 +1,11 @@
-package CROSS.API.Requests.OrderData;
+package CROSS.API.Requests.Order;
 
 import CROSS.API.JSON;
 import CROSS.Enums.PriceType;
 import CROSS.Types.Quantity;
 
 /**
- * RequestOnOrderData is an abstract class.
+ * Generic is an abstract class.
  * It is used to represent the request that is about the order's data.
  * This class is not a concrete request, but an abstract one, used to represent the common data of the requests.
  * It's extended by other classes that represent the concrete requests.
@@ -13,20 +13,25 @@ import CROSS.Types.Quantity;
  * 
  * @version 1.0
  * @see JSON
+ * @see Limit
+ * @see Market
+ * @see Stop
+ * @see Quantity
+ * @see PriceType
  */
-public abstract class RequestOnOrderData extends JSON {
+public abstract class Generic extends JSON {
     
     private String type;
     private Integer size;
 
     /**
-     * Constructor of the RequestOnOrderData class.
+     * Constructor of the Generic class.
      * 
      * @param type The type of the order.
      * @param size The size of the order.
      * @throws NullPointerException If the type or the size are null.
      */
-    public RequestOnOrderData(PriceType type, Quantity size) throws NullPointerException {
+    public Generic(PriceType type, Quantity size) throws NullPointerException {
         if (type == null) {
             throw new NullPointerException("The type of the order cannot be null.");
         }

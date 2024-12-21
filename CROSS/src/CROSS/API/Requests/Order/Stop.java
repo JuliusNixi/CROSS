@@ -1,30 +1,32 @@
-package CROSS.API.Requests.OrderData;
+package CROSS.API.Requests.Order;
 
 import CROSS.Enums.PriceType;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;
 
 /**
- * RequestOnOrderDataStop is a class that extends RequestOnOrderData and is used to request orders data.
+ * Stop is a class that extends Generic and is used to request orders data.
  * It is used to represent the request that is about the order's data.
  * It contains the price.
  * 
  * @version 1.0
- * @see RequestOnOrderData
+ * @see Generic
+ * @see PriceType
+ * @see Quantity
  */
-public class RequestOnOrderDataStop extends RequestOnOrderData {
+public class Stop extends Generic {
     
     private Integer price;
 
     /**
-     * Constructor of the RequestOnOrderDataStop class.
+     * Constructor of the Stop class.
      * 
      * @param type The type of the order.
      * @param size The size of the order.
      * @param price The price of the order.
      * @throws IllegalArgumentException If the price is null or if the price type is different from the order type.
      */
-    public RequestOnOrderDataStop(PriceType type, Quantity size, SpecificPrice price) throws IllegalArgumentException {
+    public Stop(PriceType type, Quantity size, SpecificPrice price) throws IllegalArgumentException {
         super(type, size);
         if (price == null) {
             throw new IllegalArgumentException("The price cannot be null.");

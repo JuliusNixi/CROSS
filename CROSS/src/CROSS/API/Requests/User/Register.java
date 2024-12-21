@@ -1,25 +1,26 @@
-package CROSS.API.Requests.UserData;
+package CROSS.API.Requests.User;
 
 import CROSS.Users.User;
 
 /**
- * RequestOnUserDataRegister is a class that extends RequestOnUserData and is used to request register data.
+ * Register is a class that extends Generic and is used to request register data.
  * It is used to represent the request that is about the user's data.
  * It contains the user's password.
  * 
  * @version 1.0
- * @see RequestOnUserData
+ * @see Generic
+ * @see User
  */
-public class RequestOnUserDataRegister extends RequestOnUserData {
+public class Register extends Generic {
     
     private String password = null;
 
     /**
-     * Constructor of the RequestOnUserData class.
+     * Constructor of the Register class.
      * 
      * @param user The user.
      */
-    public RequestOnUserDataRegister(User user) {
+    public Register(User user) {
         super(user);
         this.password = user.getPassword();
     }
@@ -30,7 +31,7 @@ public class RequestOnUserDataRegister extends RequestOnUserData {
      * @return The user.
      */
     public User getUser() {
-        return new User(getUsername(), password);
+        return new User(super.username, password);
     }
 
 }

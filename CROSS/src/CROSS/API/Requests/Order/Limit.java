@@ -1,30 +1,33 @@
-package CROSS.API.Requests.OrderData;
+package CROSS.API.Requests.Order;
 
 import CROSS.Enums.PriceType;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;
 
 /**
- * RequestOnOrderDataLimit is a class that extends RequestOnOrderData and is used to request orders data.
+ * Limit is a class that extends Generic and is used to request orders data.
  * It is used to represent the request that is about the order's data.
  * It contains the price.
  * 
  * @version 1.0
- * @see RequestOnOrderData
+ * @see Generic
+ * @see PriceType
+ * @see Quantity
+ * @see SpecificPrice
  */
-public class RequestOnOrderDataLimit extends RequestOnOrderData {
+public class Limit extends Generic {
 
     private Integer price;
 
     /**
-     * Constructor of the RequestOnOrderDataLimit class.
+     * Constructor of the Limit class.
      * 
      * @param type The type of the order.
      * @param size The size of the order.
      * @param price The price of the order.
      * @throws IllegalArgumentException If the price is null or if the price type is different from the order type.
      */
-    public RequestOnOrderDataLimit(PriceType type, Quantity size, SpecificPrice price) throws IllegalArgumentException {
+    public Limit(PriceType type, Quantity size, SpecificPrice price) throws IllegalArgumentException {
         super(type, size);
         if (price == null) {
             throw new IllegalArgumentException("The price cannot be null.");
