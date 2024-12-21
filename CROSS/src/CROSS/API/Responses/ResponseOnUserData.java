@@ -1,5 +1,6 @@
 package CROSS.API.Responses;
 
+import CROSS.API.JSON;
 import CROSS.Enums.ResponseCode;
 
 /**
@@ -7,10 +8,11 @@ import CROSS.Enums.ResponseCode;
  * This class is used to represent the response of a request that is about the user's data.
  * 
  * @version 1.0
+ * @see JSON
  */
-public class ResponseOnUserData {
+public class ResponseOnUserData extends JSON {
     
-    private ResponseCode response = null;
+    private Integer response = null;
     private String errorMessage = null;
 
     /**
@@ -27,16 +29,17 @@ public class ResponseOnUserData {
         if (errorMessage == null) {
             throw new NullPointerException("Error message is null.");
         }
-        this.response = response;
+        this.response = response.getCode();
         this.errorMessage = errorMessage;
     }
 
+    // Cannot returns a response object because i don't know the type of the response.
     /**
      * Getter for the response code.
      * 
      * @return The response code of the response.
      */
-    public ResponseCode getResponse() {
+    public Integer getResponse() {
         return response;
     }
 

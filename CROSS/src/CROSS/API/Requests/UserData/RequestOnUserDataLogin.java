@@ -1,5 +1,7 @@
 package CROSS.API.Requests.UserData;
 
+import CROSS.Users.User;
+
 /**
  * RequestOnUserDataLogin is a class that extends RequestOnUserData and is used to request login data.
  * It is used to represent the request that is about the user's data.
@@ -15,25 +17,20 @@ public class RequestOnUserDataLogin extends RequestOnUserData {
     /**
      * Constructor of RequestOnUserDataLogin the class.
      * 
-     * @param username The username of the user.
-     * @param password The password of the user.
-     * @throws NullPointerException If the password is null.
+     * @param user The user.
      */
-    public RequestOnUserDataLogin(String username, String password) throws NullPointerException {
-        super(username);
-        if (password == null) {
-            throw new NullPointerException("Password is null.");
-        }
-        this.password = password;
+    public RequestOnUserDataLogin(User user) {
+        super(user);
+        this.password = user.getPassword();
     }
 
     /**
-     * Returns the password of the user.
+     * Returns the user.
      * 
-     * @return The password of the user.
+     * @return The user.
      */
-    public String getPassword() {
-        return password;
+    public User getUser() {
+        return new User(super.getUsername(), password);
     }
     
 }
