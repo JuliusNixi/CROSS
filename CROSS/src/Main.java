@@ -3,6 +3,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.TreeSet;
 
+import CROSS.API.Requests.UserData.RequestOnUserDataLogin;
 import CROSS.Client.Client;
 import CROSS.Enums.Currency;
 import CROSS.Enums.Direction;
@@ -214,6 +215,8 @@ public class Main {
 
     }
 
+
+
     // Returns an OrderBook with some orders executed.
     public static OrderBook TestExecutingLimit() {
 
@@ -280,7 +283,7 @@ public class Main {
             System.out.println(separator);
             TestGenericOrder();
             System.out.println(separator);
-            TestLimit();
+            /*TestLimit();
             System.out.println(separator);
             TestOrderBook();
             System.out.println(separator);
@@ -288,10 +291,11 @@ public class Main {
             for (LimitOrder o : ob.getLimitOrders()) {
                 System.out.println(o.toString() + "\n");
             }
-            System.out.println(separator);
+            System.out.println(separator);*/
+
 
             Thread.sleep(1000 * 5);
-            System.exit(0);
+            //System.exit(0);
         } catch (IOException e) {
             e.printStackTrace();
         }

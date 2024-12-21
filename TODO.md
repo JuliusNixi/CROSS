@@ -1,5 +1,8 @@
 On server start add users file load.
-Parse JSON requests received in ClientThread in the server.
-Craft and send the JSON requests in Client.
+
+Parse JSON requests received in ClientThread in the Server.
+Craft and send the JSON requests in the Client.
+
 Create the notify system.
-Test the orderbook.
+
+Finish testing the orderbook.
