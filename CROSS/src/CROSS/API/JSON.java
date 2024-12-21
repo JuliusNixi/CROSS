@@ -2,7 +2,7 @@ package CROSS.API;
 
 // The Gson library is a Google's library to work with JSON.
 // It's used to convert the Java objects to JSON.
-import com.google.gson.Gson;
+import com.google.gson.Gson; 
 
 /**
  * JSON is an abstract class.

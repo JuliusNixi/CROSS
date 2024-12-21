@@ -1,28 +1,29 @@
-package CROSS.API.Requests.UserData;
+package CROSS.API.Requests.User;
 
 import CROSS.Users.User;
 
 /**
- * RequestOnUserDataUpdate is a class that extends RequestOnUserData and is used to request an update of the user's data.
+ * Update is a class that extends Generic and is used to request an update of the user's data.
  * It is used to represent the request that is about the user's data.
  * It contains the old password and the new password of the user.
  * 
  * @version 1.0
- * @see RequestOnUserData
+ * @see Generic
+ * @see User
  */
-public class RequestOnUserDataUpdate extends RequestOnUserData {
+public class Update extends Generic {
     
     private String old_password;
     private String new_password;
 
     /**
-     * Constructor of the RequestOnUserDataUpdate class.
+     * Constructor of the Update class.
      * 
      * @param user The user.
      * @param new_password The new password of the user as string.
      * @throws NullPointerException If the new_password is null.
      */
-    public RequestOnUserDataUpdate(User user, String new_password) throws NullPointerException {
+    public Update(User user, String new_password) throws NullPointerException {
         super(user);
         if (new_password == null) {
             throw new NullPointerException("New password is null.");
@@ -38,7 +39,7 @@ public class RequestOnUserDataUpdate extends RequestOnUserData {
      * @return The unupdated user.
      */
     public User getOldUser() {
-        return new User(super.getUsername(), this.old_password);
+        return new User(super.username, this.old_password);
     }
     /**
      * Getter for the new user.
@@ -47,7 +48,7 @@ public class RequestOnUserDataUpdate extends RequestOnUserData {
      * @return The updated user.
      */
     public User getNewUser() {
-        return new User(super.getUsername(), this.new_password);
+        return new User(super.username, this.new_password);
     }
 
 }
