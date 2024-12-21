@@ -38,6 +38,34 @@ public abstract class Users {
 
     }
 
+    public static void updateUser(User user) throws InvalidUser {
+
+        if (!users.contains(user)) {
+            throw new InvalidUser("User does not exist.");
+        }
+
+        users.remove(user);
+        users.add(user);
+
+        // TODO: COntinua qui
+        // Prevent double file writes when the method is called from DBUsersInterface.
+        // That because:
+        // loadUsers() read from file user X -> call addUser() to add it in RAM -> writeUserOnFile() write user X on file AGAIN.
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        for (StackTraceElement stackTraceElement : stackTrace) {
+            if (stackTraceElement.getClassName().equals(DBUsersInterface.class.getName()) && Arrays.asList(DBUsersInterface.class.getMethods()).stream().map(m -> m.getName()).toList().contains(stackTraceElement.getMethodName())) {
+                return;
+            }
+        }
+        try {
+            DBUsersInterface.writeUserOnFile(user);
+        } catch (Exception e) {
+            users.remove(user);
+            throw new InvalidUser("Error writing user on file.");
+        }
+
+    }
+
     public static User getUser(User user) {
         
         User result = null;

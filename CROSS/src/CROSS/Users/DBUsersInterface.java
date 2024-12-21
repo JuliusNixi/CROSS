@@ -115,6 +115,7 @@ public abstract class DBUsersInterface {
         // Not empty file.
         try {
             User[] users = new Gson().fromJson(DBUsersInterface.fileContent, User[].class);
+            // TODO: COntinua qui salvare numero utente per calcolarsi la riga sul file al quale corrisponde.
             for (User user : users) {
                 Users.addUser(user);
             }
@@ -206,6 +207,56 @@ public abstract class DBUsersInterface {
         } catch (Exception e) {
             System.err.printf("Error writing user on file %s.\n", filePath);
         }
+    }
+
+    public static void removeUserOnFile(User user) throws IOException {
+
+        if (fileContent == null) {
+            throw new IOException("File content is needed to write on file. Load users before.");
+        }
+
+        // TODO: Continua qui.
+        // Remove last line.
+        try {
+            removeLastLine();
+        } catch (IOException e) {
+            System.err.printf("Error removing last line from file %s.\n", filePath);
+        }
+
+        // Write user on file.
+        // Buffered to improve performance.
+        try {
+            BufferedOutputStream fileOutBuffered = new BufferedOutputStream(fileOut);
+
+            String jsonUser = new Gson().toJson(user);
+            jsonUser = String.join("", jsonUser.trim().split("\n")).replaceAll(" ", "");
+            if (fileContent.equals(fileInit)) {
+                /*
+                 * [
+                 * 
+                 */
+                jsonUser = jsonUser + "\n";
+                jsonUser = jsonUser + "]";
+            } else {
+                /* 
+                 * [
+                 *  {user1}
+                 * 
+                 */
+                jsonUser = "," + "\n" + jsonUser + "\n]";
+            }
+
+            // Append to the file.
+            fileOutBuffered.write(jsonUser.getBytes());
+            fileOutBuffered.close();
+
+            fileOut = new FileOutputStream(file, true);
+        } catch (IOException e) {
+            System.err.printf("Error writing user on file %s.\n", filePath);
+        } catch (Exception e) {
+            System.err.printf("Error writing user on file %s.\n", filePath);
+        }
+
     }
 
 }

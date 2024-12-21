@@ -5,7 +5,10 @@ public class User implements Comparable<User> {
     private String username;
     private String password; 
 
-    public User(String username, String password) {
+    public User(String username, String password) throws NullPointerException {
+        if (username == null || password == null) {
+            throw new NullPointerException("Username or password is null.");
+        }
         this.username = username;
         this.password = password;
     }

@@ -8,6 +8,12 @@ import java.util.Scanner;
 
 import com.google.gson.Gson;
 
+import CROSS.API.JSONInterface;
+import CROSS.Enums.ClientActions;
+import CROSS.Exceptions.InvalidUser;
+import CROSS.Users.User;
+import CROSS.Users.Users;
+
 // Client thread.
 // Each client has its own thread.
 public class ClientThread implements Runnable {
@@ -51,6 +57,46 @@ public class ClientThread implements Runnable {
             while (true) {
                 String data = scanner.nextLine();
                 // TODO: Read API json java object request from the socket.
+
+                ClientActions action = JSONInterface.parseRequest(data);
+                switch (action) {
+                    case REGISTER:
+                        User user = JSONInterface.getUser();
+                        try {
+                            Users.addUser(user);
+                        }catch (InvalidUser e) {
+                            // TODO: Error handling.
+                            System.err.println(e.getMessage());
+                            System.exit(-1);
+                        }
+                        break;
+                    case LOGIN:
+                        
+                        break;
+                    case UPDATE_CREDENTIALS:
+    
+                        break;
+                    case LOGOUT:
+    
+                        break;
+                    case INSERT_LIMIT_ORDER:
+    
+                        break;
+                    case INSERT_MARKET_ORDER:
+    
+                        break;
+                    case INSERT_STOP_ORDER:
+    
+                        break;
+                    case CANCEL_ORDER:  
+    
+                        break;
+                    case GET_PRICE_HISTORY:
+    
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Invalid action.");
+                }
 
                 // TODO: Remove this.
                 if ("42"==data) {

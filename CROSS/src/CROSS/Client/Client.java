@@ -1,9 +1,11 @@
 package CROSS.Client;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Properties;
@@ -22,6 +24,8 @@ public class Client {
     private InetAddress serverAddress = null;
 
     private Socket socket = null;
+
+    private OutputStream outputStream = null;
 
     public Client(String pathToConfigPropertiesFile) {
 
@@ -95,6 +99,9 @@ public class Client {
             this.socket = new Socket(serverAddress, portInt);
             // 10 seconds timeout.
             socket.setSoTimeout(10 * 1000);
+            this.outputStream = socket.getOutputStream();
+        } catch (UnknownHostException ex) {
+            // TODO: Error handling.
         } catch (IOException ex) {
             // TODO: Error handling.
         }
@@ -112,7 +119,7 @@ public class Client {
         }
 
         // Get and start a thread.
-        ClientCLI clientCLI = new ClientCLI();
+        ClientCLI clientCLI = new ClientCLI(client);
         clientCLI.start();
         Client.clientCLI = clientCLI; 
 
@@ -140,6 +147,22 @@ public class Client {
     @Override
     public String toString() {
         return String.format("Client Info's:\nServer IP: %s.\nServer port: %s.\nConfig file path: %s.\n", this.getServerAddress(), this.getPortInt(), this.getPathToConfigPropertiesFile());
+    }
+
+    public void sendJSON(String json) throws NullPointerException, IOException {
+        if (this.socket == null) {
+            throw new NullPointerException("Socket is null.");
+        }
+        if (this.outputStream == null) {
+            throw new NullPointerException("Output stream is null.");
+        }
+        try {
+            BufferedOutputStream outputStreamBuff = new BufferedOutputStream(this.outputStream);
+            outputStreamBuff.write(json.getBytes());
+            outputStreamBuff.flush();
+        } catch (IOException ex) {
+            throw new IOException("Error sending JSON.");
+        }
     }
 
 }

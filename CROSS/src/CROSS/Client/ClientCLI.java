@@ -1,12 +1,19 @@
 package CROSS.Client;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Scanner;
 
+import CROSS.API.JSONInterface;
 import CROSS.Enums.ClientActions;
 
 // This thread will handle the client CLI.
 public class ClientCLI extends Thread {
+
+    private Client client = null;
+    public ClientCLI(Client client) {
+        this.client = client;
+    }
     
     @Override
     public void run(){
@@ -40,6 +47,44 @@ public class ClientCLI extends Thread {
             }
 
             // TODO: Prepare the JSON request to send.
+            String jsonToSend = "";
+            switch (action) {
+                case REGISTER:
+                    jsonToSend = JSONInterface.userRegister(args.get(0), args.get(1));
+                    break;
+                case LOGIN:
+
+                    break;
+                case UPDATE_CREDENTIALS:
+
+                    break;
+                case LOGOUT:
+
+                    break;
+                case INSERT_LIMIT_ORDER:
+
+                    break;
+                case INSERT_MARKET_ORDER:
+
+                    break;
+                case INSERT_STOP_ORDER:
+
+                    break;
+                case CANCEL_ORDER:  
+
+                    break;
+                case GET_PRICE_HISTORY:
+
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid action.");
+            }
+
+            try {
+                this.client.sendJSON(jsonToSend);
+            } catch (NullPointerException | IOException e) {
+                // TODO Auto-generated catch block
+            }
 
             // TODO: Remove this.
             if ("1"==args.get(0)) break;
