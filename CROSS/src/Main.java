@@ -3,7 +3,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.TreeSet;
 
-import CROSS.API.Requests.UserData.RequestOnUserDataLogin;
 import CROSS.Client.Client;
 import CROSS.Enums.Currency;
 import CROSS.Enums.Direction;

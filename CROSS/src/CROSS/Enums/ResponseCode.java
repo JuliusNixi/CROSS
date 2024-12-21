@@ -1,14 +1,14 @@
 package CROSS.Enums;
 
 /**
- * ResponseCode is an abstract class, it contais some enums.
+ * ResponseCode is a class, it contains some enums.
  * These are used to represent the response code of a response to a request.
  * Responses with different types could have the same response code for different reasons.
  * For that I used different enums.
  * 
  * @version 1.0
  */
-public abstract class ResponseCode {
+public class ResponseCode {
 
     public static enum Register {
 
@@ -99,6 +99,32 @@ public abstract class ResponseCode {
         }
         public int getCode() {
             return code;
+        }
+    }
+
+    private ResponseType type;
+    public ResponseCode(ResponseType type) {
+        this.type = type;
+    }
+
+    public ResponseType getType() {
+        return type;
+    }
+
+    public int getCode() {
+        switch (type) {
+            case REGISTER:
+                return Register.OK.getCode();
+            case UPDATE_CREDENTIALS:
+                return updateCredentials.OK.getCode();
+            case LOGIN:
+                return Login.OK.getCode();
+            case LOGOUT:
+                return Logout.OK.getCode();
+            case CANCEL_ORDER:
+                return cancelOrder.OK.getCode();
+            default:
+                return -1;
         }
     }
 

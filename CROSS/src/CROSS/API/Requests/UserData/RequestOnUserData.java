@@ -1,37 +1,43 @@
 package CROSS.API.Requests.UserData;
 
+import CROSS.API.JSON;
+import CROSS.Users.User;
+
 /**
  * RequestOnUserData is an abstract class.
  * It is used to represent the request that is about the user's data.
  * This class is not a concrete request, but an abstract one, used to represent the common data of the requests.
+ * It's extended by other classes that represent the concrete requests.
  * It contains the username of the user that the request is about.
  * 
  * @version 1.0
  * @see RequestOnUserDataLogin
  * @see RequestOnUserDataRegister
  * @see RequestOnUserDataUpdate
+ * @see JSON
  */
-public abstract class RequestOnUserData extends CROSS.API.JSON {
+public abstract class RequestOnUserData extends JSON {
     
     private String username = null;
 
     /**
      * Constructor of the RequestOnUserData class.
      * 
-     * @param username The username of the user.
-     * @throws NullPointerException If the username is null.
+     * @param user The user.
+     * @throws NullPointerException If the user is null.
      */
-    public RequestOnUserData(String username) throws NullPointerException {
-        if (username == null) {
-            throw new NullPointerException("Username is null.");
+    public RequestOnUserData(User user) throws NullPointerException {
+        if (user == null) {
+            throw new NullPointerException("User is null.");
         }
-        this.username = username;
+        this.username = user.getUsername();
     }
 
+    // Not returning the user object, because i haven't the password here.
     /**
      * Getter for the username.
      * 
-     * @return The username of the user.
+     * @return The username of the user as string.
      */
     public String getUsername() {
         return username;

@@ -6,3 +6,5 @@ Craft and send the JSON requests in the Client.
 Create the notify system.
 
 Finish testing the orderbook.
+
+Create responses from cancelOrder and below.

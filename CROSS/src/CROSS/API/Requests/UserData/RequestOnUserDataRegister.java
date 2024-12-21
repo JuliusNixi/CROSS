@@ -1,5 +1,7 @@
 package CROSS.API.Requests.UserData;
 
+import CROSS.Users.User;
+
 /**
  * RequestOnUserDataRegister is a class that extends RequestOnUserData and is used to request register data.
  * It is used to represent the request that is about the user's data.
@@ -15,25 +17,20 @@ public class RequestOnUserDataRegister extends RequestOnUserData {
     /**
      * Constructor of the RequestOnUserData class.
      * 
-     * @param username The username of the user.
-     * @param password The password of the user.
-     * @throws NullPointerException If the password is null.
+     * @param user The user.
      */
-    public RequestOnUserDataRegister(String username, String password) throws NullPointerException {
-        super(username);
-        if (password == null) {
-            throw new NullPointerException("Password is null.");
-        }
-        this.password = password;
+    public RequestOnUserDataRegister(User user) {
+        super(user);
+        this.password = user.getPassword();
     }
 
     /**
-     * Getter for the password.
+     * Getter for the user.
      * 
-     * @return The password of the user.
+     * @return The user.
      */
-    public String getPassword() {
-        return password;
+    public User getUser() {
+        return new User(getUsername(), password);
     }
 
 }

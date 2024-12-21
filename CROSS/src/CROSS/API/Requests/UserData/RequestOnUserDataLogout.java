@@ -1,5 +1,7 @@
 package CROSS.API.Requests.UserData;
 
+import CROSS.API.JSON;
+
 /**
  * RequestOnUserDataLogout is a class that is used to logout.
  * It is used to represent the request that is about the user's data.
@@ -7,7 +9,7 @@ package CROSS.API.Requests.UserData;
  * 
  * @version 1.0
  */
-public class RequestOnUserDataLogout {
+public class RequestOnUserDataLogout extends JSON {
     
     public RequestOnUserDataLogout() {}
 
