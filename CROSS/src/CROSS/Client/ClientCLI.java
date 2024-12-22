@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Scanner;
 
-import CROSS.API.JSONInterface;
 import CROSS.Enums.ClientActions;
+import CROSS.TMP.JSONInterface;
 
 // This thread will handle the client CLI.
 public class ClientCLI extends Thread {

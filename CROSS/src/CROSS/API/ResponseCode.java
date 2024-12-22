@@ -1,4 +1,4 @@
-package CROSS.Enums;
+package CROSS.API;
 
 /**
  * ResponseCode is a class, it contains some enums.
@@ -7,6 +7,7 @@ package CROSS.Enums;
  * For that I used different enums.
  * 
  * @version 1.0
+ * @see ResponseType
  */
 public class ResponseCode {
 
@@ -29,7 +30,6 @@ public class ResponseCode {
         }
 
     }
-
     public static enum updateCredentials {
 
         OK(100),
@@ -51,7 +51,6 @@ public class ResponseCode {
         }
 
     }
-
     public static enum Login {
         OK(100),
         INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST(101),
@@ -69,7 +68,6 @@ public class ResponseCode {
             return code;
         }
     };
-
     public static enum Logout {
         OK(100),
         INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST_OR_USER_NOT_LOGGED_OR_OTHER_ERROR(101),;
@@ -85,7 +83,6 @@ public class ResponseCode {
             return code;
         }
     }
-
     public static enum cancelOrder {
         OK(100),
         ORDER_DOES_NOT_EXIST_OR_BELONGS_TO_DIFFERENT_USER_OR_HAS_ALREADY_BEEN_FINALIZED_OR_OTHER_ERROR_CASES(101),;
@@ -103,14 +100,33 @@ public class ResponseCode {
     }
 
     private ResponseType type;
-    public ResponseCode(ResponseType type) {
+    /**
+     * Constructor of the ResponseCode class.
+     * 
+     * @param type The type of the response.
+     * @throws NullPointerException If the type is null.
+     */
+    public ResponseCode(ResponseType type) throws NullPointerException {
+        if (type == null) {
+            throw new NullPointerException("type of the response is null.");
+        }
         this.type = type;
     }
 
+    /**
+     * Getter for the type of the response.
+     * 
+     * @return The type of the response.
+     */
     public ResponseType getType() {
         return type;
     }
 
+    /**
+     * Getter for the code of the response.
+     * 
+     * @return The code of the response.
+     */
     public int getCode() {
         switch (type) {
             case REGISTER:
@@ -128,4 +144,4 @@ public class ResponseCode {
         }
     }
 
-};
+}
