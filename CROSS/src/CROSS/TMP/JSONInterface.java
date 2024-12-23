@@ -2,7 +2,7 @@ package CROSS.TMP;
 
 import com.google.gson.Gson;
 
-import CROSS.Enums.ClientActions;
+import CROSS.Client.ClientActions;
 import CROSS.Users.User;
 
 // This class is used as an interface to/from JSON to/from Java objects.
