@@ -4,15 +4,14 @@ import java.util.Arrays;
 import java.util.TreeSet;
 
 import CROSS.Client.Client;
-import CROSS.Enums.Currency;
-import CROSS.Enums.Direction;
-import CROSS.Enums.PriceType;
 import CROSS.Exceptions.InvalidUser;
 import CROSS.OrderBook.Market;
 import CROSS.OrderBook.OrderBook;
 import CROSS.Orders.LimitOrder;
 import CROSS.Server.Server;
+import CROSS.Types.Currency;
 import CROSS.Types.GenericPrice;
+import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;
 import CROSS.Users.DBUsersInterface;

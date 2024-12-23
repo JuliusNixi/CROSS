@@ -1,7 +1,7 @@
 package CROSS.API.Requests.Order;
 
 import CROSS.API.JSON;
-import CROSS.Enums.PriceType;
+import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
 
 /**
