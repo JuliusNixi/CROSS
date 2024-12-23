@@ -4,11 +4,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.TreeMap;
 
-import CROSS.Enums.Currency;
 import CROSS.Enums.Direction;
 import CROSS.Orders.LimitOrder;
 import CROSS.Orders.MarketOrder;
 import CROSS.Orders.StopMarketOrder;
+import CROSS.Types.Currency;
 import CROSS.Types.GenericPrice;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;

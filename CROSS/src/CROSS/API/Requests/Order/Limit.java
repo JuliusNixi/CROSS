@@ -1,6 +1,6 @@
 package CROSS.API.Requests.Order;
 
-import CROSS.Enums.PriceType;
+import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;
 

@@ -1,7 +1,5 @@
 package CROSS.Types;
 
-import CROSS.Enums.PriceType;
-
 public class SpecificPrice extends GenericPrice implements Comparable<SpecificPrice> {
     
     private PriceType type;

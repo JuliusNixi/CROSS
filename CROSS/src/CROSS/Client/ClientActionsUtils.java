@@ -2,7 +2,7 @@ package CROSS.Client;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import CROSS.Enums.PriceType;
+import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
 import CROSS.Types.SpecificPrice;
 
