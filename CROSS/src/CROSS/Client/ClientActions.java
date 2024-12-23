@@ -1,6 +1,8 @@
-package CROSS.Enums;
+package CROSS.Client;
 
-// Available actions for the client.
+/**
+ * This enum represents the available actions for the client.
+ */
 public enum ClientActions {
     REGISTER,
     LOGIN,

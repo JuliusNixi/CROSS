@@ -1,17 +1,28 @@
 package CROSS.Client;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Scanner;
 
-import CROSS.Enums.ClientActions;
-import CROSS.TMP.JSONInterface;
 
-// This thread will handle the client CLI.
-public class ClientCLI extends Thread {
+/**
+ * This class is responsible for handling the client CLI.
+ * It's a thread.
+ * @version 1.0
+ * @see Client
+ * @see Thread
+ * @see ClientActions
+ * @see ClientActionsUtils
+ */
+public class ClientCLIThread extends Thread {
 
     private Client client = null;
-    public ClientCLI(Client client) {
+    /**
+     * Constructor of the class.
+     * @param client The client object that will be used with the CLI.
+     * @throws NullPointerException If the client object is null.
+     */
+    public ClientCLIThread(Client client) throws NullPointerException {
+        if (client == null) throw new NullPointerException("The client object can't be null.");
         this.client = client;
     }
     
@@ -25,12 +36,16 @@ public class ClientCLI extends Thread {
 
             String command = scanner.nextLine().toLowerCase().trim();
 
+            if (command.equals("exit")) {
+                break;
+            }
+
             // Check if the command is valid.
             ClientActions action = null;
             try {
                 action = ClientActionsUtils.actionFromString(command);
-            } catch (IllegalArgumentException e) {
-                // This is not a critical error, just a invalid command.
+            } catch (IllegalArgumentException | NullPointerException e) {
+                // This is not a critical error, just an invalid command.
                 System.out.println("Invalid string command.");
                 continue;
             }
@@ -40,17 +55,17 @@ public class ClientCLI extends Thread {
             try {
                 args = ClientActionsUtils.parseCommandFromString(command, action);
                 ClientActionsUtils.parseArgs(args, action);
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | NullPointerException e) {
                 // This is not a critical error, just a invalid command.
                 System.out.println("Invalid arguments.");
                 continue;
             }
 
-            // TODO: Prepare the JSON request to send.
+            // TODO: Send the JSON request to the server.
             String jsonToSend = "";
             switch (action) {
                 case REGISTER:
-                    jsonToSend = JSONInterface.userRegister(args.get(0), args.get(1));
+
                     break;
                 case LOGIN:
 
@@ -77,17 +92,15 @@ public class ClientCLI extends Thread {
 
                     break;
                 default:
-                    throw new IllegalArgumentException("Invalid action.");
+                    break;
             }
 
             try {
-                this.client.sendJSON(jsonToSend);
-            } catch (NullPointerException | IOException e) {
-                // TODO Auto-generated catch block
+                this.client.sendJSONToServer(jsonToSend);
+            } catch (NullPointerException e) {
+                System.err.println("Error sending JSON to the server.");
+                Thread.currentThread().interrupt();
             }
-
-            // TODO: Remove this.
-            if ("1"==args.get(0)) break;
 
         } // End while.
 

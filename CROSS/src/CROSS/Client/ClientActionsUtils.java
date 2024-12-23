@@ -2,17 +2,23 @@ package CROSS.Client;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import CROSS.Enums.ClientActions;
-import CROSS.Enums.Direction;
-import CROSS.Types.GenericPrice;
+import CROSS.Enums.PriceType;
 import CROSS.Types.Quantity;
+import CROSS.Types.SpecificPrice;
 
-// Not instantiable, only for the static things.
-// This class contains some utility functions for the client actions.
-// It is used to parse and check the commands from the client's CLI.
+/**
+ * This class contains some utility functions for the client actions.
+ * It is used to parse and check the commands from the client's CLI.
+ * It is not instantiable. It only contains static methods.
+ * @version 1.0
+ * @see ClientActions
+ * @see PriceType
+ * @see SpecificPrice
+ * @see Quantity
+ */
 public abstract class ClientActionsUtils {
     
-    // Some mapping from enums to strings.
+    // Some mapping from enums to command strings.
     private static HashMap<ClientActions, String> commands = new HashMap<ClientActions, String>(){{
         put(ClientActions.REGISTER, "register(username, password)");
         put(ClientActions.LOGIN, "login(username, password)");
@@ -24,85 +30,182 @@ public abstract class ClientActionsUtils {
         put(ClientActions.CANCEL_ORDER, "cancelOrder(orderID)");
         put(ClientActions.GET_PRICE_HISTORY, "getPriceHistory(month)");
     }};
-    private static HashMap<Direction, String> directions = new HashMap<Direction, String>(){{
-        put(Direction.BUY, "ask");
-        put(Direction.SELL, "bid");
-    }};
 
     // ACTIONS.
-    // String from enum.
-    public static String getCommand(ClientActions action) {
+    // String command from enum.
+    /**
+     * Get the command string from the action enum.
+     * @param action The action enum.
+     * @return The command string.
+     * @throws IllegalArgumentException If the action is invalid.
+     * @throws NullPointerException If the action is null.
+     */
+    public static String getCommand(ClientActions action) throws IllegalArgumentException, NullPointerException {
+        if (action == null){
+            throw new NullPointerException("Null string action.");
+        }
+        if (!commands.containsKey(action)){
+            throw new IllegalArgumentException("Invalid string action.");
+        }
         return commands.get(action);
     }
     // String from enum, but without the parenthesis, only the keyword, thus, the command.
-    public static String getKeywordCommand(ClientActions action){
-        return commands.get(action).split("\\(")[0];
+    /**
+     * Get the keyword command from the action enum.
+     * @param action The action enum.
+     * @return The keyword command as a string.
+     * @throws IllegalArgumentException If the action is invalid.
+     * @throws NullPointerException If the action is null.
+     */
+    public static String getKeywordCommand(ClientActions action) throws IllegalArgumentException, NullPointerException {
+        if (action == null){
+            throw new NullPointerException("Null string action.");
+        }
+        if (!commands.containsKey(action)){
+            throw new IllegalArgumentException("Invalid string action.");
+        }
+        return ClientActionsUtils.getCommand(action).split("\\(")[0];
     }
+    // Not used but could be useful.
+    /**
+     * Get all the commands.
+     * @return A copy of the commands as strings with the action enums as keys.
+     */
     public static HashMap<ClientActions, String> getCommands(){
         // Returns a copy.
-        HashMap<ClientActions, String> commands = new HashMap<>();
+        HashMap<ClientActions, String> commandsl = new HashMap<>();
         for (ClientActions action : ClientActions.values()) {
-            commands.put(action, getCommand(action));
+            commandsl.put(action, ClientActionsUtils.getCommand(action));
         }
-        return commands;
+        return commandsl;
     }
     // Action enum from string, ONLY CHECK THE COMMAND, NOT THE SYNTAX/PARAMETERS.
-    public static ClientActions actionFromString(String command) throws IllegalArgumentException {
+    // Parse.
+    /**
+     * Get the action enum from a string action.
+     * Note that this method only checks the action as keyword, not the syntax or the parameters of the whole command.
+     * @param action The string action.
+     * @return The action enum.
+     * @throws IllegalArgumentException If the string action is invalid.
+     * @throws NullPointerException If the string action is null.
+     */
+    public static ClientActions actionFromString(String action) throws IllegalArgumentException, NullPointerException {
 
-        command = command.toLowerCase().trim();
-        for (ClientActions action : ClientActions.values()) {
-            if (command.startsWith(getKeywordCommand(action))){
-                return action;
+        if (action == null){
+            throw new NullPointerException("Null string action.");
+        }
+        action = action.toLowerCase().trim();
+        for (ClientActions actionEn : ClientActions.values()) {
+            if (action.startsWith(ClientActionsUtils.getKeywordCommand(actionEn))){
+                return actionEn;
             }
         }
-        throw new IllegalArgumentException("Invalid string command.");
+        throw new IllegalArgumentException("Invalid string action.");
         
     }
 
-    // DIRECTIONS.
-    // Direction (order type).
+    // PRICE TYPE.
+    // Price type (order type).
     // String from enum.
-    public static String getDirection(Direction direction){
-        return directions.get(direction);
+    /**
+     * Get the price type string from the price type enum.
+     * @param priceType The price type enum.
+     * @return The price type as string.
+     * @throws NullPointerException If the price type is null.
+     */
+    public static String getPriceType(PriceType priceType) throws NullPointerException {
+        if (priceType == null){
+            throw new NullPointerException("Null priceType (order type).");
+        }
+        return priceType.name();
     }
-    public static HashMap<Direction, String> getDirections(){
-        return directions;
-    }
-    // Order type direction from string.
-    public static Direction directionFromString(String command) throws IllegalArgumentException {
-        command = command.toLowerCase().trim();
-        for (Direction direction : Direction.values()) {
-            if (command.equals(getDirection(direction))){
-                return direction;
+    // Price type enum from string.
+    // Parse.
+    /**
+     * Get the price type enum from a string.
+     * @param priceType The string priceType.
+     * @return The PriceType enum.
+     * @throws IllegalArgumentException If the string priceType is invalid.
+     * @throws NullPointerException If the string priceType is null.
+     */
+    public static PriceType priceTypeFromString(String priceType) throws IllegalArgumentException, NullPointerException {
+        if (priceType == null){
+            throw new NullPointerException("Null string priceType (order type).");
+        }
+        priceType = priceType.toLowerCase().trim();
+        for (PriceType priceTypeEn : PriceType.values()) {
+            if (priceType.equals(ClientActionsUtils.getPriceType(priceTypeEn).toLowerCase())){
+                return priceTypeEn;
             }
         }
-        throw new IllegalArgumentException("Invalid string direction (order type).");
+        throw new IllegalArgumentException("Invalid string priceType (order type).");
     }
 
     // PRICE.
-    public static GenericPrice getPriceFromString(String price, Direction direction) throws IllegalArgumentException {
+    // Parse.
+    /**
+     * Get the price from a string.
+     * @param price The string price.
+     * @param priceType The priceType (order type) associated with the price as enum.
+     * @return The price as a SpecificPrice object.
+     * @throws IllegalArgumentException If the string price is invalid.
+     * @throws NullPointerException If the string price or the priceType are null.
+     */
+    public static SpecificPrice getPriceFromString(String price, PriceType priceType) throws IllegalArgumentException, NullPointerException {
+        if (price == null){
+            throw new NullPointerException("Null string price.");
+        }
+        if (priceType == null){
+            throw new NullPointerException("Null priceType stirng (order type).");
+        }
         try {
-            Integer priceD = Integer.parseInt(price);
-            return new GenericPrice(priceD);
+            Integer priceI = Integer.parseInt(price);
+            return new SpecificPrice(priceI, priceType);
         }catch (NumberFormatException e){
-            throw new IllegalArgumentException("Invalid price.");
+                throw new IllegalArgumentException("Invalid string price.");
+        }catch (IllegalArgumentException e){
+            // If the price is negative.
+            throw new IllegalArgumentException("Invalid string price.");
         }
     }
 
     // QUANTITY.
-    public static Quantity getSizeFromString(String size) throws IllegalArgumentException {
+    // Parse.
+    /**
+     * Get the size (quantity) from a string.
+     * @param size The string size.
+     * @return The size as a Quantity object.
+     * @throws IllegalArgumentException If the string size is invalid.
+     * @throws NullPointerException If the string size is null.
+     */
+    public static Quantity getSizeFromString(String size) throws IllegalArgumentException, NullPointerException {
+        if (size == null){
+            throw new NullPointerException("Null string size.");
+        }
         try {
-            Integer sizeD = Integer.parseInt(size);
-            return new Quantity(sizeD);
+            Integer sizeI = Integer.parseInt(size);
+            return new Quantity(sizeI);
         }catch (NumberFormatException e){
+            throw new IllegalArgumentException("Invalid size.");
+        }catch (IllegalArgumentException e){
+            // If the size is negative.
             throw new IllegalArgumentException("Invalid size.");
         }
     }
     
     // MONTH/YEAR.
-    // Only parse the month/year string.
-    // Does not returns anything, only throws an exception if the string is invalid.
-    public static void parseMonthString(String monthyear) throws IllegalArgumentException {
+    // Parse.
+    /**
+     * Parse the month/year string.
+     * Does not returns anything, only throws an exception if the string is invalid.
+     * @param monthyear The month/year string.
+     * @throws IllegalArgumentException If the month/year string is invalid.
+     * @throws NullPointerException If the month/year string is null.
+     */
+    public static void parseMonthFromString(String monthyear) throws IllegalArgumentException, NullPointerException {
+        if (monthyear == null){
+            throw new NullPointerException("Null string month/year.");
+        }
         try {
             // Format:
             // MMYYYY
@@ -124,11 +227,20 @@ public abstract class ClientActionsUtils {
     }
     
     // ORDER ID.
-    // Only parse the order ID string.
-    // Does not returns anything, only throws an exception if the string is invalid.
-    public static void parseOrderIDString(String orderID) throws IllegalArgumentException {
+    // Parse.
+    /**
+     * Parse the order ID string.
+     * Does not returns anything, only throws an exception if the string is invalid.
+     * @param orderID The order ID string.
+     * @throws IllegalArgumentException If the order ID string is invalid.
+     * @throws NullPointerException If the order ID string is null.
+     */
+    public static void parseOrderIDFromString(String orderID) throws IllegalArgumentException, NullPointerException {
+        if (orderID == null){
+            throw new NullPointerException("Null string order ID.");
+        }
         try {
-            Integer orderIDI = Integer.parseInt(orderID);
+            Long orderIDI = Long.parseLong(orderID);
             if (orderIDI < 0){
                 throw new NumberFormatException("Invalid order ID.");
             }
@@ -137,10 +249,27 @@ public abstract class ClientActionsUtils {
         }
     }
 
-    // Parse the command from a string input, checking the syntax and the parameters.
-    // Returns a list of strings parsed with the parameters without the command.
-    // The action should be the correct associated with the string, anyway it will be checked.
-    public static LinkedList<String> parseCommandFromString(String command, ClientActions action) throws IllegalArgumentException {
+    // COMMAND AND ARGUMENTS.
+    // Parse.
+    // Linked list is not a performance issue, the arguments are few.
+    /**
+     * Parse the command from a string input, checking the syntax and the parameters.
+     * The action should be the correct associated with the command string, anyway it will be checked.
+     * @param command The string command, with the action and the parameters.
+     * @param action The action enum associated with the command.
+     * @return A list of strings parsed with the parameters without the initial command.
+     * @throws IllegalArgumentException If the string command is invalid.
+     * @throws NullPointerException If the string command or the action are null.
+     */
+    public static LinkedList<String> parseCommandFromString(String command, ClientActions action) throws IllegalArgumentException, NullPointerException {
+        
+        if (command == null){
+            throw new NullPointerException("Null string command.");
+        }
+        if (action == null){
+            throw new NullPointerException("Null action.");
+        }
+        
         command = command.toLowerCase().trim();
 
         // Preliminary checks.
@@ -150,18 +279,19 @@ public abstract class ClientActionsUtils {
         }catch (IllegalArgumentException e){
             throw new IllegalArgumentException("Invalid string command.");
         }
+
         if (internal != action){
             throw new IllegalArgumentException("Invalid string/action match.");
         }
 
         // Parsing syntax.
         // Checking parenthesis.
-        if (command.charAt(getKeywordCommand(action).length()) != '(' || command.charAt(command.length() - 1) != ')'){
+        if (command.charAt(ClientActionsUtils.getKeywordCommand(action).length()) != '(' || command.charAt(command.length() - 1) != ')'){
             throw new IllegalArgumentException("Invalid parenthesis.");
         }
 
         // Checking commas.
-        Integer exactNumberOfCommas = getCommand(action).split(",").length - 1;
+        Integer exactNumberOfCommas = ClientActionsUtils.getCommand(action).split(",").length - 1;
         Integer detectedCommas = command.split(",").length - 1;
         if (exactNumberOfCommas != detectedCommas){
             throw new IllegalArgumentException("Invalid number of commas.");
@@ -183,11 +313,25 @@ public abstract class ClientActionsUtils {
 
         return parameters;
     }
+    /**
+     * Parse the arguments from a list of strings.
+     * This list should be obtained from the parseCommandFromString method.
+     * Throws an exception if the arguments are invalid.
+     * Otherwise, it will return nothing.
+     * @param args The list of strings with the arguments.
+     * @param action The action enum associated with the arguments.
+     * @throws IllegalArgumentException If the arguments are invalid.
+     * @throws NullPointerException If the arguments or the action are null.
+     * @see ClientActionsUtils#parseCommandFromString(String, ClientActions)
+     */
+    public static void parseArgs(LinkedList<String> args, ClientActions action) throws IllegalArgumentException, NullPointerException {
 
-    // Parse the arguments from the list of strings.
-    // Throws an exception if the arguments are invalid.
-    // Otherwise, it will return nothing.
-    public static void parseArgs(LinkedList<String> args, ClientActions action) throws IllegalArgumentException {
+        if (args == null){
+            throw new NullPointerException("Null arguments.");
+        }
+        if (action == null){
+            throw new NullPointerException("Null action.");
+        }
 
         Integer neededArgsNumber = null;
         switch (action) {
@@ -225,7 +369,8 @@ public abstract class ClientActionsUtils {
             throw new IllegalArgumentException("Invalid number of arguments.");
         }
 
-        Direction direction = null;
+        // In case of invalid arguments, the exceptions will be thrown by the ClientActionsUtils methods.
+        PriceType priceType = null;
         switch (action) {
             case REGISTER:
                 break;
@@ -236,24 +381,24 @@ public abstract class ClientActionsUtils {
             case LOGOUT:
                 break;
             case INSERT_LIMIT_ORDER:
-                direction = ClientActionsUtils.directionFromString(args.get(0));
+                priceType = ClientActionsUtils.priceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
-                ClientActionsUtils.getPriceFromString(args.get(2), direction);
+                ClientActionsUtils.getPriceFromString(args.get(2), priceType);
                 break;
             case INSERT_MARKET_ORDER:
-                direction = ClientActionsUtils.directionFromString(args.get(0));
+                priceType = ClientActionsUtils.priceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
                 break;
             case INSERT_STOP_ORDER:
-                direction = ClientActionsUtils.directionFromString(args.get(0));
+                priceType = ClientActionsUtils.priceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
-                ClientActionsUtils.getPriceFromString(args.get(2), direction);
+                ClientActionsUtils.getPriceFromString(args.get(2), priceType);
                 break;
             case CANCEL_ORDER:  
-                ClientActionsUtils.parseOrderIDString(args.get(0));
+                ClientActionsUtils.parseOrderIDFromString(args.get(0));
                 break;
             case GET_PRICE_HISTORY:
-                ClientActionsUtils.parseMonthString(args.get(0));
+                ClientActionsUtils.parseOrderIDFromString(args.get(0));
                 break;
             default:
                 throw new IllegalArgumentException("Invalid action.");

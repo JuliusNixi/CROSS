@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 import com.google.gson.Gson;
 
-import CROSS.Enums.ClientActions;
+import CROSS.Client.ClientActions;
 import CROSS.Exceptions.InvalidUser;
 import CROSS.TMP.JSONInterface;
 import CROSS.Users.User;

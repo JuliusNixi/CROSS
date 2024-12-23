@@ -9,7 +9,7 @@ import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
-import CROSS.Exceptions.InvalidIPOrPort;
+import CROSS.Exceptions.InvalidConfig;
 import CROSS.Exceptions.InvalidMaxConnections;
 
 public class Server {
@@ -37,13 +37,13 @@ public class Server {
             String maxConnections = props.getProperty("server_max_connections");
 
             if (server == null || port == null) {
-                throw new InvalidIPOrPort("Invalid server IP or port.");
+                throw new InvalidConfig("Invalid server IP or port.");
             }
 
             // Parsing IP and port.
             this.portInt = Integer.parseInt(port);
             if (portInt < 0 || portInt > 65535) {
-                throw new InvalidIPOrPort("Invalid port number.");
+                throw new InvalidConfig("Invalid port number.");
             }
             this.serverAddress = InetAddress.getByName(server);
 
@@ -85,7 +85,7 @@ public class Server {
         } 
 
         // InvalidIPOrPort exception.
-        catch (InvalidIPOrPort ex) {
+        catch (InvalidConfig ex) {
             System.err.printf("Invalid server IP or port reading file %s.\n", pathToConfigPropertiesFile);
         }
         // InvalidMaxConnections exception.
