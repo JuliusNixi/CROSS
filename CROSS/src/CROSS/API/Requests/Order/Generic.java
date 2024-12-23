@@ -1,8 +1,8 @@
 package CROSS.API.Requests.Order;
 
 import CROSS.API.JSON;
-import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
+import CROSS.Types.Price.PriceType;
 
 /**
  * Generic is an abstract class.

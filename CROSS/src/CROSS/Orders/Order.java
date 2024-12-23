@@ -2,9 +2,9 @@ package CROSS.Orders;
 
 import CROSS.Enums.Direction;
 import CROSS.OrderBook.Market;
-import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
-import CROSS.Types.SpecificPrice;
+import CROSS.Types.Price.PriceType;
+import CROSS.Types.Price.SpecificPrice;
 import CROSS.Users.User;
 import CROSS.Users.Users;
 

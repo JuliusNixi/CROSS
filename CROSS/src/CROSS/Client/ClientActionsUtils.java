@@ -2,9 +2,9 @@ package CROSS.Client;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
-import CROSS.Types.SpecificPrice;
+import CROSS.Types.Price.PriceType;
+import CROSS.Types.Price.SpecificPrice;
 
 /**
  * This class contains some utility functions for the client actions.

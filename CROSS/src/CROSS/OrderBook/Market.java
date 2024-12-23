@@ -1,9 +1,9 @@
 package CROSS.OrderBook;
 
 import CROSS.Types.Currency;
-import CROSS.Types.GenericPrice;
-import CROSS.Types.PriceType;
-import CROSS.Types.SpecificPrice;
+import CROSS.Types.Price.GenericPrice;
+import CROSS.Types.Price.PriceType;
+import CROSS.Types.Price.SpecificPrice;
 
 public class Market {
 

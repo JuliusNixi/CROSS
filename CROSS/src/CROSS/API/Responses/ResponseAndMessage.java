@@ -1,7 +1,6 @@
 package CROSS.API.Responses;
 
 import CROSS.API.JSON;
-import CROSS.API.ResponseCode;
 
 /**
  * ResponseAndMessage is a class.

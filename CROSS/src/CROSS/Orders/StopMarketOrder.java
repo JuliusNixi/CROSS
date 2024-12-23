@@ -3,7 +3,7 @@ package CROSS.Orders;
 import CROSS.Enums.Direction;
 import CROSS.OrderBook.Market;
 import CROSS.Types.Quantity;
-import CROSS.Types.SpecificPrice;
+import CROSS.Types.Price.SpecificPrice;
 
 // A stop market order is converted into a market order when the stop price is reached.
 public class StopMarketOrder extends Order {

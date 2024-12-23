@@ -8,7 +8,7 @@ import CROSS.Orders.MarketOrder;
 import CROSS.Orders.Order;
 import CROSS.Orders.StopMarketOrder;
 import CROSS.Types.Quantity;
-import CROSS.Types.SpecificPrice;
+import CROSS.Types.Price.SpecificPrice;
 
 // A line in a order book.
 // It's used both by limit orders book and stop orders book.

@@ -1,4 +1,4 @@
-package CROSS.API;
+package CROSS.API.Responses;
 
 /**
  * ResponseType is an enum, it contains the different types of responses.

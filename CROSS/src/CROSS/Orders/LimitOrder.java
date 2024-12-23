@@ -3,7 +3,7 @@ package CROSS.Orders;
 import CROSS.Enums.Direction;
 import CROSS.OrderBook.Market;
 import CROSS.Types.Quantity;
-import CROSS.Types.SpecificPrice;
+import CROSS.Types.Price.SpecificPrice;
 
 public class LimitOrder extends Order {
 
