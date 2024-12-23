@@ -8,6 +8,7 @@ import CROSS.API.JSON;
  * It contains the order ID.
  * 
  * @version 1.0
+ * @see JSON
  */
 public class Cancel extends JSON {
     

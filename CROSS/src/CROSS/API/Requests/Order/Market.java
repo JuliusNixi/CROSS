@@ -1,7 +1,7 @@
 package CROSS.API.Requests.Order;
 
-import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
+import CROSS.Types.Price.PriceType;
 
 /**
  * Market is a class that extends Generic and is used to request orders data.

@@ -9,9 +9,9 @@ import CROSS.Orders.LimitOrder;
 import CROSS.Orders.MarketOrder;
 import CROSS.Orders.StopMarketOrder;
 import CROSS.Types.Currency;
-import CROSS.Types.GenericPrice;
 import CROSS.Types.Quantity;
-import CROSS.Types.SpecificPrice;
+import CROSS.Types.Price.GenericPrice;
+import CROSS.Types.Price.SpecificPrice;
 import CROSS.Utils.Separator;
 
 public class OrderBook extends Market {

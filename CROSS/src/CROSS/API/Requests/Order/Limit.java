@@ -1,8 +1,8 @@
 package CROSS.API.Requests.Order;
 
-import CROSS.Types.PriceType;
 import CROSS.Types.Quantity;
-import CROSS.Types.SpecificPrice;
+import CROSS.Types.Price.PriceType;
+import CROSS.Types.Price.SpecificPrice;
 
 /**
  * Limit is a class that extends Generic and is used to request orders data.

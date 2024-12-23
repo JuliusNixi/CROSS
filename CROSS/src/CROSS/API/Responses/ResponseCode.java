@@ -1,4 +1,4 @@
-package CROSS.API;
+package CROSS.API.Responses;
 
 /**
  * ResponseCode is a class, it contains some enums.
@@ -108,7 +108,7 @@ public class ResponseCode {
      */
     public ResponseCode(ResponseType type) throws NullPointerException {
         if (type == null) {
-            throw new NullPointerException("type of the response is null.");
+            throw new NullPointerException("Type of the response is null.");
         }
         this.type = type;
     }
