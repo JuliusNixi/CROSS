@@ -3,10 +3,10 @@ package CROSS.OrderBook;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import CROSS.Orders.LimitOrder;
-import CROSS.Orders.MarketOrder;
-import CROSS.Orders.Order;
-import CROSS.Orders.StopMarketOrder;
+import CROSS.Order.LimitOrder;
+import CROSS.Order.MarketOrder;
+import CROSS.Order.Order;
+import CROSS.Order.StopMarketOrder;
 import CROSS.Types.Quantity;
 import CROSS.Types.Price.SpecificPrice;
 

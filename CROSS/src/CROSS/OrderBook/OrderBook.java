@@ -5,9 +5,9 @@ import java.util.LinkedList;
 import java.util.TreeMap;
 
 import CROSS.Enums.Direction;
-import CROSS.Orders.LimitOrder;
-import CROSS.Orders.MarketOrder;
-import CROSS.Orders.StopMarketOrder;
+import CROSS.Order.LimitOrder;
+import CROSS.Order.MarketOrder;
+import CROSS.Order.StopMarketOrder;
 import CROSS.Types.Currency;
 import CROSS.Types.Quantity;
 import CROSS.Types.Price.GenericPrice;
