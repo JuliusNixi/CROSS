@@ -5,9 +5,9 @@ import java.util.TreeSet;
 
 import CROSS.Client.Client;
 import CROSS.Exceptions.InvalidUser;
+import CROSS.Order.LimitOrder;
 import CROSS.OrderBook.Market;
 import CROSS.OrderBook.OrderBook;
-import CROSS.Orders.LimitOrder;
 import CROSS.Server.Server;
 import CROSS.Types.Currency;
 import CROSS.Types.Quantity;

@@ -9,4 +9,4 @@ Finish testing the orderbook.
 
 Create responses from cancelOrder (excluded) and below.
 
-Review OrderBook, Orders, Server, Users, Main.
+Review OrderBook, Server, Users, Main.
