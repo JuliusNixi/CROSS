@@ -1,11 +1,9 @@
-package CROSS.Order;
+package CROSS.Orders;
 
 import CROSS.OrderBook.Market;
 import CROSS.Types.Quantity;
-import CROSS.Types.Price.PriceType;
 import CROSS.Types.Price.SpecificPrice;
 import CROSS.Users.User;
-import CROSS.Users.Users;
 import CROSS.Utils.UniqueNumber;
 
 /**
@@ -36,8 +34,9 @@ public abstract class Order {
      * @param quantity The quantity of the order.
      * @param user The user who placed the order.
      * @throws NullPointerException if market, price, quantity or user are null.
+     * @throws IllegalArgumentException If the price's market doesn't match with the given market.
      */
-    public Order(Market market, SpecificPrice price, Quantity quantity, User user) throws NullPointerException {
+    public Order(Market market, SpecificPrice price, Quantity quantity, User user) throws NullPointerException, IllegalArgumentException {
         if (market == null) {
             throw new NullPointerException("Market cannot be null.");
         }
@@ -51,15 +50,21 @@ public abstract class Order {
             throw new NullPointerException("User cannot be null.");
         }
 
+        if (price.getMarket() != market) {
+            throw new IllegalArgumentException("The price's market doesn't match with the given market.");
+        }
+
         this.price = price;
         this.quantity = quantity;
         this.market = market;
         this.id = new UniqueNumber().getNumber();
 
         // TODO: Check if user is in the Users list.
+        this.user = user;
 
     }
 
+    // GETTERS
     /**
      * Getters for price.
      * @return The price of the order.

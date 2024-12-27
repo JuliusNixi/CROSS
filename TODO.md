@@ -9,4 +9,10 @@ Finish testing the orderbook.
 
 Create responses from cancelOrder (excluded) and below.
 
-Review OrderBook, Server, Users, Main.
+Review Main, Tests.
+
+Rewrite the complex executeOrder(MarketOrder) in OrderBook.java.
+
+Write the system to update the best bid and the best ask.
+
+Check grep -r "System.err" to see coherence on stop.

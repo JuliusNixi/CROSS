@@ -1,49 +1,104 @@
 package CROSS.OrderBook;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.TreeMap;
-
-import CROSS.Enums.Direction;
-import CROSS.Order.LimitOrder;
-import CROSS.Order.MarketOrder;
-import CROSS.Order.StopMarketOrder;
+import CROSS.Orders.LimitOrder;
+import CROSS.Orders.MarketOrder;
+import CROSS.Orders.Order;
+import CROSS.Orders.StopMarketOrder;
 import CROSS.Types.Currency;
 import CROSS.Types.Quantity;
 import CROSS.Types.Price.GenericPrice;
 import CROSS.Types.Price.SpecificPrice;
 import CROSS.Utils.Separator;
 
+/**
+ * The order book is the core of the market.
+ * It extends the Market class.
+ * It contains all the orders.
+ * It's used to match the orders.
+ * It's used to execute the orders.
+ * It contains the limit orders book and the stop orders book.
+ * @version 1.0
+ * @see Market
+ * @see OrderBookLine
+ * @see LimitOrder
+ * @see StopMarketOrder
+ * @see MarketOrder
+ * @see Order
+ * @see Currency
+ * @see Quantity
+ * @see SpecificPrice
+ * @see GenericPrice
+ * @see Separator
+ * @see PriceType
+ */
 public class OrderBook extends Market {
 
     // By using a TreeMap, the order book is always sorted by price.
     private TreeMap<SpecificPrice, OrderBookLine<LimitOrder>> limitBook;
+
     // Technically the order book contains only the limit orders.
     // The majority of the brokers not show the stop orders in the order book.
     // The stop orders are hidden and are only executed when the price hits the stop price.
     // So i will follow this philosophy.
+
     // I will use the same data structure because i think that it fits well also for the stop orders.
     // But, the OFFICIAL order book is the limit orders book, that contains only the limit orders.
     // The stop orders book is "opaque".
-    // So, for example, the toString() method will show only the limit orders.
     private TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>> stopBook;
 
-    // The first order is used to detect the correct book to use.
-    private void addLine(SpecificPrice price, LimitOrder order) throws IllegalArgumentException {
-        if (order.getMarket().getPrimaryCurrency() != super.getPrimaryCurrency() || order.getMarket().getSecondaryCurrency() != super.getSecondaryCurrency()) {
-            throw new IllegalArgumentException("Order market not match with order book market.");
+    /**
+     * It's private because it's used only by the class.
+     * Add a line to the order book.
+     * The line is added to the limit book or to the stop book.
+     * The first order is used to detect the correct book to use.
+     * This method is intended to create a NEW LINE, if the line with the specified price already exists, an exception will be throwed.
+     * @param <O> Order type, could be LimitOrder or StopMarketOrder.
+     * @param linePrice The price of the line.
+     * @param initialOrder The first order to add to the line.
+     * @throws IllegalArgumentException If the initialOrder market not match with order book market, if the initialOrder price not match with linePrice, if the initialOrder type not supported or if the line with the specified price already exists.
+     * @throws NullPointerException If the initialOrder or the linePrice are null.
+     */
+    private <O extends Order> void addLine(SpecificPrice linePrice, O initialOrder) throws IllegalArgumentException, NullPointerException {
+        if (initialOrder == null) {
+            throw new NullPointerException("initialOrder is null.");
         }
-        OrderBookLine<LimitOrder> line = new OrderBookLine<LimitOrder>(price, LimitOrder.class);
-        this.limitBook.put(price, line);
-    }
-    private void addLine(SpecificPrice price, StopMarketOrder order) throws IllegalArgumentException {
-        if (order.getMarket().getPrimaryCurrency() != super.getPrimaryCurrency() || order.getMarket().getSecondaryCurrency() != super.getSecondaryCurrency()) {
-            throw new IllegalArgumentException("Order market not match with order book market.");
+        if (linePrice == null) {
+            throw new NullPointerException("linePrice is null.");
         }
-        OrderBookLine<StopMarketOrder> line = new OrderBookLine<StopMarketOrder>(price, StopMarketOrder.class);
-        this.stopBook.put(price, line);
+        
+        if (initialOrder.getMarket().getPrimaryCurrency() != super.getPrimaryCurrency() || initialOrder.getMarket().getSecondaryCurrency() != super.getSecondaryCurrency()) {
+            throw new IllegalArgumentException("initialOrder market not match with order book market.");
+        }
+
+        if (initialOrder.getPrice().getValue() != linePrice.getValue()) {
+            throw new IllegalArgumentException("initialOrder price not match with line price.");
+        }
+
+        if (initialOrder instanceof LimitOrder) {
+            if (this.limitBook.containsKey(initialOrder.getPrice()))
+                throw new IllegalArgumentException("Line with this price already exists in the limit book.");
+            OrderBookLine<LimitOrder> line = new OrderBookLine<LimitOrder>(linePrice, initialOrder);
+            this.limitBook.put(linePrice, line);
+        } else if (initialOrder instanceof StopMarketOrder) {
+            if (this.stopBook.containsKey(initialOrder.getPrice()))
+                throw new IllegalArgumentException("Line with this price already exists in the stop book.");
+            OrderBookLine<StopMarketOrder> line = new OrderBookLine<StopMarketOrder>(linePrice, initialOrder);
+            this.stopBook.put(linePrice, line);
+        } else {
+            throw new IllegalArgumentException("initialOrder type not supported.");
+        }
     }
-    
+
+    /**
+     * Constructor of the OrderBook class.
+     * @param primary_currency The primary currency of the market.
+     * @param secondary_currency The secondary currency of the market.
+     * @param actualPriceAsk The actual ask price.
+     * @param actualPriceBid The actual bid price.
+     * @param increment The price increment.
+     */
     public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid, GenericPrice increment) {
         super(primary_currency, secondary_currency, actualPriceAsk, actualPriceBid, increment);
         limitBook = new TreeMap<SpecificPrice, OrderBookLine<LimitOrder>>();
@@ -52,151 +107,107 @@ public class OrderBook extends Market {
 
     @Override
     public String toString() {
-        String separator = "";
         String superInfo = super.toString();
-        separator = Separator.getSeparator("-", superInfo.length());
+        String separator = new Separator("-", superInfo.length()).toString();
+
+        // Adding the basic market info.
         String result = separator + superInfo + "\n" + separator;
+
+        // I want to divide the best ask and the best bid.
+        // So i need to know the position of the best bid.
         LinkedList<String> lines = new LinkedList<String>();
-        separator = Separator.getSeparator("*");
+        separator = new Separator("*").toString();
         Integer beforeLineBidIndex = 0;
         Integer counter = 0;
         for (OrderBookLine<LimitOrder> line : limitBook.values()) {
             String lineStr = line.toStringWithOrders();
-            if (line.getPrice().getValue() == actualPriceAsk.getValue()) {
+            if (line.getLinePrice().getValue() == actualPriceAsk.getValue()) {
                 lineStr += separator;
             }
-            if (line.getPrice().getValue() == actualPriceBid.getValue()) {
+            if (line.getLinePrice().getValue() == actualPriceBid.getValue()) {
                 beforeLineBidIndex = counter;
             }
             lines.add(lineStr);
             counter++;
         }
+
+        // Inserting the separator at the previous found bid index.
         lines.add(beforeLineBidIndex, separator);
+
+        // Joining the lines.
         for (String line : lines) {
             result += line;
         }
         return result;
     }
 
-    private Boolean checkMarketOrderSatisfability(MarketOrder order) throws IllegalArgumentException, RuntimeException { 
+    // Overloading the method to handle the different types of orders.
+    // The market order is the most complex to handle.
+    public void executeOrder(MarketOrder order) {
+        // TODO: Implement the executeOrder method.
+    }
+    /**
+     * Execute a limit order.
+     * The order is added to the limit book.
+     * @param order The limit order to execute.
+     * @throws NullPointerException If the order is null.
+     * @throws IllegalArgumentException If the order market not match with order book market.
+     */
+    public void executeOrder(LimitOrder order) throws NullPointerException, IllegalArgumentException {
 
-        if (order.getMarket() != this) {
+        if (order == null) {
+            throw new NullPointerException("Order is null.");
+        }
+
+        if (order.getMarket().getPrimaryCurrency() != super.getPrimaryCurrency() || order.getMarket().getSecondaryCurrency() != super.getSecondaryCurrency()) {
             throw new IllegalArgumentException("Order market not match with order book market.");
         }
 
-        // Getting the actual opposite price.
-        SpecificPrice actualOppositePrice;
-        if (order.getDirection() == Direction.BUY) {
-            actualOppositePrice = actualPriceBid;
-        } else {
-            actualOppositePrice = actualPriceAsk;
-        }
-        // Get the actual opposite price line.
-        OrderBookLine<LimitOrder> limitLine = limitBook.get(actualOppositePrice);
-        if (limitLine == null || limitLine.getOrdersNumber() == 0) {
-            throw new RuntimeException("Invalid actual price.");
-        }
-
-        Quantity avaibleTotalQuantity = new Quantity(0);
-        while (true) {
-            // Empty line for this price.
-            if (limitLine == null) continue;
-
-            // Avaible quantity for this price.
-            avaibleTotalQuantity.setQuantity(avaibleTotalQuantity.getQuantity() + limitLine.checkMarketOrderLineSatisfability(order).getQuantity());
-            // The order could be satisfied.
-            if (order.getQuantity().getQuantity() == avaibleTotalQuantity.getQuantity()) {
-                return true;
-            }
-
-            SpecificPrice maxPrice = limitBook.lastKey();
-            SpecificPrice minPrice = limitBook.firstKey();
-            if (order.getDirection() == Direction.BUY) {
-                // Going to the next price.
-                actualOppositePrice = new SpecificPrice(actualOppositePrice.getValue() + super.getIncrement().getValue(), actualOppositePrice.getType());
-                if (actualOppositePrice.getValue() > maxPrice.getValue()) {
-                    return false;
-                }
-            } else {
-                actualOppositePrice = new SpecificPrice(actualOppositePrice.getValue() - super.getIncrement().getValue(), actualOppositePrice.getType());
-                if (actualOppositePrice.getValue() < minPrice.getValue()) {
-                    return false;
-                }
-            }
-
-        }
-
-    }
-
-    // Overloading the method to handle the different types of orders.
-    public Boolean executeOrder(MarketOrder order) {
-        if (this.checkMarketOrderSatisfability(order)) {
-            Quantity currentRemainingQuantity = new Quantity(order.getQuantity().getQuantity());
-            while (currentRemainingQuantity.getQuantity() > 0){
-
-                SpecificPrice actualOppositePrice;
-                if (order.getDirection() == Direction.BUY) {
-                    actualOppositePrice = actualPriceBid;
-                } else {
-                    actualOppositePrice = actualPriceAsk;
-                }
-
-                OrderBookLine<LimitOrder> limitLine = limitBook.get(actualOppositePrice);
-                if (limitLine == null || limitLine.getOrdersNumber() == 0) {
-                    throw new RuntimeException("Invalid actual price.");
-                }
-
-                while (true) {
-                    HashMap<Quantity, HashMap<LinkedList<LimitOrder>, LimitOrder>> executedOrders = limitLine.executeMarketOrderOnLine(order);
-                    currentRemainingQuantity.setQuantity(currentRemainingQuantity.getQuantity() - executedOrders.keySet().iterator().next().getQuantity());
-                    if (currentRemainingQuantity.getQuantity() == 0) {
-                        return true;
-                    }
-                }
-
-            }
-        }
-        
-        return false;
-
-    }
-
-    public void executeOrder(LimitOrder order) {
         SpecificPrice price = order.getPrice();
         OrderBookLine<LimitOrder> limitLine = limitBook.get(price);
 
         // New price line creation.
         if (limitLine == null) {
             this.addLine(price, order);
-            limitLine = limitBook.get(price);
+            // The addLine method will automatically add the order to the line.
+            return;
         }
 
         // Adding the order to the line.
         limitLine.addOrder(order);
 
-    }
+    } 
+    /**
+     * Execute a stop order.
+     * The order is added to the stop book.
+     * @param order The stop order to execute.
+     * @throws NullPointerException If the order is null.
+     * @throws IllegalArgumentException If the order market not match with order book market.
+     */
+    public void executeOrder(StopMarketOrder order) throws NullPointerException, IllegalArgumentException {
 
-    public void executeOrder(StopMarketOrder order) {
+        if (order == null) {
+            throw new NullPointerException("Order is null.");
+        }
+
+        if (order.getMarket().getPrimaryCurrency() != super.getPrimaryCurrency() || order.getMarket().getSecondaryCurrency() != super.getSecondaryCurrency()) {
+            throw new IllegalArgumentException("Order market not match with order book market.");
+        }
+
         SpecificPrice price = order.getPrice();
-
         OrderBookLine<StopMarketOrder> stopLine = stopBook.get(price);
+
         // New price line creation.
         if (stopLine == null) {
             this.addLine(price, order);
-            stopLine = stopBook.get(price);
+            // The addLine method will automatically add the order to the line.
+            return;
         }
 
         // Adding the order to the line.
         stopLine.addOrder(order);
     }
 
-    public LinkedList<LimitOrder> getLimitOrders() {
-        LinkedList<LimitOrder> orders = new LinkedList<LimitOrder>();
-        for (OrderBookLine<LimitOrder> line : limitBook.values()) {
-            orders.addAll(line.getOrders());
-        }
-        return orders;
-    }
+    // TODO: Implement the removeOrder method. In the method remove empty lines after a check.
 
-    // TODO: Implement the removeOrder method.
 }

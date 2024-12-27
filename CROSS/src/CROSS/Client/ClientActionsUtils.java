@@ -1,10 +1,10 @@
 package CROSS.Client;
+
 import java.util.HashMap;
 import java.util.LinkedList;
-
 import CROSS.Types.Quantity;
 import CROSS.Types.Price.PriceType;
-import CROSS.Types.Price.SpecificPrice;
+import CROSS.Types.Price.GenericPrice;
 
 /**
  * This class contains some utility functions for the client actions.
@@ -13,7 +13,7 @@ import CROSS.Types.Price.SpecificPrice;
  * @version 1.0
  * @see ClientActions
  * @see PriceType
- * @see SpecificPrice
+ * @see GenericPrice
  * @see Quantity
  */
 public abstract class ClientActionsUtils {
@@ -146,21 +146,17 @@ public abstract class ClientActionsUtils {
     /**
      * Get the price from a string.
      * @param price The string price.
-     * @param priceType The priceType (order type) associated with the price as enum.
-     * @return The price as a SpecificPrice object.
+     * @return The price as a GenericPrice object.
      * @throws IllegalArgumentException If the string price is invalid.
-     * @throws NullPointerException If the string price or the priceType are null.
+     * @throws NullPointerException If the string price is null.
      */
-    public static SpecificPrice getPriceFromString(String price, PriceType priceType) throws IllegalArgumentException, NullPointerException {
+    public static GenericPrice getPriceFromString(String price) throws IllegalArgumentException, NullPointerException {
         if (price == null){
             throw new NullPointerException("Null string price.");
         }
-        if (priceType == null){
-            throw new NullPointerException("Null priceType stirng (order type).");
-        }
         try {
             Integer priceI = Integer.parseInt(price);
-            return new SpecificPrice(priceI, priceType);
+            return new GenericPrice(priceI);
         }catch (NumberFormatException e){
                 throw new IllegalArgumentException("Invalid string price.");
         }catch (IllegalArgumentException e){
@@ -370,7 +366,6 @@ public abstract class ClientActionsUtils {
         }
 
         // In case of invalid arguments, the exceptions will be thrown by the ClientActionsUtils methods.
-        PriceType priceType = null;
         switch (action) {
             case REGISTER:
                 break;
@@ -381,18 +376,18 @@ public abstract class ClientActionsUtils {
             case LOGOUT:
                 break;
             case INSERT_LIMIT_ORDER:
-                priceType = ClientActionsUtils.priceTypeFromString(args.get(0));
+                ClientActionsUtils.priceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
-                ClientActionsUtils.getPriceFromString(args.get(2), priceType);
+                ClientActionsUtils.getPriceFromString(args.get(2));
                 break;
             case INSERT_MARKET_ORDER:
-                priceType = ClientActionsUtils.priceTypeFromString(args.get(0));
+                ClientActionsUtils.priceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
                 break;
             case INSERT_STOP_ORDER:
-                priceType = ClientActionsUtils.priceTypeFromString(args.get(0));
+                ClientActionsUtils.priceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
-                ClientActionsUtils.getPriceFromString(args.get(2), priceType);
+                ClientActionsUtils.getPriceFromString(args.get(2));
                 break;
             case CANCEL_ORDER:  
                 ClientActionsUtils.parseOrderIDFromString(args.get(0));

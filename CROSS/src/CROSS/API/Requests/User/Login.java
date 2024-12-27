@@ -31,7 +31,7 @@ public class Login extends Generic {
      * @return The user.
      */
     public User getUser() {
-        return new User(super.username, password);
+        return new User(super.getUsername(), password);
     }
     
 }

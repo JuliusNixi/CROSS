@@ -39,7 +39,7 @@ public class Update extends Generic {
      * @return The unupdated user.
      */
     public User getOldUser() {
-        return new User(super.username, this.old_password);
+        return new User(super.getUsername(), this.old_password);
     }
     /**
      * Getter for the new user.
@@ -48,7 +48,7 @@ public class Update extends Generic {
      * @return The updated user.
      */
     public User getNewUser() {
-        return new User(super.username, this.new_password);
+        return new User(super.getUsername(), this.new_password);
     }
 
 }

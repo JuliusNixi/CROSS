@@ -19,8 +19,7 @@ import CROSS.Users.User;
  */
 public abstract class Generic extends JSON {
     
-    // Protected to be accessed by the subclasses.
-    protected String username = null;
+    private String username = null;
 
     /**
      * Constructor of the Generic class.
@@ -33,6 +32,14 @@ public abstract class Generic extends JSON {
             throw new NullPointerException("User is null.");
         }
         this.username = user.getUsername();
+    }
+
+    /**
+     * Getter for the username.
+     * @return The username as string.
+     */
+    public String getUsername() {
+        return this.username;
     }
 
 }

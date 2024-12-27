@@ -100,6 +100,7 @@ public class ResponseCode {
     }
 
     private ResponseType type;
+    
     /**
      * Constructor of the ResponseCode class.
      * 

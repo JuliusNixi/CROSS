@@ -35,7 +35,7 @@ public class Client {
     private OutputStream outputStream = null;
 
     /**
-     * Constructor of the client.
+     * Constructor of the Client class.
      * 
      * @param pathToConfigPropertiesFile Path to the client config file.
      * @throws NullPointerException If the path to the client config file is null.
@@ -70,7 +70,7 @@ public class Client {
 
             this.pathToConfigPropertiesFile = pathToConfigPropertiesFile;
 
-            System.out.print(this);
+            System.out.println(this);
 
         // Throwed by getByName.
         }catch (UnknownHostException ex) {
@@ -119,22 +119,25 @@ public class Client {
     
     /**
      * Connects the client to the server.
+     * @throws RuntimeException If the client is already connected.
      */
-    public void connectClient() {
+    public void connectClient() throws RuntimeException {
+
+        if (this.socket != null) {
+            throw new RuntimeException("Client already connected.");
+        }
 
         try {
             this.socket = new Socket(serverAddress, serverPort);
             // 10 seconds timeout.
             socket.setSoTimeout(10 * 1000);
             this.outputStream = socket.getOutputStream();
+            System.out.println("Client connected succesfully!");
         } catch (NullPointerException ex) {
             System.err.println("Null pointer exception in connecting the client to the server.");
             Thread.currentThread().interrupt();
         } catch (IllegalArgumentException ex) {
             System.err.println("Illegal argument in connecting the client to the server.");
-            Thread.currentThread().interrupt();
-        } catch (UnknownHostException ex) {
-            System.err.println("Unknown host in connecting the client to the server.");
             Thread.currentThread().interrupt();
         } catch (SocketException ex) {
             System.err.println("Socket exception in connecting the client to the server.");
@@ -154,12 +157,20 @@ public class Client {
      * Command Line Interface.
      * Static, I cannot have multiple instances of the CLI.
      * Returns the CLI thread.
+     * The check for the not null client's socket is performed inside the ClientCLIThread constructor.
      * @param client The client.
-     * @return ClientCLIThread
+     * @return ClientCLIThread, the CLI thread.
      * @throws IOException If the CLI is already started.
+     * @throws RuntimeException If the client's socket is null.
+     * @throws NullPointerException If the client is null.
      */
-    public static ClientCLIThread CLI(Client client) throws IOException {
+    public static ClientCLIThread CLI(Client client) throws IOException, RuntimeException, NullPointerException {
         
+        // Check for null client.
+        if (client == null) {
+            throw new NullPointerException("Client cannot be null.");
+        }
+
         // Start the CLI.
         if (clientCLI != null) {
             throw new IOException("CLI already started.");
@@ -168,11 +179,15 @@ public class Client {
         // Get and start a thread.
         ClientCLIThread clientCLI = new ClientCLIThread(client);
         clientCLI.start();
-        Client.clientCLI = clientCLI; 
+        Client.clientCLI = clientCLI;
 
         return clientCLI;
 
     }
+    /**
+     * Get the client CLI's thread.
+     * @return The client CLI's thread.
+     */
     public static ClientCLIThread getClientCLI() {
         return clientCLI;
     }    
@@ -180,28 +195,28 @@ public class Client {
     // GETTERS
     /**
      * Get the path to the client's configuration file.
-     * @return String
+     * @return A string rapresenting the path to the client's configuration file.
      */
     public String getPathToConfigPropertiesFile() {
         return pathToConfigPropertiesFile;
     }
     /**
      * Get the server port.
-     * @return Integer
+     * @return Integer rapresenting the server's port.
      */
     public Integer getServerPort() {
         return serverPort;
     }
     /**
      * Get the server address.
-     * @return InetAddress
+     * @return InetAddress rapresenting the server's address.
      */
     public InetAddress getServerAddress() {
         return serverAddress;
     }
     /**
      * Get the socket.
-     * @return Socket
+     * @return Socket rapresenting the client's socket.
      */
     public Socket getSocket() {
         return this.socket;
@@ -216,22 +231,25 @@ public class Client {
 
     @Override
     public String toString() {
-        return String.format("Client Info's:\nServer IP: %s.\nServer port: %s.\nConfig file path: %s.\n", this.getServerAddress(), this.getServerPort(), this.getPathToConfigPropertiesFile());
+        return String.format("Client Info's [Server IP [%s] - Server port [%s] - Config file path [%s]]", this.getServerAddress(), this.getServerPort(), this.getPathToConfigPropertiesFile());
     }
 
     /**
      * 
      * Send a JSON to the server.
      * @param json The JSON to send to the server.
-     * @throws NullPointerException If the socket or the output stream are null.
+     * @throws NullPointerException If the json is null.
+     * @throws RuntimeException If the outputStream is null.
      */
-    public void sendJSONToServer(String json) throws NullPointerException {
-        if (this.socket == null) {
-            throw new NullPointerException("Socket is null.");
-        }
+    public void sendJSONToServer(String json) throws NullPointerException, RuntimeException {
+
         if (this.outputStream == null) {
-            throw new NullPointerException("Output stream is null.");
+            throw new RuntimeException("Output stream is null. Call connectClient() before.");
         }
+
+        if (json == null) 
+            throw new NullPointerException("json cannot be null.");
+
         try {
             // Buffered to optimize the performance.
             BufferedOutputStream outputStreamBuff = new BufferedOutputStream(this.outputStream);
@@ -244,6 +262,7 @@ public class Client {
             System.err.println("Generic error sending JSON to the server.");
             Thread.currentThread().interrupt();
         }
+
     }
 
 }

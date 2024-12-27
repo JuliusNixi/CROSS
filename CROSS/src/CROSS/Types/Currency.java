@@ -6,5 +6,5 @@ package CROSS.Types;
  * Enum for the currency.
  */
 public enum Currency {
-    BTC, USD
+    BTC, USD, ETH, EUR
 }

@@ -3,7 +3,6 @@ package CROSS.Client;
 import java.util.LinkedList;
 import java.util.Scanner;
 
-
 /**
  * This class is responsible for handling the client CLI.
  * It's a thread.
@@ -16,13 +15,18 @@ import java.util.Scanner;
 public class ClientCLIThread extends Thread {
 
     private Client client = null;
+    
     /**
      * Constructor of the class.
      * @param client The client object that will be used with the CLI.
      * @throws NullPointerException If the client object is null.
+     * @throws RuntimeException If the client's socket is null.
      */
-    public ClientCLIThread(Client client) throws NullPointerException {
-        if (client == null) throw new NullPointerException("The client object can't be null.");
+    public ClientCLIThread(Client client) throws NullPointerException, RuntimeException {
+        if (client == null)
+            throw new NullPointerException("The client object can't be null.");
+        if (client.getSocket() == null)
+            throw new RuntimeException("The client's socket in the CLI is null.");
         this.client = client;
     }
     
@@ -97,7 +101,7 @@ public class ClientCLIThread extends Thread {
 
             try {
                 this.client.sendJSONToServer(jsonToSend);
-            } catch (NullPointerException e) {
+            } catch (RuntimeException ex) {
                 System.err.println("Error sending JSON to the server.");
                 Thread.currentThread().interrupt();
             }

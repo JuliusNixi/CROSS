@@ -7,9 +7,10 @@ package CROSS.Utils;
  */
 public class UniqueNumber {
     
-    private static long lastTime = 0;
-    private static long lastNumber = 0;
-    private long number;
+    private static Long lastTime = Long.valueOf(0);
+    private static Long lastNumber;
+    
+    private Long number;
 
     /**
      * Constructor to generate a unique number.
@@ -19,11 +20,11 @@ public class UniqueNumber {
     public UniqueNumber() {
         synchronized (UniqueNumber.class) {
             long currentTime = System.currentTimeMillis();
-            if (currentTime == lastTime) {
+            if (currentTime == lastTime.longValue()) {
                 lastNumber++;
             } else {
-                lastTime = currentTime;
-                lastNumber = 0;
+                lastTime = Long.valueOf(currentTime);
+                lastNumber = Long.valueOf(0);
             }
             this.number = lastTime + lastNumber;
         }
@@ -31,11 +32,10 @@ public class UniqueNumber {
 
     /**
      * Get the unique number.
-     * @return The unique number.
+     * @return The unique number as Long.
      */
-    public long getNumber() {
+    public Long getNumber() {
         return number;
     }
-
 
 }
