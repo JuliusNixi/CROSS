@@ -6,113 +6,96 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
-import com.google.gson.Gson;
-
-import CROSS.Client.ClientActions;
-import CROSS.Exceptions.InvalidUser;
-import CROSS.TMP.JSONInterface;
-import CROSS.Users.User;
-import CROSS.Users.Users;
-
-// Client thread.
-// Each client has its own thread.
+// TODO: Generate Javadoc.
+/**
+ * This class rapresent a thread that will handle a specific client.
+ * Each client will have its own dedicated thread.
+ * This thread is started after a new client connection acceptance.
+ * This thread is submitted to CachedThreadPool.
+ * @version 1.0
+ * @see Server
+ */
 public class ClientThread implements Runnable {
     
     // Specific client socket.
     private final Socket socket;
     
-    public ClientThread(Socket socket) {
+    /**
+     * Constructor of the ClientThread class.
+     * @param socket The socket of the client that this thread will handle.
+     * @throws NullPointerException If the socket is null.
+     */
+    public ClientThread(Socket socket) throws NullPointerException {
+        if (socket == null)
+            throw new NullPointerException("Socket cannot be null.");
         this.socket = socket;
     }
 
+    // GETTERS
+    /**
+     * Getter for the client's socket.
+     * @return The client's socket.
+     */
     public Socket getSocket() {
         return socket;
     }
-
+    /**
+     * Getter for the client's IP.
+     * Used for debugging.
+     * @return The client's IP as String.
+     */
     public String getClientIP() {
         return socket.getInetAddress().getHostAddress();
     }
-
+    /**
+     * Getter for the client's port.
+     * Used for debugging.
+     * @return The client's port as Integer.
+     */
     public Integer getClientPort() {
         return Integer.parseInt(socket.getPort() + "");
     }
 
     @Override
     public String toString() {
-        return String.format("Client thread ID: %s - IP: %s - Port: %s", Thread.currentThread().threadId(), getClientIP(), getClientPort());
+        return String.format("Client thread ID [%s] - IP [%s] - Port [%s]", Thread.currentThread().threadId(), getClientIP(), getClientPort());
     }
     
-    // Main loop logic.
+    // Main loop for client's actions handling logic.
     @Override
     public void run() {
+
         System.out.printf("%s started successfully.\n", this.toString());
+
         try {
+
             // Input from extern to our server.
             // Output from our server to extern.
-            InputStream in = socket.getInputStream();
             // UTF-8 is the default encoding.
-            Scanner scanner = new Scanner(in);
+            InputStream in = socket.getInputStream();
             OutputStream out = socket.getOutputStream();
-            Gson gson = new Gson();
+
+            Scanner scanner = new Scanner(in);
+
             while (true) {
+
                 String data = scanner.nextLine();
+
                 // TODO: Read API json java object request from the socket.
 
-                ClientActions action = JSONInterface.parseRequest(data);
-                switch (action) {
-                    case REGISTER:
-                        User user = JSONInterface.getUser();
-                        try {
-                            Users.addUser(user);
-                        }catch (InvalidUser e) {
-                            // TODO: Error handling.
-                            System.err.println(e.getMessage());
-                            System.exit(-1);
-                        }
-                        break;
-                    case LOGIN:
-                        
-                        break;
-                    case UPDATE_CREDENTIALS:
-    
-                        break;
-                    case LOGOUT:
-    
-                        break;
-                    case INSERT_LIMIT_ORDER:
-    
-                        break;
-                    case INSERT_MARKET_ORDER:
-    
-                        break;
-                    case INSERT_STOP_ORDER:
-    
-                        break;
-                    case CANCEL_ORDER:  
-    
-                        break;
-                    case GET_PRICE_HISTORY:
-    
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Invalid action.");
-                }
-
                 // TODO: Remove this.
-                if ("42"==data) {
-                    gson.toJson("Hello", System.out);
-                    out.write("42".getBytes());
-                    break;
-                }
+                if ("42"==data && out.toString() == "a") break;
+                
             }
+
             // Clean up.
             scanner.close();
+
         } catch (IOException e) {
                 // TODO: Error handling.
         }catch (Exception e) {
                 // TODO: Error handling.
         }
-
 
     }
 

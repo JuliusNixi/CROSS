@@ -27,7 +27,6 @@ public class Order extends JSON {
         this.orderId = orderId;
     }
 
-    // Cannot returns a response object because i don't know the type of the response.
     /**
      * Getter for the orderId.
      * 

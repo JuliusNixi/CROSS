@@ -43,8 +43,8 @@ public class Limit extends Generic {
      * 
      * @return The price of the order.
      */
-    public SpecificPrice getPrice() {
-        return new SpecificPrice(price, super.getType());
+    public Integer getPrice() {
+        return this.price;
     }
     
 }

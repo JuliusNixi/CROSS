@@ -1,4 +1,4 @@
-package CROSS.Order;
+package CROSS.Orders;
 
 import CROSS.OrderBook.Market;
 import CROSS.Types.Quantity;

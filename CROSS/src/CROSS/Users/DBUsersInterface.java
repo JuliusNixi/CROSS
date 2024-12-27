@@ -8,11 +8,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-// Abstract class. I assume that i don't want to handle different users dabatases.
+/**
+ * This class is an interface to handle users database file.
+ * Abstract class because i assume that i don't want to handle different users databases at the same time.
+ * @version 1.0
+ * @see User
+ */
 public abstract class DBUsersInterface {
     
     private static String filePath = null;
@@ -23,15 +27,29 @@ public abstract class DBUsersInterface {
 
     private static String fileContent = null;
 
-    // Costants for file handling checks.
+    // Costants for file handling.
     private static final String fileReaded = "loaded";
     private static final String fileInit = "[\n]\n";
 
-    // Open the users DB file.
-    public static void setFile(String filePath) throws IOException {
+    /**
+     * Set the file to handle.
+     * @param filePath The path to the file.
+     * @throws IllegalArgumentException If the file is not a JSON file.
+     * @throws NullPointerException If the file path is null.
+     * @throws RuntimeException If the file is already attached.
+     */
+    public static void setFile(String filePath) throws IllegalArgumentException, NullPointerException, RuntimeException {
+
+        if (filePath == null) {
+            throw new NullPointerException("File path cannot be null.");
+        }
 
         if (!filePath.endsWith(".json")) {
-            throw new IOException("File must be a JSON file.");
+            throw new IllegalArgumentException("File must be a JSON file.");
+        }
+
+        if (DBUsersInterface.filePath != null) {
+            throw new RuntimeException("File already attached.");
         }
 
         try {
@@ -45,25 +63,41 @@ public abstract class DBUsersInterface {
             System.out.printf("DB Users file %s attached.\n", filePath);
         } catch (FileNotFoundException e) {
             System.err.printf("DB Users file %s not found.\n", filePath);
-        }catch (Exception e) {
+        } catch (Exception e) {
             // TODO: Error handling.
         }
 
     }   
 
+    /**
+     * Get the file path.
+     * @return The file path.
+     */
     public static String getFilePath() {
         return filePath;
     }
 
-    public static void readFile() throws IOException {
+    /**
+     * Read the file attached.
+     * This fills the fileContent variable.
+     * Before using this method, the file must be attached with setFile().
+     * @throws RuntimeException If the file is not attached.
+     */
+    public static void readFile() throws RuntimeException {
 
-        if (fileIn == null) {
-            throw new IOException("File not attached. Set file before.");
+        if (fileIn == null || DBUsersInterface.filePath == null) {
+            throw new RuntimeException("File not attached. Set file before with setFile().");
+        }
+
+        if (DBUsersInterface.fileContent != null) {
+            System.out.printf("File %s already readed.\n", filePath);
+            return;
         }
 
         // Read file.
         // Buffered to improve performance.
         BufferedInputStream fileBuffered = new BufferedInputStream(fileIn);
+
         StringBuilder fileContentBuilder = new StringBuilder();
         try {
             int data = fileBuffered.read();
@@ -75,22 +109,26 @@ public abstract class DBUsersInterface {
         } catch (IOException e) {
             System.err.printf("Error reading file %s.\n", filePath);
         } catch (Exception e) {
-            System.err.printf("Error reading file %s.\n", filePath);
+            // TODO: Error handling.
         }
     }
 
-    // Populate Users (in RAM).
-    public static void loadUsers() throws IOException {
+    /**
+     * Load users from file to Users (in RAM).
+     * Before using this method, the file must be readed with readFile().
+     * @throws RuntimeException If the file is not readed.
+     */
+    public static void loadUsers() throws RuntimeException {
 
         if (DBUsersInterface.fileContent == null) {
-            throw new IOException("File not read. Read it before.");
+            throw new RuntimeException("File not read. Read it before with readFile().");
         }
 
         if (Users.getUsersSize() > 0) {
-            throw new IOException("Users already loaded.");
+            throw new RuntimeException("Users already loaded.");
         }
 
-        // Empty file.
+        // Empty file, initialize it.
         if (DBUsersInterface.fileContent.isEmpty()) {
             try {
                 BufferedOutputStream fileOutBuffered = new BufferedOutputStream(fileOut);
@@ -106,6 +144,7 @@ public abstract class DBUsersInterface {
             System.out.printf("Empty file %s. Initailized it.\n", filePath);
             return;
         }
+
         // IMPORTANT: The file could be already initialized before from the program, but no users has been added.
         if (DBUsersInterface.fileContent.equals(fileInit)) {
             fileContent = fileInit;
@@ -115,26 +154,30 @@ public abstract class DBUsersInterface {
         // Not empty file.
         try {
             User[] users = new Gson().fromJson(DBUsersInterface.fileContent, User[].class);
-            // TODO: COntinua qui salvare numero utente per calcolarsi la riga sul file al quale corrisponde.
+            // TODO: Continua qui. Salvare numero utente per calcolarsi la riga sul file al quale corrisponde.
+            
+            // Add users to Users (RAM).
             for (User user : users) {
                 Users.addUser(user);
             }
+
             // File content is no longer needed.
             // To save memory.
             fileContent = fileReaded;
         } catch (JsonSyntaxException e) {
             System.err.printf("Error parsing JSON from file %s.\n", filePath);
         } catch (Exception e) {
-            System.err.printf("Error loading users from file %s.\n", filePath);
+            // TODO: Error handling.
         }
 
     }
 
-    // To remove last line from DB users file.
-    // This to append a new user without rewriting all the file.
-    // Private because it's not intended to be used outside this class.
-    // It's just an utility function.
-    private static void removeLastLine() throws IOException {
+    /**
+     * Remove the last line from the file attached.
+     * This is an utility function to append a new user without rewriting all the file.
+     * Private because it's not intended to be used outside this class.
+     */
+    private static void removeLastLine() {
         
         // To open the file and truncate it.
         try (RandomAccessFile raf = new RandomAccessFile(file, "rw"))  {
@@ -151,28 +194,36 @@ public abstract class DBUsersInterface {
                 }
                 pointer--;
             }
+
             // Truncate the file at this point.
             raf.setLength(pointer + 1);
         } catch (IOException e) {
             System.err.printf("Error removing last line from file %s.\n", filePath);
         } catch (Exception e) {
-            System.err.printf("Error removing last line from file %s.\n", filePath);
+            // TODO: Error handling.
         }
 
     }
 
-    public static void writeUserOnFile(User user) throws IOException {
+    /**
+     * Write a user on the file attached.
+     * This appends the user to the file without rewriting all the file.
+     * @param user The user to write.
+     * @throws RuntimeException If the file content is null.
+     * @throws NullPointerException If the user is null.
+     */
+    public static void writeUserOnFile(User user) throws RuntimeException, NullPointerException {
+
+        if (user == null) {
+            throw new NullPointerException("User cannot be null.");
+        }
 
         if (fileContent == null) {
-            throw new IOException("File content is needed to write on file. Load users before.");
+            throw new RuntimeException("File content is needed to write on file. Load users before with loadUsers().");
         }
 
         // Remove last line.
-        try {
-            removeLastLine();
-        } catch (IOException e) {
-            System.err.printf("Error removing last line from file %s.\n", filePath);
-        }
+        removeLastLine();
 
         // Write user on file.
         // Buffered to improve performance.
@@ -205,10 +256,11 @@ public abstract class DBUsersInterface {
         } catch (IOException e) {
             System.err.printf("Error writing user on file %s.\n", filePath);
         } catch (Exception e) {
-            System.err.printf("Error writing user on file %s.\n", filePath);
+            // TODO: Error handling.
         }
     }
 
+    // TODO: Da rivedere.
     public static void removeUserOnFile(User user) throws IOException {
 
         if (fileContent == null) {
@@ -217,11 +269,7 @@ public abstract class DBUsersInterface {
 
         // TODO: Continua qui.
         // Remove last line.
-        try {
-            removeLastLine();
-        } catch (IOException e) {
-            System.err.printf("Error removing last line from file %s.\n", filePath);
-        }
+        removeLastLine();
 
         // Write user on file.
         // Buffered to improve performance.
@@ -260,4 +308,3 @@ public abstract class DBUsersInterface {
     }
 
 }
-

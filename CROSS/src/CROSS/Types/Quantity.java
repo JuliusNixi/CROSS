@@ -31,22 +31,6 @@ public class Quantity {
     public Integer getQuantity() {
         return this.quantity;
     }
-    /**
-     * Set the quantity.
-     * It's used when an order is placed to modify its quantity until it's fulfilled.
-     * @param quantity The quantity.
-     * @throws IllegalArgumentException If the quantity is negative.
-     * @throws NullPointerException If the quantity is null.
-     */
-    public void setQuantity(Integer quantity) throws IllegalArgumentException, NullPointerException {
-        if (quantity == null) {
-            throw new NullPointerException("Quantity cannot be null.");
-        }
-        if (quantity < 0) {
-            throw new IllegalArgumentException("Quantity cannot be negative.");
-        }
-        this.quantity = quantity;
-    }
 
     @Override
     public String toString() {

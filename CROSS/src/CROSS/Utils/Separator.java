@@ -33,7 +33,6 @@ public class Separator {
         for (int i = 0; i < length; i++) {
             separator += character;
         }
-        separator += "\n";
         this.character = character;
         this.length = length;
     }
