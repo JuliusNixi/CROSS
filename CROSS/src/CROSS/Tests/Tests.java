@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import CROSS.Client.Client;
 import CROSS.Client.ClientCLIThread;
+import CROSS.Exceptions.InvalidUser;
 import CROSS.Orders.LimitOrder;
 import CROSS.Server.AcceptThread;
 import CROSS.Server.Server;
@@ -12,8 +13,11 @@ import CROSS.Types.Quantity;
 import CROSS.Types.Price.GenericPrice;
 import CROSS.Types.Price.PriceType;
 import CROSS.Types.Price.SpecificPrice;
+import CROSS.Users.DBUsersInterface;
 import CROSS.Users.User;
+import CROSS.Users.Users;
 import CROSS.Utils.Separator;
+import CROSS.Utils.UniqueNumber;
 
 // TODO: Generate Javadoc.
 /**
@@ -33,6 +37,9 @@ import CROSS.Utils.Separator;
  * @see Quantity
  * @see LimitOrder
  * @see User
+ * @see DBUsersInterface
+ * @see Users
+ * @see UniqueNumber
  * 
  */
 public abstract class Tests {
@@ -261,6 +268,113 @@ public abstract class Tests {
 
     }
 
+    // USERS TESTS
+    /**
+     * To test the user.
+     */
+    public static void TestUser() {
+        
+        // Test user.
+        System.out.println("Testing user...");
+        
+        User u = new User("testuser", "testpassword");
+
+        System.out.println("Here's a user: " + u.toString());
+
+    }
+    /**
+     * To test users class and the users' database interface.
+     */
+    public static void TestUsersAndDB() {
+
+        // Test Users and users' DB.
+        System.out.println("Testing Users and users' DB...");
+
+        try {
+            DBUsersInterface.readFile();
+        }catch (RuntimeException ex) {
+            System.out.println("Test passed, blocked reading non-existing file.");
+        }
+        try {
+            DBUsersInterface.loadUsers();
+        }catch (RuntimeException ex) {
+            System.out.println("Test passed, blocked loading users from non-existing file.");
+        }
+
+        String pathToUsersFile = "./DB/users.json";
+
+        try {
+            DBUsersInterface.setFile(pathToUsersFile + ".txt");
+        }catch (RuntimeException ex) {
+            System.out.println("Test passed, blocked setting non-json file.");
+        }
+
+        DBUsersInterface.setFile(pathToUsersFile);
+
+        try {
+            DBUsersInterface.setFile(pathToUsersFile);
+        }catch (RuntimeException ex) {
+            System.out.println("Test passed, blocked setting file multiple times.");
+        }
+
+        try {
+            DBUsersInterface.loadUsers();
+        }catch (RuntimeException ex) {
+            System.out.println("Test passed, blocked loading users before reading file.");
+        }
+
+        DBUsersInterface.readFile();
+
+        try {
+            DBUsersInterface.readFile();
+        }catch (RuntimeException ex) {
+            System.out.println("Test passed, blocked reading file multiple times.");
+        }
+
+        DBUsersInterface.loadUsers();
+
+        try {
+            DBUsersInterface.loadUsers();
+        }catch (RuntimeException ex) {
+            System.out.println("Test passed, blocked loading users multiple times.");
+        }
+
+        System.out.println("Users DB loaded. Showing users...");
+
+        System.out.printf("Users count: %d.\nHere's the users:\n", Users.getUsersSize());
+        System.out.printf("%s", Users.toStringUsers());
+
+        System.out.println("Adding new user...");
+        UniqueNumber uniqueNumber = new UniqueNumber();
+        String randomUsername = String.format("testuser%d", uniqueNumber.getNumber());
+        String randomPassword = String.format("testpassword%d", uniqueNumber.getNumber());
+        User newUser = new User(randomUsername, randomPassword);
+        try {
+            Users.addUser(newUser);
+        }catch (InvalidUser ex) {
+        }
+        System.out.println("New user added.");
+        try {
+            Users.addUser(newUser);
+        }catch (InvalidUser ex) {
+            System.out.println("Test passed, blocked adding user with existing username.");
+        }
+
+        System.out.println("Showing new users DB...");
+        System.out.printf("Users count: %d.\nHere's the users:\n", Users.getUsersSize());
+        System.out.printf("%s", Users.toStringUsers());
+
+        System.out.println("Searching the previous added user...");
+        String password = Users.getUserPassword(randomUsername);
+        System.out.printf("Here's the user found: %s.\n", new User(randomUsername, password).toString());
+
+        System.out.println("Searching a non existent user...");
+        password = Users.getUserPassword("nonexistentuser");
+        password = password == null ? "null" : password;
+        System.out.printf("Here's the non existent user found: %s.\n", password);
+
+    }
+
     public static void AllTests() throws InterruptedException {
 
         Separator separator = new Separator("-");
@@ -291,20 +405,16 @@ public abstract class Tests {
         TestMarket();
         System.out.println(separator);
 
-        /* 
-
-        TestUserDB();
-        System.out.println(separator);
-
         TestUser();
         System.out.println(separator);
 
-        TestOrderBook();
+        TestUsersAndDB();
         System.out.println(separator);
 
-        */
+        /* 
 
-        /*
+        TestOrderBook();
+        System.out.println(separator);
 
         OrderBook ob = TestExecutingLimit();
         for (LimitOrder o : ob.getLimitOrders()) {
@@ -312,14 +422,6 @@ public abstract class Tests {
         }
         System.out.println(separator);
 
-        */
-
-        Thread.sleep(1000 * 5);
-        
-        //System.exit(0);
-
-     /*    
-        
         // Test Order Book with Sell Limit Orders.
         quantity = new Quantity(10);
         order = new LimitOrder(BTCUSD, actualPriceBid, Direction.SELL, quantity, user.getUsername());
@@ -330,9 +432,11 @@ public abstract class Tests {
             BTCUSDorderBook.executeOrder(order);
         }
         System.out.println(BTCUSDorderBook);
-        
-    */
 
+        */
+
+        Thread.sleep(1000 * 5);
+        System.exit(0);
 
     }
 

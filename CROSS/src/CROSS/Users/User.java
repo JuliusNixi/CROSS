@@ -15,10 +15,25 @@ public class User implements Comparable<User> {
      * @param username The username of the User as a String.
      * @param password The password of the User as a String.
      * @throws NullPointerException If the username or the password are null.
+     * @throws IllegalArgumentException If the username or the password are empty, too long or too short.
      */
-    public User(String username, String password) throws NullPointerException {
+    public User(String username, String password) throws NullPointerException, IllegalArgumentException {
         if (username == null || password == null) {
             throw new NullPointerException("Username or password are null.");
+        }
+        // Sanitize the input.
+        username = username.trim();
+        password = password.trim();
+        username = username.replaceAll("\\s+", " ");
+        password = password.replaceAll("\\s+", " ");
+        if (username.isBlank() || password.isBlank()) {
+            throw new IllegalArgumentException("Username or password are empty.");
+        }
+        if (username.length() > 40 || password.length() > 40) {
+            throw new IllegalArgumentException("Username or password are too long.");
+        }
+        if (username.length() <= 3 || password.length() <= 3) {
+            throw new IllegalArgumentException("Username or password are too short.");
         }
         this.username = username;
         this.password = password;

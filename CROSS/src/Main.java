@@ -4,49 +4,6 @@ public class Main {
 
     /* 
 
-    public static void TestUserDB() throws IOException, InvalidUser {
-        // Test Users DB.
-
-        String pathToUsersFile = "./DB/users.json";
-
-        DBUsersInterface.setFile(pathToUsersFile);
-        DBUsersInterface.readFile();
-        DBUsersInterface.loadUsers();
-
-        System.out.println("Users DB loaded. Showing users...");
-        TreeSet<User> users = Users.getUsersCopy();
-        for (User user : users) {
-            System.out.println(user);
-        }
-        System.out.printf("Users count: %d.\n", users.size());
-
-        System.out.println("Adding new user...");
-        long now = Instant.now().getEpochSecond();
-        String randomUsername = String.format("testuser%d", now);
-        String randomPassword = String.format("testpassword%d", now);
-        User newUser = new User(randomUsername, randomPassword);
-        Users.addUser(newUser);
-        System.out.println("New user added.");
-
-        System.out.println("Showing new users DB...");
-        users = Users.getUsersCopy();
-        for (User user : users) {
-            System.out.println(user);
-        }
-        System.out.printf("Users count: %d.\n", users.size());
-
-
-    }
-    public static void TestUser() {
-        
-        // Test User.
-        System.out.println("Testing User...");
-        
-        User u = new User("testuser", "testpassword");
-        System.out.println(u);
-
-    }
-
     public static void TestOrderBook() {
 
         // Test Order Book.
@@ -103,8 +60,6 @@ public class Main {
     }
 
     */
-
-    /*throws InterruptedException, InvalidUser*/
 
     public static void main(String[] args) {
 
