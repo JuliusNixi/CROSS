@@ -106,21 +106,21 @@ public abstract class Users {
 
     // GETTERS
     /**
-     * Get a user from the database.
-     * @param user The user to get.
-     * @return The user if it exists, null otherwise.
-     * @throws NullPointerException If the user is null.
+     * Find a user with its username in the database and get its password.
+     * @param username The username of the user to find.
+     * @return A string with the password of the user if the user is found, null otherwise.
+     * @throws NullPointerException If the username is null.
      */
-    public static User getUser(User user) throws NullPointerException {
+    public static String getUserPassword(String username) throws NullPointerException {
 
-        if (user == null) {
-            throw new NullPointerException("User is null.");
+        if (username == null) {
+            throw new NullPointerException("Username cannot be null.");
         }
         
-        User result = null;
-        result = users.ceiling(user);
-        if (result != null && result.equals(user)) {
-            return result;
+        User toSearch = new User(username, "placeholder");
+        User result = users.ceiling(toSearch);
+        if (result != null && result.getUsername().equals(username)) {
+            return result.getPassword();
         }
         return null;
         
@@ -133,8 +133,11 @@ public abstract class Users {
         return users.size();
     }
 
-    @Override
-    public String toString() {
+    /**
+     * Get the users database as list of string lines, one for each user.
+     * @return The users database as list of string lines.
+     */
+    public static String toStringUsers() {
         String result = "";
         for (User user : users) {
             result += user.toString() + "\n";

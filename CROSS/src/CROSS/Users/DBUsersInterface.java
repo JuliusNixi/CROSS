@@ -90,8 +90,7 @@ public abstract class DBUsersInterface {
         }
 
         if (DBUsersInterface.fileContent != null) {
-            System.out.printf("File %s already readed.\n", filePath);
-            return;
+            throw new RuntimeException("File already readed.");
         }
 
         // Read file.
@@ -204,7 +203,6 @@ public abstract class DBUsersInterface {
         }
 
     }
-
     /**
      * Write a user on the file attached.
      * This appends the user to the file without rewriting all the file.
