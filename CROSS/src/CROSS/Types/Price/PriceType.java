@@ -1,4 +1,4 @@
-package CROSS.Types.Price;
+package CROSS.Types.Price; 
 
 /**
  * Enumerates the price type and the type of a trade.

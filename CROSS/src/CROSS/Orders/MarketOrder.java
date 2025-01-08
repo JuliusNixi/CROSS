@@ -9,6 +9,7 @@ import CROSS.Users.User;
 /**
  * MarketOrder class represents a market order in the system.
  * It extends the Order class.
+ * 
  * @version 1.0
  * @see Order
  * @see Market
@@ -18,7 +19,7 @@ import CROSS.Users.User;
  * */
 public class MarketOrder extends Order {
 
-    // Used in the setPrice method.
+    // Used in the setUpdatedPrice method.
     private PriceType type;
 
     /**
@@ -61,6 +62,7 @@ public class MarketOrder extends Order {
     /**
      * Set the price of the order to the actual price of the market.
      * Used to update the order's price to the actual price of the market.
+     * 
      * @throws RuntimeException If the actual price of the market is invalid.
      */
     public void setUpdatedPrice() throws RuntimeException {

@@ -30,7 +30,7 @@ public class Quantity {
      * @return The quantity.
      */
     public Integer getQuantity() {
-        return this.quantity;
+        return Integer.valueOf(this.quantity);
     }
 
     @Override

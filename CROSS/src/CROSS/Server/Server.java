@@ -10,11 +10,11 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import CROSS.Exceptions.InvalidConfig;
 
-// TODO: Generate Javadoc.
 /**
  * The Server class.
  * 
  * @version 1.0
+ * @see AcceptThread
  */
 public class Server {
 
@@ -36,7 +36,7 @@ public class Server {
     public Server(String pathToConfigPropertiesFile) throws NullPointerException {
 
         if (pathToConfigPropertiesFile == null) {
-            throw new NullPointerException("Path to server config file is null.");
+            throw new NullPointerException("Path to server config file cannot be null.");
         }
 
         File configFile = new File(pathToConfigPropertiesFile);
@@ -75,8 +75,6 @@ public class Server {
                 throw new InvalidConfig("Invalid max connections number.");
             }
 
-            System.out.println(this);
-
         // Throwed by getByName.
         }catch (UnknownHostException ex) {
             // TODO: Error handling.
@@ -109,7 +107,7 @@ public class Server {
 
         // Generic exception.
         catch (Exception ex) {
-            // TODO: Error handling.c
+            // TODO: Error handling.
         }
         
     } // End of constructor.
@@ -121,7 +119,7 @@ public class Server {
     public void startServer() throws RuntimeException {
 
         if (this.serverSocket != null) {
-            throw new RuntimeException("Server already started.\n");
+            throw new RuntimeException("Server already started.");
         }
 
         System.out.printf("Starting server with these following args...\n%s\n", this.toString());
@@ -143,6 +141,7 @@ public class Server {
     // CLIENTS ACCEPTANCE
     /**
      * Start accepting clients. Call this method after startServer().
+     * 
      * @return The thread that accepts clients.
      * @throws RuntimeException If the server is not started (socket null) or if the accept thread is already started.
      */
@@ -177,21 +176,21 @@ public class Server {
      * @return A string rapresenting the path to the server's configuration file.
      */
     public String getPathToConfigPropertiesFile() {
-        return this.pathToConfigPropertiesFile;
+        return String.format("%s", this.pathToConfigPropertiesFile);
     }
     /**
      * Get the server port.
-     *  @return Integer rapresenting the server's port.
+     * @return Integer rapresenting the server's port.
      */
     public Integer getServerPort() {
-        return this.serverPort;
+        return Integer.valueOf(this.serverPort);
     }
     /**
      * Get the max connections number allowed from the server.
      * @return Integer rapresenting the max connections number allowed from the server.
      */
     public Integer getMaxConnections() {
-        return this.maxConnections;
+        return Integer.valueOf(this.maxConnections);
     }
     /**
      * Get the server address.
@@ -205,7 +204,7 @@ public class Server {
      * @return Socket rapresenting the server's socket.
      */
     public ServerSocket getServerSocket() {
-        return serverSocket;
+        return this.serverSocket;
     }
 
     @Override

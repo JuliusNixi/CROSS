@@ -6,9 +6,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
-// TODO: Generate Javadoc.
 /**
  * This thread is responsible for accepting new connections from clients for the server.
+ * It's started after the server is started by the Server class.
  * @version 1.0
  * @see Server
  */
@@ -25,13 +25,14 @@ public class AcceptThread extends Thread {
     public AcceptThread(Server server) throws IllegalArgumentException {
         if (server == null)
             throw new IllegalArgumentException("Server cannot be null.");
+
         this.server = server;
+        this.executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
     }
 
     @Override 
     public void run() {
 
-        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
         System.out.printf("Server started a CACHED pool of max %d threads, but the max number of client connections is %s.\n", executor.getMaximumPoolSize(), server.getMaxConnections().toString());
 
         System.out.printf("Waiting for connections...\n");
@@ -59,14 +60,14 @@ public class AcceptThread extends Thread {
      * @return The executor.
      */
     public ThreadPoolExecutor getExecutor() {
-        return executor;
+        return this.executor;
     } 
     /**
      * Getter for the server.
      * @return The server.
      */
     public Server getServer() {
-        return server;
+        return this.server;
     }   
 
 }

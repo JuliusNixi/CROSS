@@ -352,7 +352,7 @@ public abstract class DBUsersInterface {
             // TODO: Error handling.
             return ' ';
         } catch (Exception ex) {
-            // TODO: Error handling, remove the returns.
+            // TODO: Error handling, remove the return.
             return ' ';
         }
     }
