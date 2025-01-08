@@ -9,6 +9,7 @@ import CROSS.Utils.UniqueNumber;
 /**
  * Abstract class for Order, an order without a type is not allowed.
  * It's extended by StopMarketOrder, LimitOrder, MarketOrder.
+ * 
  * @version 1.0
  * @see SpecificPrice
  * @see Quantity
@@ -29,11 +30,13 @@ public abstract class Order implements Comparable<Order> {
     private Integer id;
 
     /**
-     * Constructor for Order.
+     * Constructor for Order class.
+     * 
      * @param market The market where the order is placed.
      * @param price The price of the order.
      * @param quantity The quantity of the order.
      * @param user The user who placed the order.
+     * 
      * @throws NullPointerException if market, price, quantity or user are null.
      * @throws IllegalArgumentException If the price's market doesn't match with the given market.
      */
@@ -51,18 +54,18 @@ public abstract class Order implements Comparable<Order> {
             throw new NullPointerException("User cannot be null.");
         }
 
-        if (price.getMarket() != market) {
+        // Market check.
+        if (!price.getMarket().equals(market)) {
             throw new IllegalArgumentException("The price's market doesn't match with the given market.");
         }
 
         this.price = price;
         this.quantity = quantity;
         this.market = market;
+        this.user = user;
+
         Long id = new UniqueNumber().getNumber();
         this.id = id.intValue();
-
-        // TODO: Check if user is in the Users list.
-        this.user = user;
 
     }
 
@@ -72,28 +75,28 @@ public abstract class Order implements Comparable<Order> {
      * @return The price of the order.
      */
     public SpecificPrice getPrice() {
-        return price;
+        return new SpecificPrice(this.price.getValue(), this.price.getType(), this.price.getMarket());
     }
     /**
      * Getters for quantity.
      * @return The quantity of the order.
      */
     public Quantity getQuantity() {
-        return this.quantity;
+        return new Quantity(this.quantity.getQuantity());
     }
     /**
      * Getters for market.
      * @return The market of the order.
      */
     public Market getMarket() {
-        return market;
+        return this.market;
     }
     /**
      * Getters for user.
      * @return The user of the order.
      */
     public User getUser() {
-        return user;
+        return new User(this.user.getUsername(), this.user.getPassword());
     }
     /**
      * Getters for id.
@@ -120,6 +123,7 @@ public abstract class Order implements Comparable<Order> {
     }
     /**
      * Sets the price of the order.
+     * Used in the MarketOrder class to update the price of the order to the current market price.
      * 
      * @param price The new price of the order.
      * @throws NullPointerException If the price is null.
@@ -140,6 +144,7 @@ public abstract class Order implements Comparable<Order> {
     /**
      * Short version of the toString method.
      * Used for the OrderBookLine class.
+     * 
      * @return A string with the id and the quantity of the order.
      */
     public String toStringShort() {

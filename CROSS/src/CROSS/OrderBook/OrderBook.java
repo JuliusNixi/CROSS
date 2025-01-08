@@ -168,7 +168,7 @@ public class OrderBook extends Market {
 
         } else if (lastOrder instanceof StopMarketOrder) {
 
-            // TODO: Da fare.
+            // TODO: This.
             
         } else {
             throw new IllegalArgumentException("Order type not supported.");
@@ -393,7 +393,7 @@ public class OrderBook extends Market {
      * @throws NullPointerException If the order is null.
      */
     public Boolean executeOrder(MarketOrder order) throws NullPointerException {
-
+        // TODO: Add notification system.
         if (order == null) {
             throw new NullPointerException("MarketOrder cannot be null.");
         }
@@ -479,7 +479,7 @@ public class OrderBook extends Market {
      * @throws IllegalArgumentException If the order market not match with order book market.
      */
     public void executeOrder(LimitOrder order) throws NullPointerException, IllegalArgumentException {
-
+        // TODO: Add notification system.
         if (order == null) {
             throw new NullPointerException("LimitOrder cannot be null.");
         }

@@ -4,10 +4,14 @@ import CROSS.OrderBook.Market;
 
 /**
  * SpecificPrice is a class that extends GenericPrice and implements Comparable<SpecificPrice>.
- * It is used to represent a price with a specific type in a specific market.
+ * 
+ * It is used to represent a price with a specific type (ask/bid) in a specific market.
+ * 
  * A type is an enum that represents the type of the price in the PriceType enum.
+ * 
  * The implementation of the Comparable interface is used to compare two prices.
- * It's used to sort a list of prices in descending order and to use it in the OrderBook.
+ * 
+ * It's used to sort a list of prices and to use it in the OrderBook.
  * 
  * @version 1.0
  * @see GenericPrice
@@ -23,20 +27,23 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
     /**
      * Constructor of the SpecificPrice class.
      * It takes an integer value and a PriceType type.
-     * It calls the constructor of the GenericPrice class with the value.
      * 
      * @param value The value of the price.
      * @param type The type of the price.
      * @param market The market of the price.
-     * @throws IllegalArgumentException If the type or market are null.
+     * 
+     * @throws NullPointerException If the type or market are null.
      */
-    public SpecificPrice(Integer value, PriceType type, Market market) throws IllegalArgumentException {
-        super(value);
+    public SpecificPrice(Integer value, PriceType type, Market market) throws NullPointerException {
+
         if (type == null) {
-            throw new IllegalArgumentException("Type cannot be null.");
+            throw new NullPointerException("Type cannot be null.");
         }
         if (market == null)
-            throw new IllegalArgumentException("Market cannot be null.");
+            throw new NullPointerException("Market cannot be null.");
+
+        super(value);
+
         this.type = type;
         this.market = market;
     }
@@ -47,7 +54,7 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
      * @return The type of the price.
      */
     public PriceType getType() {
-        return type;
+        return this.type;
     }
     /**
      * Getter of the market attribute.
@@ -72,6 +79,7 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
     /**
      * A to string method for the price without the market.
      * Used to avoid infinite loops in the toString method of the Market class.
+     * 
      * @return A to string method for the price without the market.
      */
     public String toStringWithoutMarket() {
