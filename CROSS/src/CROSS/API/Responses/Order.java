@@ -1,39 +1,26 @@
 package CROSS.API.Responses;
 
-import CROSS.API.JSON;
-
 /**
  * Order is a class.
  * This class is used to represent the response of a request that is about the orders.
- * It contains the order id.
+ * It extends the CancelOrderID (attention CancelOrderID is a request) class since the content is the same.
+ * It's used to get the order ID.
  * 
  * @version 1.0
- * @see JSON
+ * @see CROSS.API.Requests.Orders.CancelOrderID 
+ * @see CROSS.Orders.Order
  */
-public class Order extends JSON {
-    
-    private Long orderId = null;
+public class Order extends CROSS.API.Requests.Orders.CancelOrderID {
 
     /**
      * Constructor of the Order class.
      * 
-     * @param orderId The orderId of the order.
-     * @throws NullPointerException If the order id is null.
+     * @param order The order to be used for the ID.
      */
-    public Order(Long orderId) throws NullPointerException {
-        if (orderId == null) {
-            throw new NullPointerException("The orderId is null.");
-        }
-        this.orderId = orderId;
+    public <O extends CROSS.Orders.Order> Order(O order) {
+        super(order);
     }
 
-    /**
-     * Getter for the orderId.
-     * 
-     * @return The orderId.
-     */
-    public Long getOrderId() {
-        return orderId;
-    }
+    // Getters defined in the super class.
 
 }

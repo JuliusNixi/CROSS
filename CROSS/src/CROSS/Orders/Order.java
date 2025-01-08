@@ -19,13 +19,14 @@ import CROSS.Utils.UniqueNumber;
  * @see StopMarketOrder
  * @see UniqueNumber
  */
-public abstract class Order {
+public abstract class Order implements Comparable<Order> {
 
     private SpecificPrice price;
     private Quantity quantity;
     private Market market;
     private User user;
-    private Long id;
+    // Integer because could be -1 in the API.
+    private Integer id;
 
     /**
      * Constructor for Order.
@@ -57,7 +58,8 @@ public abstract class Order {
         this.price = price;
         this.quantity = quantity;
         this.market = market;
-        this.id = new UniqueNumber().getNumber();
+        Long id = new UniqueNumber().getNumber();
+        this.id = id.intValue();
 
         // TODO: Check if user is in the Users list.
         this.user = user;
@@ -97,23 +99,39 @@ public abstract class Order {
      * Getters for id.
      * @return The id of the order.
      */
-    public Long getId() {
-        return id;
+    public Integer getId() {
+        return Integer.valueOf(this.id);
     }
 
+    // SETTERS
     /**
-     * Setter for the quantity.
-     * Used to update the quantity during the execution of a market order.
-     * @param quantity The quantity of the order.
-     * @throws NullPointerException if the quantity is null.
-     */
+     * Sets the quantity of the order.
+     * Using this method during the market orders execution.
+     * 
+     * @param quantity The new quantity of the order.
+     * @throws NullPointerException If the quantity is null.
+     * */
     public void setQuantity(Quantity quantity) throws NullPointerException {
         if (quantity == null) {
             throw new NullPointerException("Quantity cannot be null.");
         }
-        this.quantity = quantity;
+        
+        this.quantity = new Quantity(quantity.getQuantity());
     }
-    
+    /**
+     * Sets the price of the order.
+     * 
+     * @param price The new price of the order.
+     * @throws NullPointerException If the price is null.
+     * */
+    public void setPrice(SpecificPrice price) throws NullPointerException {
+        if (price == null) {
+            throw new NullPointerException("Price cannot be null.");
+        }
+
+        this.price = price;
+    }
+
     @Override
     public String toString() {
         return String.format("Type [%s] - ID [%s] - User [%s] - Price [%s] - Quantity [%s] - Market [%s]", this.getClass().getSimpleName(), this.getId().toString(), this.getUser().toString(), this.getPrice().toString(), this.getQuantity().toString(), this.getMarket().toString());
@@ -126,6 +144,11 @@ public abstract class Order {
      */
     public String toStringShort() {
         return String.format("ID [%s] - Quantity [%s]", this.getId().toString(), this.getQuantity().toString());
+    }
+
+    @Override
+    public int compareTo(Order o) {
+        return this.getId().compareTo(o.getId());
     }
 
 }

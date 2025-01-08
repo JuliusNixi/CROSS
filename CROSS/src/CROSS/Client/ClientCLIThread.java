@@ -9,7 +9,6 @@ import java.util.Scanner;
  * @version 1.0
  * @see Client
  * @see Thread
- * @see ClientActions
  * @see ClientActionsUtils
  */
 public class ClientCLIThread extends Thread {
@@ -25,8 +24,10 @@ public class ClientCLIThread extends Thread {
     public ClientCLIThread(Client client) throws NullPointerException, RuntimeException {
         if (client == null)
             throw new NullPointerException("The client object can't be null.");
+
         if (client.getSocket() == null)
-            throw new RuntimeException("The client's socket in the CLI is null.");
+            throw new RuntimeException("The client's socket in the CLI cannot be null.");
+
         this.client = client;
     }
     
@@ -40,15 +41,16 @@ public class ClientCLIThread extends Thread {
 
             String command = scanner.nextLine().toLowerCase().trim();
 
-            if (command.equals("exit")) {
+            if (command.equals("exit") || command.equals("quit") || command.equals("q")) {
+                System.out.println("Exiting the client CLI.");
                 break;
             }
 
             // Check if the command is valid.
-            ClientActions action = null;
+            ClientActionsUtils.ClientActions action = null;
             try {
                 action = ClientActionsUtils.actionFromString(command);
-            } catch (IllegalArgumentException | NullPointerException e) {
+            } catch (IllegalArgumentException | NullPointerException ex) {
                 // This is not a critical error, just an invalid command.
                 System.out.println("Invalid string command.");
                 continue;
@@ -59,56 +61,31 @@ public class ClientCLIThread extends Thread {
             try {
                 args = ClientActionsUtils.parseCommandFromString(command, action);
                 ClientActionsUtils.parseArgs(args, action);
-            } catch (IllegalArgumentException | NullPointerException e) {
+            } catch (IllegalArgumentException | NullPointerException ex) {
                 // This is not a critical error, just a invalid command.
                 System.out.println("Invalid arguments.");
                 continue;
             }
 
-            // TODO: Send the JSON request to the server.
-            String jsonToSend = "";
-            switch (action) {
-                case REGISTER:
-
-                    break;
-                case LOGIN:
-
-                    break;
-                case UPDATE_CREDENTIALS:
-
-                    break;
-                case LOGOUT:
-
-                    break;
-                case INSERT_LIMIT_ORDER:
-
-                    break;
-                case INSERT_MARKET_ORDER:
-
-                    break;
-                case INSERT_STOP_ORDER:
-
-                    break;
-                case CANCEL_ORDER:  
-
-                    break;
-                case GET_PRICE_HISTORY:
-
-                    break;
-                default:
-                    break;
+            String jsonToSend = ClientActionsUtils.getJSONRequest(client, action, args);
+            if (jsonToSend == null) {
+                // This is not a critical error, just a invalid command.
+                System.out.println("Error processing your request.");
+                continue;
             }
 
             try {
                 this.client.sendJSONToServer(jsonToSend);
             } catch (RuntimeException ex) {
-                System.err.println("Error sending JSON to the server.");
-                Thread.currentThread().interrupt();
+                // This is a critical error.
+                System.err.println("Error sending the request to the server.");
+                // TODO: Error handling.
+                break;
             }
 
         } // End while.
 
-        // Clean up.
+        // TODO: Clean up.
         scanner.close();
         
     }

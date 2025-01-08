@@ -18,6 +18,7 @@ public class Quantity {
         if (quantity == null) {
             throw new NullPointerException("Quantity cannot be null.");
         }
+        // Quantity cannot be negative but can be zero.
         if (quantity < 0) {
             throw new IllegalArgumentException("Quantity cannot be negative.");
         }

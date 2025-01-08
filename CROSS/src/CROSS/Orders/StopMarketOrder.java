@@ -21,19 +21,21 @@ public class StopMarketOrder extends Order {
 
     /**
      * Constructor for the StopMarketOrder class.
+     * 
      * @param market The market where the order is placed.
-     * @param type The type of the order (ASK or BID).
      * @param price The price of the order.
      * @param quantity The quantity of the order.
      * @param user The user who placed the order.
+     * 
      * @throws IllegalArgumentException If the price of the order is not valid.
      * */
-    public StopMarketOrder(Market market, PriceType type, SpecificPrice price, Quantity quantity, User user) throws IllegalArgumentException {
+    public StopMarketOrder(Market market, SpecificPrice price, Quantity quantity, User user) throws IllegalArgumentException {
         super(market, price, quantity, user);
-        if (type == PriceType.ASK && price.getValue() < market.getActualPriceBid().getValue()) {
+
+        if (price.getType() == PriceType.ASK && price.getValue() < market.getActualPriceBid().getValue()) {
             throw new IllegalArgumentException("Buy stop order price is lower than the market bid price.");
         }
-        if (type == PriceType.BID && price.getValue() > market.getActualPriceAsk().getValue()) {
+        if (price.getType() == PriceType.BID && price.getValue() > market.getActualPriceAsk().getValue()) {
             throw new IllegalArgumentException("Sell stop order price is higher than the market ask price.");
         }
     }

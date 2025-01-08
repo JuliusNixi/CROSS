@@ -11,8 +11,8 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import java.net.Socket;
 import java.net.SocketException;
-
 import CROSS.Exceptions.InvalidConfig;
+import CROSS.Users.User;
 
 /**
  * The client class.
@@ -34,6 +34,8 @@ public class Client {
 
     private OutputStream outputStream = null;
 
+    private User userLogged = null;
+
     /**
      * Constructor of the Client class.
      * 
@@ -43,7 +45,7 @@ public class Client {
     public Client(String pathToConfigPropertiesFile) throws NullPointerException {
 
         if (pathToConfigPropertiesFile == null) {
-            throw new NullPointerException("Path to client config file is null.");
+            throw new NullPointerException("Path to client config file cannot be null.");
         }
 
         File configFile = new File(pathToConfigPropertiesFile);
@@ -70,49 +72,39 @@ public class Client {
 
             this.pathToConfigPropertiesFile = pathToConfigPropertiesFile;
 
-            System.out.println(this);
-
         // Throwed by getByName.
         }catch (UnknownHostException ex) {
-            System.err.printf("Unknown server host reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling.
         }
 
         // Throwed by FileReader.
         catch (FileNotFoundException ex) {
-            System.err.printf("File %s not found.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         }
 
         // parseInt exception.
         catch (NumberFormatException ex) {
-            System.err.printf("Port number format error reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         }
         
         // Throwed by Properties.load().
         catch (IllegalArgumentException ex) {
-            System.err.printf("Illegal argument reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } catch (IOException ex) {
-            System.err.printf("I/O error reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         }
         catch (NullPointerException ex) {
-            System.err.printf("Null pointer reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } 
 
         // InvalidConfig exception.
         catch (InvalidConfig ex) {
-            System.err.printf("Invalid configuration file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         }
 
         // Generic exception.
         catch (Exception ex) {
-            System.err.printf("Generic error reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         }
 
     }
@@ -134,20 +126,15 @@ public class Client {
             this.outputStream = socket.getOutputStream();
             System.out.println("Client connected succesfully!");
         } catch (NullPointerException ex) {
-            System.err.println("Null pointer exception in connecting the client to the server.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } catch (IllegalArgumentException ex) {
-            System.err.println("Illegal argument in connecting the client to the server.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } catch (SocketException ex) {
-            System.err.println("Socket exception in connecting the client to the server.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } catch (IOException ex) {
-            System.err.println("I/O exception in connecting the client to the server.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } catch (Exception ex) {
-            System.err.println("Generic exception in connecting the client to the server.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         }
 
     }
@@ -158,13 +145,12 @@ public class Client {
      * Static, I cannot have multiple instances of the CLI.
      * Returns the CLI thread.
      * The check for the not null client's socket is performed inside the ClientCLIThread constructor.
-     * @param client The client.
+     * @param client The client to start the CLI for.
      * @return ClientCLIThread, the CLI thread.
-     * @throws IOException If the CLI is already started.
-     * @throws RuntimeException If the client's socket is null.
+     * @throws RuntimeException If the client's socket is null or the CLI is already started.
      * @throws NullPointerException If the client is null.
      */
-    public static ClientCLIThread CLI(Client client) throws IOException, RuntimeException, NullPointerException {
+    public static ClientCLIThread CLI(Client client) throws RuntimeException, NullPointerException {
         
         // Check for null client.
         if (client == null) {
@@ -172,8 +158,8 @@ public class Client {
         }
 
         // Start the CLI.
-        if (clientCLI != null) {
-            throw new IOException("CLI already started.");
+        if (Client.clientCLI != null) {
+            throw new RuntimeException("CLI already started.");
         }
 
         // Get and start a thread.
@@ -181,7 +167,7 @@ public class Client {
         clientCLI.start();
         Client.clientCLI = clientCLI;
 
-        return clientCLI;
+        return Client.clientCLI;
 
     }
     /**
@@ -189,7 +175,7 @@ public class Client {
      * @return The client CLI's thread.
      */
     public static ClientCLIThread getClientCLI() {
-        return clientCLI;
+        return Client.clientCLI;
     }    
   
     // GETTERS
@@ -198,21 +184,21 @@ public class Client {
      * @return A string rapresenting the path to the client's configuration file.
      */
     public String getPathToConfigPropertiesFile() {
-        return pathToConfigPropertiesFile;
+        return String.format("%s", this.pathToConfigPropertiesFile);
     }
     /**
      * Get the server port.
-     * @return Integer rapresenting the server's port.
+     * @return Integer rapresenting the server's port used by the client to connect.
      */
     public Integer getServerPort() {
-        return serverPort;
+        return Integer.valueOf(this.serverPort);
     }
     /**
      * Get the server address.
      * @return InetAddress rapresenting the server's address.
      */
     public InetAddress getServerAddress() {
-        return serverAddress;
+        return this.serverAddress;
     }
     /**
      * Get the socket.
@@ -223,10 +209,36 @@ public class Client {
     }
     /**
      * Get the output stream.
-     * @return OutputStream
+     * @return OutputStream of the client.
      */
     public OutputStream getOutputStream() {
         return this.outputStream;
+    }
+    /**
+     * Get the logged user.
+     * The logging status is also indipendently managed by the server to ensure more security.
+     * @return User rapresenting the logged user or null if no user is logged.
+     */
+    public User getLoggedUser() {
+        if (this.userLogged == null) {
+            return null;
+        }
+        
+        return new User(this.userLogged.getUsername(), this.userLogged.getPassword());
+    }
+
+    // SETTERS
+    /**
+     * Set the user logged.
+     * @param userLogged The logged user.
+     * @throws NullPointerException If the logged user is null.
+     */
+    public void setLoggedUser(User userLogged) throws NullPointerException {
+        if (userLogged == null) {
+            throw new NullPointerException("User logged cannot be null.");
+        }
+
+        this.userLogged = userLogged;
     }
 
     @Override
@@ -244,7 +256,7 @@ public class Client {
     public void sendJSONToServer(String json) throws NullPointerException, RuntimeException {
 
         if (this.outputStream == null) {
-            throw new RuntimeException("Output stream is null. Call connectClient() before.");
+            throw new RuntimeException("Output stream cannot be null. Call connectClient() before.");
         }
 
         if (json == null) 
@@ -256,11 +268,9 @@ public class Client {
             outputStreamBuff.write(json.getBytes());
             outputStreamBuff.flush();
         } catch (IOException ex) {
-            System.err.println("I/O error sending JSON to the server.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } catch (Exception ex) {
-            System.err.println("Generic error sending JSON to the server.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         }
 
     }

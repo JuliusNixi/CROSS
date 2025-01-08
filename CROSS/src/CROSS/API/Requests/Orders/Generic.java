@@ -1,4 +1,4 @@
-package CROSS.API.Requests.Order;
+package CROSS.API.Requests.Orders;
 
 import CROSS.API.JSON;
 import CROSS.Types.Quantity;
@@ -6,18 +6,21 @@ import CROSS.Types.Price.PriceType;
 
 /**
  * Generic is an abstract class.
- * It is used to represent the request that is about the order's data.
+ * 
+ * It is used to represent the requests that are about the orders.
+ * 
  * This class is not a concrete request, but an abstract one, used to represent the common data of the requests.
  * It's extended by other classes that represent the concrete requests.
+ * 
  * It contains the type and the size of the order.
  * 
  * @version 1.0
  * @see JSON
+ * @see CROSS.Orders.Order
+ * 
  * @see Limit
  * @see Market
  * @see Stop
- * @see Quantity
- * @see PriceType
  */
 public abstract class Generic extends JSON {
     
@@ -27,20 +30,16 @@ public abstract class Generic extends JSON {
     /**
      * Constructor of the Generic class.
      * 
-     * @param type The type of the order.
-     * @param size The size of the order.
-     * @throws NullPointerException If the type or the size are null.
+     * @param order The order to get the type and the size from.
+     * @throws NullPointerException If the order is null.
      */
-    public Generic(PriceType type, Quantity size) throws NullPointerException {
-        if (type == null) {
-            throw new NullPointerException("The type of the order cannot be null.");
+    public <O extends CROSS.Orders.Order> Generic(O order) throws NullPointerException {
+        if (order == null) {
+            throw new NullPointerException("The order cannot be null.");
         }
-        // The check for the size > 0 is done in the Quantity class.
-        if (size == null) {
-            throw new NullPointerException("The size of the order cannot be null.");
-        }
-        this.size = size.getQuantity();
-        this.type = type.name().toLowerCase();
+        
+        this.size = order.getQuantity().getQuantity();
+        this.type = order.getPrice().getType().name().toLowerCase();
     }
 
     /**
@@ -49,7 +48,7 @@ public abstract class Generic extends JSON {
      * @return The type of the order.
      */
     public PriceType getType() {
-        return PriceType.valueOf(type.toUpperCase());
+        return PriceType.valueOf(this.type.toUpperCase());
     }
     /**
      * Getter for the size of the order.
@@ -57,7 +56,12 @@ public abstract class Generic extends JSON {
      * @return The size of the order.
      */
     public Quantity getSize() {
-        return new Quantity(size);
+        return new Quantity(this.size);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Type [%s] - Size [%s]", this.getType().name(), this.getSize().getQuantity());
     }
 
 }

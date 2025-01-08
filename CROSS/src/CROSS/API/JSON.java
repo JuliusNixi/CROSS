@@ -7,7 +7,7 @@ import com.google.gson.Gson;
 /**
  * JSON is an abstract class.
  * It is used as a superclass for all the requests and responses classes.
- * It contains the method toJSON, that converts the object to a JSON string.
+ * It contains the method toJSON, that converts the object to a JSON string to be sent through the network.
  * 
  * @version 1.0
  */

@@ -79,45 +79,37 @@ public class Server {
 
         // Throwed by getByName.
         }catch (UnknownHostException ex) {
-            System.err.printf("Unknown server host reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling.
         }
 
         // Throwed by FileReader.
         catch (FileNotFoundException ex) {
-            System.err.printf("File %s not found.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling.
         }
 
         // parseInt exception.
         catch (NumberFormatException ex) {
-            System.err.printf("Port number or max connections format error reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling.  
         }
         
         // Throwed by Properties.load().
         catch (IllegalArgumentException ex) {
-            System.err.printf("Illegal argument reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling.
         } catch (IOException ex) {
-            System.err.printf("I/O error reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling. 
         }
         catch (NullPointerException ex) {
-            System.err.printf("Null pointer reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling.
         } 
 
         // InvalidIPOrPort exception.
         catch (InvalidConfig ex) {
-            System.err.printf("Invalid server IP or port or max connections reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling.
         }
 
         // Generic exception.
         catch (Exception ex) {
-            System.err.printf("Generic error reading file %s.\n", pathToConfigPropertiesFile);
-            Thread.currentThread().interrupt();   
+            // TODO: Error handling.c
         }
         
     } // End of constructor.
@@ -139,14 +131,11 @@ public class Server {
             this.serverSocket = new ServerSocket(serverPort, maxConnections, serverAddress);
             System.out.printf("Server started succesfully.\n");
         } catch (IllegalArgumentException ex) {
-            System.err.println("Illegal argument in server start.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } catch (IOException ex) {
-            System.err.println("I/O exception in server start.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         } catch (Exception ex) {
-            System.err.println("Generic exception in server start.");
-            Thread.currentThread().interrupt();
+            // TODO: Error handling.
         }
 
     }

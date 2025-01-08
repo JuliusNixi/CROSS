@@ -42,13 +42,13 @@ public class AcceptThread extends Thread {
                 System.out.printf("Connection accepted from %s:%s.\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
                 executor.execute(new ClientThread(clientSocket));
             }catch (IOException ex) {
-                System.err.printf("Error IOException accepting connection from client.\n");
+                // TODO: Error handling.
             } catch (RejectedExecutionException ex) {
-                System.err.printf("Error RejectedExecutionException during the creation of a new client thread.\n");
+                // TODO: Error handling.
             }
             // Generic exception.
             catch (Exception ex) {
-                System.err.printf("Generic error during the acceptance of a new client or its thread creation.\n");
+                // TODO: Error handling.
             }
         } // End of while.
 
