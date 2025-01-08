@@ -4,7 +4,9 @@ import CROSS.Users.User;
 
 /**
  * Update is a class that extends Generic and is used to request an update of the user's data.
+ * 
  * It is used to represent the request that is about the user's data.
+ * 
  * It contains the old password and the new password of the user.
  * 
  * @version 1.0
@@ -19,19 +21,27 @@ public class Update extends Generic {
     /**
      * Constructor of the Update class.
      * 
-     * @param user The user.
+     * @param updateUser The user to update.
      * @param new_password The new password of the user as string.
      * @throws NullPointerException If the new_password is null.
+     * @throws IllegalArgumentException If the new_password is the same as the old password.
      */
-    public Update(User user, String new_password) throws NullPointerException {
-        super(user);
+    public Update(User updateUser, String new_password) throws NullPointerException, IllegalArgumentException {
+        super(updateUser);
+
         if (new_password == null) {
             throw new NullPointerException("New password is null.");
         }
-        this.old_password = user.getPassword();
+
+        if (new_password.equals(old_password)) {
+            throw new IllegalArgumentException("New password is the same as the old password.");
+        }
+
+        this.old_password = updateUser.getPassword();
         this.new_password = new_password;
     }
 
+    // GETTERS
     /**
      * Getter for the old user.
      * Used to get the user with the old password.
@@ -49,6 +59,11 @@ public class Update extends Generic {
      */
     public User getNewUser() {
         return new User(super.getUsername(), this.new_password);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Old User [%s] - New User [%s] - %s", this.getOldUser(), this.getNewUser(), super.toString());
     }
 
 }

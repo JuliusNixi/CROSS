@@ -2,16 +2,43 @@ package CROSS.API.Responses;
 
 /**
  * ResponseCode is a class, it contains some enums.
- * These are used to represent the response code of a response to a request.
- * Responses with different types could have the same response code for different reasons.
- * For that I used different enums.
+ * These are used to represent the response status with its code (and its content) of a response to a request.
+ * 
+ * Responses with different types could have the same response code for different content reasons.
+ * For that I used different enums and a dedicated class and methods.
  * 
  * @version 1.0
  * @see ResponseType
+ * @see AllResponses
  */
 public class ResponseCode {
 
-    public static enum Register {
+    // The type of the response.
+    public enum ResponseType {
+        REGISTER,
+        UPDATE_CREDENTIALS,
+        LOGIN,
+        LOGOUT,
+        CANCEL_ORDER,
+    }
+
+    // Contains ALL the possible responses regardless of the type.
+    public static enum AllResponses {
+        OK,
+        INVALID_PASSWORD,
+        USERNAME_NOT_AVAILABLE,
+        OTHER_ERROR,
+        INVALID_NEW_PASSWORD,
+        INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST,
+        NEW_PASSWORD_EQUAL_OLD,
+        USER_CURRENTLY_LOGGED_IN,
+        USER_ALREADY_LOGGED_IN,
+        INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST_OR_USER_NOT_LOGGED_OR_OTHER_ERROR,
+        ORDER_DOES_NOT_EXIST_OR_BELONGS_TO_DIFFERENT_USER_OR_HAS_ALREADY_BEEN_FINALIZED_OR_OTHER_ERROR_CASES
+    }
+
+    // Binding the response code and its content to the type of the response.
+    private static enum Register {
 
         OK(100),
         INVALID_PASSWORD(101),
@@ -30,7 +57,7 @@ public class ResponseCode {
         }
 
     }
-    public static enum updateCredentials {
+    private static enum updateCredentials {
 
         OK(100),
         INVALID_NEW_PASSWORD(101),
@@ -51,7 +78,7 @@ public class ResponseCode {
         }
 
     }
-    public static enum Login {
+    private static enum Login {
         OK(100),
         INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST(101),
         USER_ALREADY_LOGGED_IN(102),
@@ -68,7 +95,7 @@ public class ResponseCode {
             return code;
         }
     };
-    public static enum Logout {
+    private static enum Logout {
         OK(100),
         INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST_OR_USER_NOT_LOGGED_OR_OTHER_ERROR(101),;
 
@@ -83,7 +110,7 @@ public class ResponseCode {
             return code;
         }
     }
-    public static enum cancelOrder {
+    private static enum cancelOrder {
         OK(100),
         ORDER_DOES_NOT_EXIST_OR_BELONGS_TO_DIFFERENT_USER_OR_HAS_ALREADY_BEEN_FINALIZED_OR_OTHER_ERROR_CASES(101),;
 
@@ -100,49 +127,103 @@ public class ResponseCode {
     }
 
     private ResponseType type;
+    private AllResponses responseContent;
     
+    // 2 different constructors for the ResponseCode class.
+    // The first one is used when the response is given as an enum.
+    // The second one is used when the response is given as a code.
+    // With the below getters we could get the response as an enum or as a code.
     /**
      * Constructor of the ResponseCode class.
      * 
-     * @param type The type of the response.
-     * @throws NullPointerException If the type is null.
+     * @param type The type of the response used because different types of responses could have the same response code.
+     * @param responseContent The responseContent as an enum.
+     * @throws NullPointerException If the type or the responseContent are null.
+     * @see AllResponses
+     * @see ResponseType
      */
-    public ResponseCode(ResponseType type) throws NullPointerException {
+    public ResponseCode(ResponseType type, AllResponses responseContent) throws NullPointerException {
         if (type == null) {
-            throw new NullPointerException("Type of the response is null.");
+            throw new NullPointerException("Type of the response cannot be null.");
         }
+        if (responseContent == null) {
+            throw new NullPointerException("Response content cannot be null.");
+        }
+
         this.type = type;
+        this.responseContent = responseContent;
+    }
+    /**
+     * Constructor of the ResponseCode class.
+     * 
+     * @param type The type of the response used because different types of responses could have the same response code.
+     * @param code The code of the response.
+     * @throws NullPointerException If the type or the code are null.
+     * @see AllResponses
+     * @see ResponseType
+     */
+    public ResponseCode(ResponseType type, Integer code) throws NullPointerException {
+        if (type == null) {
+            throw new NullPointerException("Type of the response cannot be null.");
+        }
+        if (code == null) {
+            throw new NullPointerException("Code cannot be null.");
+        }
+
+        this.type = type;
+        this.responseContent = AllResponses.values()[code];
     }
 
+    // GETTERS
     /**
      * Getter for the type of the response.
      * 
      * @return The type of the response.
      */
     public ResponseType getType() {
-        return type;
+        return ResponseType.valueOf(type.name());
     }
-
     /**
-     * Getter for the code of the response.
+     * Getter for the response as an enum.
      * 
-     * @return The code of the response.
+     * @return The response as an enum.
      */
-    public int getCode() {
+    public AllResponses getResponseContent() {
+        return AllResponses.valueOf(this.responseContent.name());
+    }
+    /**
+     * Getter for the code of the response based on the type as an Integer.
+     * 
+     * @return The code of the response based on the type as an Integer.
+     */
+    public Integer getCode() {
+        int i;
         switch (type) {
             case REGISTER:
-                return Register.OK.getCode();
+                i = Register.valueOf(responseContent.name()).getCode();
+                break;
             case UPDATE_CREDENTIALS:
-                return updateCredentials.OK.getCode();
+                i = updateCredentials.valueOf(responseContent.name()).getCode();
+                break;
             case LOGIN:
-                return Login.OK.getCode();
+                i = Login.valueOf(responseContent.name()).getCode();
+                break;
             case LOGOUT:
-                return Logout.OK.getCode();
+                i = Logout.valueOf(responseContent.name()).getCode();
+                break;
             case CANCEL_ORDER:
-                return cancelOrder.OK.getCode();
+                i = cancelOrder.valueOf(responseContent.name()).getCode();
+                break;
             default:
-                return -1;
+                i = -1;
+                break;
         }
+        return Integer.valueOf(i);
     }
 
+    @Override
+    public String toString() {
+        return String.format("Type [%s] - Content [%s] - Code [%s]", this.getType().name(), this.getResponseContent().name(), this.getCode());
+    }
+    
 }

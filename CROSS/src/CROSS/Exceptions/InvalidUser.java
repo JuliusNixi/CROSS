@@ -1,7 +1,7 @@
 package CROSS.Exceptions;
 
 /**
- * Exception for invalid user.
+ * Exception for invalid user. 
  * It's throwed for example when a user is not found in the database.
  * 
  * @version 1.0

@@ -2,7 +2,6 @@ package CROSS.Users;
 
 import java.util.TreeSet;
 import CROSS.Exceptions.InvalidUser;
-import java.util.Arrays;
 
 /**
  * Users class.
@@ -10,6 +9,8 @@ import java.util.Arrays;
  * This class will rapresent the users database in RAM.
  * @version 1.0
  * @see User
+ * @see DBUsersInterface
+ * @see InvalidUser
  */
 public abstract class Users {
     
@@ -19,11 +20,13 @@ public abstract class Users {
     /**
      * Add a user to the database.
      * The user is added to the TreeSet and to the file.
+     * If not present, the user line id is set to the current size of the database, since it's appended at the end of the file.
      * @param user The user to add.
      * @throws InvalidUser If the user already exists.
      * @throws NullPointerException If the user is null.
+     * @throws RuntimeException If an error occurs while writing the user on file or if the method loadUsers() is not found.
      */
-    public static void addUser(User user) throws InvalidUser, NullPointerException {
+    public static void addUser(User user) throws InvalidUser, NullPointerException, RuntimeException {
 
         if (user == null) {
             throw new NullPointerException("User is null.");
@@ -33,18 +36,25 @@ public abstract class Users {
             throw new InvalidUser("User already exists.");
         }
 
+        if (user.getFileLineId() == null) {
+            user.setFileLineId(DBUsersInterface.calculateFileLines() + 1);
+        }
+
+        // Added user to the TreeSet.
         users.add(user);
 
-        // Prevent double file writes when the method is called from DBUsersInterface.
+        // Prevent double file writes when the method is called from DBUsersInterface.loadUsers().
         // That because:
         // loadUsers() read from file user X -> call addUser() to add it in RAM -> writeUserOnFile() write user X on file AGAIN.
+        String method = null;
+        try {
+            method = DBUsersInterface.class.getMethod("loadUsers").getName();
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException("Method loadUsers() not found.");
+        }
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         for (StackTraceElement stackTraceElement : stackTrace) {
-            // If the current method is called from DBUsersInterface class.
-            if (stackTraceElement.getClassName().equals(DBUsersInterface.class.getName())
-            &&
-            // And the method is one of the methods of DBUsersInterface.
-            Arrays.asList(DBUsersInterface.class.getMethods()).stream().map(m -> m.getName()).toList().contains(stackTraceElement.getMethodName())) {
+            if (stackTraceElement.getMethodName().equals(method)) {
                 return;
             }
         }
@@ -54,7 +64,7 @@ public abstract class Users {
             DBUsersInterface.writeUserOnFile(user);
         } catch (RuntimeException ex) {
             users.remove(user);
-            throw new InvalidUser("Error writing user on file.");
+            throw new RuntimeException("Error writing user on file.");
         }
 
     }
@@ -62,44 +72,34 @@ public abstract class Users {
     /**
      * Update a user in the database.
      * The user is updated in the TreeSet and in the file.
-     * @param user The user to update.
-     * @throws InvalidUser If the user does not exist.
-     * @throws NullPointerException If the user is null.
+     * The method will updated the password of the userOld with the password of the userNew.
+     * @param userOld The user to update.
+     * @param userNew The new user to replace the old one.
+     * @throws InvalidUser If the userOld does not exist.
+     * @throws NullPointerException If the userOld or userNew are null.
+     * @throws RuntimeException If an error occurs while writing the newUser on file.
      */
-    public static void updateUser(User user) throws InvalidUser, NullPointerException {
+    public static void updateUser(User userOld, User userNew) throws InvalidUser, NullPointerException, RuntimeException {
 
-        if (user == null) {
-            throw new NullPointerException("User is null.");
+        if (userOld == null) {
+            throw new NullPointerException("Old user is null.");
+        }
+        if (userNew == null) {
+            throw new NullPointerException("New user is null.");
         }
 
-        if (!users.contains(user)) {
+        if (!users.contains(userOld)) {
             throw new InvalidUser("User does not exist.");
         }
 
-        users.remove(user);
-        users.add(user);
+        users.remove(userOld);
 
-        // Prevent double file writes when the method is called from DBUsersInterface.
-        // That because:
-        // loadUsers() read from file user X -> call addUser() to add it in RAM -> writeUserOnFile() write user X on file AGAIN.
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        for (StackTraceElement stackTraceElement : stackTrace) {
-            // If the current method is called from DBUsersInterface class.
-            if (stackTraceElement.getClassName().equals(DBUsersInterface.class.getName())
-            &&
-            // And the method is one of the methods of DBUsersInterface.
-            Arrays.asList(DBUsersInterface.class.getMethods()).stream().map(m -> m.getName()).toList().contains(stackTraceElement.getMethodName())) {
-                return;
-            }
-        }
-
-        // Write user on file.
+        // Write newUser on file and remove old user from file.
         try {
-            // TODO: Write the remove or update user on file in DBUsersInterface.
-            DBUsersInterface.writeUserOnFile(user);
+            DBUsersInterface.updateUserOnFile(userOld, userNew);
         } catch (RuntimeException ex) {
-            users.remove(user);
-            throw new InvalidUser("Error writing user on file.");
+            users.add(new User(userOld.getUsername(), userOld.getPassword()));
+            throw new RuntimeException("Error writing newUser on file.");
         }
 
     }
@@ -117,10 +117,11 @@ public abstract class Users {
             throw new NullPointerException("Username cannot be null.");
         }
         
+        // Search by username, password is a placeholder, cannot be null due to check in User constructor.
         User toSearch = new User(username, "placeholder");
         User result = users.ceiling(toSearch);
         if (result != null && result.getUsername().equals(username)) {
-            return result.getPassword();
+            return String.format("%s", result.getPassword());
         }
         return null;
         

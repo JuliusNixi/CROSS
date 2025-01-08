@@ -1,7 +1,7 @@
 package CROSS.Exceptions;
 
 /**
- * Exception for invalid configuration file.
+ * Exception for invalid configuration file server or client.
  * It's throwed for example when the IP or port are invalid (readed from config file) for server or client.
  * 
  * @version 1.0

@@ -5,7 +5,9 @@ import CROSS.API.JSON;
 /**
  * ResponseAndMessage is a class.
  * This class is used to represent the response of a request.
- * It's include a code and a message.
+ * It's include a response code and a message.
+ * It's extends the JSON class.
+ * It's used the ResponseCode class as core.
  * 
  * @version 1.0
  * @see ResponseCode
@@ -13,37 +15,42 @@ import CROSS.API.JSON;
  */
 public class ResponseAndMessage extends JSON {
     
-    private Integer code = null;
-    private String errorMessage = null;
+    private Integer code;
+    private String errorMessage;
 
     /**
      * Constructor of the ResponseAndMessage class.
-     * 
+     * If the errorMessage is empty, the error message is set to the name of the response content.
      * @param code The code of the response.
      * @param errorMessage The message of the response.
      * @throws NullPointerException If the code or the errorMessage are null.
      */
     public ResponseAndMessage(ResponseCode code, String errorMessage) throws NullPointerException {
         if (code == null) {
-            throw new NullPointerException("code of the response is null.");
+            throw new NullPointerException("Code of the response cannot be null.");
         }
         if (errorMessage == null) {
-            throw new NullPointerException("errorMessage of the response is null.");
+            throw new NullPointerException("Error message of the response cannot be null.");
         }
+
         this.code = code.getCode();
-        this.errorMessage = errorMessage;
+        this.errorMessage = errorMessage.trim();
+
+        // A shortcut to set the error message if it's empty.
+        if (this.errorMessage.isEmpty()) {
+            this.errorMessage = code.getResponseContent().name().replace("_", " ").toLowerCase();
+        }
     }
 
-
+    // GETTERS
     /**
      * Getter for the errorMessage of the response.
      * 
-     * @return The errorMessage of the response.
+     * @return The errorMessage of the response as a String.
      */
     public String getErrorMessage() {
-        return errorMessage;
+        return String.format("%s", this.errorMessage);
     }
-
     // NB: The type of the response is lost.
     /**
      * Getter for the code of the response.
@@ -51,7 +58,12 @@ public class ResponseAndMessage extends JSON {
      * @return The code of the response.
      */
     public Integer getResponseCode() {
-        return code;
+        return Integer.valueOf(this.code);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Code [%s] - Message [%s]", this.getResponseCode(), this.getErrorMessage());
     }
 
 }

@@ -79,9 +79,14 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
     }
 
     @Override
-    public int compareTo(SpecificPrice price) throws IllegalArgumentException  {
-        if (price.getMarket() != this.getMarket())
+    public int compareTo(SpecificPrice price) throws IllegalArgumentException, NullPointerException  {
+
+        if (price == null)
+            throw new NullPointerException("Cannot compare a SpecificPrice to null.");
+
+        if (!price.getMarket().equals(this.getMarket()))
             throw new IllegalArgumentException("Cannot compare SpecificPrices from different markets to prevent errors.");
+        
         return Integer.compare(price.getValue(), this.getValue());
     }
     

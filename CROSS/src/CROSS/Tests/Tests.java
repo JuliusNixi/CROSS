@@ -1,6 +1,5 @@
 package CROSS.Tests;
 
-import java.io.IOException;
 import java.util.Arrays;
 import CROSS.Client.Client;
 import CROSS.Client.ClientCLIThread;
@@ -40,7 +39,6 @@ import CROSS.Utils.UniqueNumber;
  * @see DBUsersInterface
  * @see Users
  * @see UniqueNumber
- * 
  */
 public abstract class Tests {
     
@@ -104,7 +102,7 @@ public abstract class Tests {
         ClientCLIThread c;
         try {
             c = Client.CLI(client);
-        }catch (RuntimeException | IOException ex) {
+        }catch (RuntimeException ex) {
             System.out.println("Test passed, blocked starting CLI before client connection.");
         }
 
@@ -115,15 +113,9 @@ public abstract class Tests {
             System.out.println("Test passed, blocked multiple client connections.");
         }
 
-        try {
-            c = Client.CLI(client);
-        }catch (IOException ex) {
-        }
-        try {
-            c = Client.CLI(client);
-        }catch (IOException ex) {
-            System.out.println("Test passed, blocked double CLI.");
-        }
+
+        c = Client.CLI(client);
+
 
         System.out.printf("Here's the client: %s.\n", client.toString());
         
@@ -276,10 +268,15 @@ public abstract class Tests {
         
         // Test user.
         System.out.println("Testing user...");
-        
-        User u = new User("testuser", "testpassword");
 
-        System.out.println("Here's a user: " + u.toString());
+        try {
+            new User("a", "password");
+        }catch (IllegalArgumentException ex) {
+            System.out.println("Test passed, blocked invalid user.");
+        }
+
+        User strangeUser = new User(" I  m\t\nUser ", "strangeUserPassword");
+        System.out.println("Here's a strange user (sanitize check): " + strangeUser.toString());
 
     }
     /**
@@ -298,7 +295,7 @@ public abstract class Tests {
         try {
             DBUsersInterface.loadUsers();
         }catch (RuntimeException ex) {
-            System.out.println("Test passed, blocked loading users from non-existing file.");
+            System.out.println("Test passed, blocked loading users from not-readed file.");
         }
 
         String pathToUsersFile = "./DB/users.json";
@@ -366,12 +363,29 @@ public abstract class Tests {
 
         System.out.println("Searching the previous added user...");
         String password = Users.getUserPassword(randomUsername);
-        System.out.printf("Here's the user found: %s.\n", new User(randomUsername, password).toString());
+        System.out.printf("Here's the user found (without line id): %s.\n", new User(randomUsername, password).toString());
 
         System.out.println("Searching a non existent user...");
         password = Users.getUserPassword("nonexistentuser");
         password = password == null ? "null" : password;
         System.out.printf("Here's the non existent user found: %s.\n", password);
+
+        System.out.println("Updating the previous added user...");
+        User newUserUpdated = new User("newusernameupdated", "newpasswordupdated");
+        User invalidUser = new User("nonexistentuser", "nonexistentpassword");
+        try {
+            Users.updateUser(invalidUser, newUserUpdated);
+        }catch (InvalidUser ex) {
+            System.out.println("Test passed, blocked updating non-existent user.");
+        }
+        try {
+            Users.updateUser(newUser, newUserUpdated);
+        }catch (InvalidUser ex) {
+        }
+
+        System.out.println("Showing new users DB...");
+        System.out.printf("Users count: %d.\nHere's the users:\n", Users.getUsersSize());
+        System.out.printf("%s", Users.toStringUsers());
 
     }
 
