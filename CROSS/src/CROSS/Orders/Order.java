@@ -135,6 +135,27 @@ public abstract class Order implements Comparable<Order> {
 
         this.price = price;
     }
+    /**
+     * Sets the id of the order.
+     * 
+     * NB: The id is normally set in the constructor automatically.
+     * This method is used in the OrderBook class to set the id of a market order to the corresponding stop order.
+     * 
+     * @param id The new id of the order.
+     * @throws NullPointerException If the id is null.
+     * @throws IllegalArgumentException If the id is negative.
+     */
+    public void setId(Integer id) throws NullPointerException, IllegalArgumentException {
+        if (id == null) {
+            throw new NullPointerException("ID cannot be null.");
+        }
+
+        if (id < 0) {
+            throw new IllegalArgumentException("ID cannot be negative.");
+        }
+
+        this.id = id;
+    }
 
     @Override
     public String toString() {
@@ -155,6 +176,7 @@ public abstract class Order implements Comparable<Order> {
     public int compareTo(Order o) {
         return this.getId().compareTo(o.getId());
     }
+
 
 }
 

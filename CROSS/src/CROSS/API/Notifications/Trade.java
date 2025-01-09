@@ -22,6 +22,7 @@ public class Trade extends CROSS.API.Requests.Orders.Limit {
     /**
      * Constructor for the Trade class.
      * 
+     * @param <O> The type of order that was traded.
      * @param order The order that was traded.
      */
     public <O extends CROSS.Orders.Order> Trade(O order) {
