@@ -1,11 +1,16 @@
 package CROSS.API.Notifications;
 
+import CROSS.Utils.Separator;
+
 /**
  * The Notification class is used to store a list of trades that need to be notified to the client.
+ * It's extend the JSON class to be able to serialize the object to JSON.
  * @version 1.0
  * @see Trade
+ * @see CROSS.API.Responses.Notify
+ * @see JSON
  */
-public class Notification {
+public class Notification extends CROSS.API.JSON {
     
     // Simple array of trades to be notified to avoid problems with JSON serialization.
     Trade[] trades;
@@ -39,9 +44,11 @@ public class Notification {
 
     @Override
     public String toString() {
-        String result = "";
+        Separator separator = new Separator("=", 5);
+        String result = separator + " " + "Notification" + " " + separator + "\n";
+        result += "Trades:\n";
         for (Trade trade : trades) {
-            result += trade.toString() + "\n";
+            result += "\t" + trade.toString() + "\n";
         }
         return result;
     }

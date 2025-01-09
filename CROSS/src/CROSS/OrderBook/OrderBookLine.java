@@ -99,7 +99,7 @@ public class OrderBookLine<O extends Order> {
 
     }
 
-    // ORDER MANAGEMENT
+    // ORDERS MANAGEMENT
     /**
      * Add an order to its corresponding line.
      * Could be a stop or a limit order.
@@ -117,7 +117,7 @@ public class OrderBookLine<O extends Order> {
         if (order == null)
             throw new NullPointerException("Order cannot be null.");
 
-        // Price check.
+        // Price checks.
         if (!order.getPrice().equals(this.linePrice))
             throw new IllegalArgumentException("Order price not match with line price.");
         if (order.getPrice().getType() != this.linePrice.getType())
@@ -224,7 +224,8 @@ public class OrderBookLine<O extends Order> {
 
         return order;
     }
-
+    
+    // ORDER EXECUTION
     /**
      * Execute a limit order on this line with a market order.
      * This method matches the ONLY THE LAST limit order with the market order.
@@ -238,7 +239,7 @@ public class OrderBookLine<O extends Order> {
      * @throws NullPointerException If the market order or the order book are null.
      * @throws IllegalArgumentException If there are some inconsistencies between the order and the line or the book (a lot of cases are possible).
      */
-    public MarketOrder executeMarketOrder(MarketOrder order, OrderBook book) {
+    public MarketOrder executeMarketOrder(MarketOrder order, OrderBook book) throws NullPointerException, IllegalArgumentException, RuntimeException {
         if (order == null) {
             throw new NullPointerException("Market order cannot be null.");
         }
@@ -280,7 +281,7 @@ public class OrderBookLine<O extends Order> {
             throw new RuntimeException("Market order price type not match with REVERSED line price type.");
         }
 
-        // Blocking stop orders execution on stop lines.
+        // Blocking orders execution on stop lines.
         if (this.lineType.getClass() != LimitOrder.class) {
             throw new RuntimeException("Line type not match with LimitOrder.");
         }
@@ -366,6 +367,63 @@ public class OrderBookLine<O extends Order> {
             return order;
         }
 
+    }
+    /**
+     * Execute a stop order on this line.
+     * 
+     * The stop order executed is the first added to the line, the last in the list, following a FIFO policy.
+     * E.g.: ORDER X -> ORDER X - 1 -> ORDER X - 2 -> ... -> ORDER X - N
+     * The executed order is X - N.
+     * 
+     * The execution is done only if the current price in the market is equal the stop order price.
+     * 
+     * The execution consist in creating a market order with the same quantity and price of the stop order executed and returning it. It's maintened also the original stop order id.
+     * 
+     * The stop order is NOT removed from the list, must be done by the caller.
+     * 
+     * It execute only the last stop order in the line.
+     * So this method is executed multiple times from the book until there are no more stop orders in the line.
+     * 
+     * If the order is the last on the line, is returned null, the order will be managed by the book to remove the line after.
+     * 
+     * @return A market order with the same quantity and price of the stop order executed, MUST BE EXECUTED BY THE BOOK, or null if the the order is the last in the line.
+     * @throws RuntimeException If the line type doesn't match with StopMarketOrder or if the line is empty or if the line market doesn't match with the stop order market.
+     * @throws IllegalArgumentException If the stop order price doesn't match with the line price or if the stop order price type doesn't match with the line price type.
+     */
+    public MarketOrder executeStopOrder() throws RuntimeException, IllegalArgumentException {
+
+        // Blocking orders execution on stop lines.
+        if (this.lineType.getClass() != StopMarketOrder.class) {
+            throw new RuntimeException("Line type not match with StopMarketOrder.");
+        }    
+
+        // Safe cast because we checked the line type before.
+        StopMarketOrder toProcess = (StopMarketOrder) extractLastOrder(false);
+
+        if (toProcess == null) {
+            // A line with no orders, MUST NOT EXIST.
+            throw new RuntimeException("Executing on line with no orders.");
+        }
+
+        // Price checks.
+        if (!toProcess.getPrice().equals(this.linePrice))
+            throw new IllegalArgumentException("Order price not match with line price.");
+        if (toProcess.getPrice().getType() != this.linePrice.getType())
+            throw new IllegalArgumentException("Order price type not match with line price type.");
+
+        // Market check.
+        if (!toProcess.getMarket().equals(this.linePrice.getMarket())) {
+            throw new RuntimeException("Market not match with line market.");
+        }
+
+        if (this.getOrdersNumber() == 1)
+            return null;
+
+        MarketOrder order = new MarketOrder(toProcess.getMarket(), toProcess.getPrice().getType(), toProcess.getQuantity(), toProcess.getUser());
+
+        order.setId(toProcess.getId());
+
+        return order;
     }
 
     // GETTERS

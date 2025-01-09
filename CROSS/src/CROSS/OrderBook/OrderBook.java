@@ -11,6 +11,7 @@ import CROSS.Types.Quantity;
 import CROSS.Types.Price.GenericPrice;
 import CROSS.Types.Price.PriceType;
 import CROSS.Types.Price.SpecificPrice;
+import CROSS.Users.User;
 import CROSS.Utils.Separator;
 
 /**
@@ -125,6 +126,7 @@ public class OrderBook extends Market {
      * @throws NullPointerException If the lastOrder or the linePrice are null.
      */
     private <O extends Order> void removeLine(SpecificPrice linePrice, O lastOrder) throws IllegalArgumentException, NullPointerException {
+    
         if (linePrice == null) {
             throw new NullPointerException("Line price cannot be null.");
         }
@@ -168,7 +170,24 @@ public class OrderBook extends Market {
 
         } else if (lastOrder instanceof StopMarketOrder) {
 
-            // TODO: This.
+            // Checking if the line exists.
+            if (!this.stopBook.containsKey(lastOrder.getPrice()))
+                throw new IllegalArgumentException("Line with this price not exists in the stop book.");
+
+            // Preventing the removal of a line with more than one order.
+            if (this.stopBook.get(lastOrder.getPrice()).getOrdersNumber() != 1)
+                throw new IllegalArgumentException("Line with this price not with only this order in the stop book.");
+            
+            // Checking if the last order is the same as the one to remove.
+            StopMarketOrder order = this.stopBook.get(lastOrder.getPrice()).extractLastOrder(false);
+            if (!order.equals(lastOrder))
+                throw new IllegalArgumentException("Order not match with the last order in the line.");
+
+            // Removing the last order.
+            this.stopBook.get(lastOrder.getPrice()).extractLastOrder(true);
+
+            // Removing the line.
+            this.stopBook.remove(lastOrder.getPrice());
             
         } else {
             throw new IllegalArgumentException("Order type not supported.");
@@ -297,18 +316,22 @@ public class OrderBook extends Market {
             if (bestAsk == null) {
                 // First ask line.
                 super.setActualPrices(linePriceAdded, super.getActualPriceBid());
+                this.triggerStopOrders();
             } else {
                 if (linePriceAdded.getValue() > bestAsk.getValue()) {
                     super.setActualPrices(linePriceAdded, super.getActualPriceBid());
+                    this.triggerStopOrders();
                 }
             }
         } else if (linePriceAdded.getType() == PriceType.BID) {
             if (bestBid == null) {
                 // First bid line.
                 super.setActualPrices(super.getActualPriceAsk(), linePriceAdded);
+                this.triggerStopOrders();
             } else {
                 if (linePriceAdded.getValue() < bestBid.getValue()) {
                     super.setActualPrices(super.getActualPriceAsk(), linePriceAdded);
+                    this.triggerStopOrders();
                 }
             }
         }
@@ -356,6 +379,7 @@ public class OrderBook extends Market {
                     }
                 }
                 super.setActualPrices(newBestAsk, super.getActualPriceBid());
+                this.triggerStopOrders();
             }
         } else if (linePriceRemove.getType() == PriceType.BID) {
             if (bestBid.getValue() == linePriceRemove.getValue()) {
@@ -370,8 +394,108 @@ public class OrderBook extends Market {
                     }
                 }
                 super.setActualPrices(super.getActualPriceAsk(), newBestBid);
+                this.triggerStopOrders();
             }
         }
+    }
+    /**
+     * It's private because it's used only by the class.
+     * 
+     * This method MUST be called after the actual prices are updated.
+     * 
+     * It's execute all the stop orders (if no fail occurs) that are in the stop book on the new actual prices lines.
+     */
+    private void triggerStopOrders() {
+
+        SpecificPrice bestAsk = super.getActualPriceAsk();
+        SpecificPrice bestBid = super.getActualPriceBid();
+
+        OrderBookLine<StopMarketOrder> lineAsk = stopBook.get(bestAsk);
+        OrderBookLine<StopMarketOrder> lineBid = stopBook.get(bestBid);
+
+        TreeMap<User, LinkedList<Order>> executedOrders = new TreeMap<User, LinkedList<Order>>();
+
+        while (true) {
+
+            MarketOrder order = null;
+            Boolean executed = null;
+            if (lineAsk != null) {
+                order = lineAsk.executeStopOrder();
+
+                if (order == null) {
+                    // Last order on the line.
+                    StopMarketOrder stop = lineAsk.extractLastOrder(false);
+
+                    order = new MarketOrder(stop.getMarket(), stop.getPrice().getType(), stop.getQuantity(), stop.getUser());
+
+                    order.setId(stop.getId());
+
+                    this.removeLine(bestAsk, stop);
+
+                    lineAsk = null;
+                }else {
+                    // Removing the order from the line.
+                    lineAsk.extractLastOrder(true);
+                }
+
+                executed = this.executeOrder(order);
+
+                if (executed) {
+                    StopMarketOrder stop =  new StopMarketOrder(order.getMarket(), order.getPrice(), order.getQuantity(), order.getUser());
+                    stop.setId(order.getId());
+                    if (executedOrders.containsKey(order.getUser())) {
+                        executedOrders.get(order.getUser()).add(stop);
+                    }else {
+                        LinkedList<Order> orders = new LinkedList<Order>();
+                        orders.add(stop);
+                        executedOrders.put(order.getUser(), orders);
+                    }
+                    for (User u : executedOrders.keySet()) {
+                        u.notifyTrades(executedOrders.get(u));
+                    }
+                }
+            }
+            if (lineBid != null) {
+                // Cannot be null.
+                order = lineBid.executeStopOrder();
+
+                if (order == null) {
+                    // Last order on the line.
+                    StopMarketOrder stop = lineBid.extractLastOrder(false);
+
+                    order = new MarketOrder(stop.getMarket(), stop.getPrice().getType(), stop.getQuantity(), stop.getUser());
+
+                    order.setId(stop.getId());
+
+                    this.removeLine(bestBid, stop);
+
+                    lineBid = null;
+                }else {
+                    // Removing the order from the line.
+                    lineBid.extractLastOrder(true);
+                }
+
+                executed = this.executeOrder(order);
+                if (executed) {
+                    StopMarketOrder stop =  new StopMarketOrder(order.getMarket(), order.getPrice(), order.getQuantity(), order.getUser());
+                    stop.setId(order.getId());
+                    if (executedOrders.containsKey(order.getUser())) {
+                        executedOrders.get(order.getUser()).add(stop);
+                    }else {
+                        LinkedList<Order> orders = new LinkedList<Order>();
+                        orders.add(stop);
+                        executedOrders.put(order.getUser(), orders);
+                    }
+                    for (User u : executedOrders.keySet()) {
+                        u.notifyTrades(executedOrders.get(u));
+                    }
+                }            }
+
+            if (lineAsk == null && lineBid == null) 
+                break;
+
+        }
+
     }
 
     // ORDERS EXECUTION
@@ -393,7 +517,7 @@ public class OrderBook extends Market {
      * @throws NullPointerException If the order is null.
      */
     public Boolean executeOrder(MarketOrder order) throws NullPointerException {
-        // TODO: Add notification system.
+
         if (order == null) {
             throw new NullPointerException("MarketOrder cannot be null.");
         }
@@ -477,9 +601,10 @@ public class OrderBook extends Market {
      * @param order The limit order to execute.
      * @throws NullPointerException If the order is null.
      * @throws IllegalArgumentException If the order market not match with order book market.
+     * @return True if the order is executed, false otherwise.
      */
-    public void executeOrder(LimitOrder order) throws NullPointerException, IllegalArgumentException {
-        // TODO: Add notification system.
+    public Boolean executeOrder(LimitOrder order) throws NullPointerException, IllegalArgumentException {
+
         if (order == null) {
             throw new NullPointerException("LimitOrder cannot be null.");
         }
@@ -503,6 +628,8 @@ public class OrderBook extends Market {
         // Adding the order to the line.
         limitLine.addOrder(order);
 
+        return true;
+
     } 
     /**
      * Execute a stop order.
@@ -511,10 +638,32 @@ public class OrderBook extends Market {
      * @param order The stop order to execute.
      * @throws NullPointerException If the order is null.
      * @throws IllegalArgumentException If the order market not match with order book market.
+     * @return True if the order is executed, false otherwise.
      */
-    public void executeOrder(StopMarketOrder order) throws NullPointerException, IllegalArgumentException {
+    public Boolean executeOrder(StopMarketOrder order) throws NullPointerException, IllegalArgumentException {
 
-        // TODO: Implement the executeOrder STOP method.
+        if (order == null) {
+            throw new NullPointerException("StopMarketOrder cannot be null.");
+        }
+
+        // Market checks.
+        if (!order.getMarket().equals(this)) {
+            throw new IllegalArgumentException("Order market not match with order book market.");
+        }
+
+        SpecificPrice price = order.getPrice();
+        OrderBookLine<StopMarketOrder> stopLine = stopBook.get(price);
+
+        // New price line creation.
+        if (stopLine == null) {
+            this.addLine(price, order);
+        }
+
+        // A check if the order is already present in the list is omitted, because a O(n) operation would be needed.
+        // Adding the order to the line.
+        stopLine.addOrder(order);
+
+        return true;
 
     }
 
