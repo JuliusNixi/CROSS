@@ -4,4 +4,3 @@ In this way i can use arbitrary Java objects and decide what exponse and in whic
 
 So these classes are interfaces between Java objects to create the JSON strings to be used for requests/responses by using the Google gson lib.
 
-The responses are from the server. The requests are from the client.

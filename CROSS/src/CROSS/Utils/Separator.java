@@ -9,49 +9,50 @@ public class Separator {
 
     private final static Integer DEFAULT_LENGTH = 42;
 
-    // Will contain the final built separator.
+    // Will contain the final created separator.
     private String separator;
 
-    // A separator could be a sequence of characters.
-    private String character;
-    private Integer length;
+    // A separator could be a sequence of characters, for that is String.
+    private String characters;
     
     /**
      * Constructor with two parameters.
      * 
-     * @param character The sequence of characters to be repeated.
+     * @param characters The sequence of characters to be repeated.
      * @param length The number of times the sequence of characters is repeated.
      * 
      * @throws NullPointerException If character or length are null.
      * @throws IllegalArgumentException If length is less than or equal to 0.
      */
-    public Separator(String character, Integer length) throws NullPointerException, IllegalArgumentException {
-        if (character == null) {
+    public Separator(String characters, Integer length) throws NullPointerException, IllegalArgumentException {
+        // Null checks.
+        if (characters == null) {
             throw new NullPointerException("Character cannot be null.");
         }
         if (length == null) {
             throw new NullPointerException("Length cannot be null.");
         }
 
+        // Length check.
         if (length <= 0) {
             throw new IllegalArgumentException("Length must be greater than 0.");
         }
 
+        // Create the separator.
         separator = "";
         for (int i = 0; i < length; i++) {
-            separator += character;
+            separator += characters;
         }
 
-        this.character = character;
-        this.length = length;
+        this.characters = characters;
     }
     /**
      * Constructor with one parameter. It uses the default length.
      * 
-     * @param character The character to be repeated.
+     * @param characters The characters to be repeated.
      */
-    public Separator(String character) {
-        this(character, DEFAULT_LENGTH);
+    public Separator(String characters) {
+        this(characters, DEFAULT_LENGTH);
     }
 
     /**
@@ -59,21 +60,14 @@ public class Separator {
      * @return The default length of the separator.
      */
     public static Integer getDefaultLength() {
-        return DEFAULT_LENGTH;
+        return Integer.valueOf(DEFAULT_LENGTH);
     }
     /**
-     * Returns the character of the separator.
-     * @return The character of the separator.
+     * Returns the characters of the separator.
+     * @return The characters of the separator.
      */
-    public String getCharacter() {
-        return String.format("%s", this.character);
-    }
-    /**
-     * Returns the length of the separator.
-     * @return The length of the separator.
-     */
-    public Integer getLength() {
-        return Integer.valueOf(this.length);
+    public String getCharacters() {
+        return String.format("%s", this.characters);
     }
     /**
      * Returns the separator.

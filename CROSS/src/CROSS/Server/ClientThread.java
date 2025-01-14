@@ -5,6 +5,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Scanner;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import CROSS.API.Responses.ResponseCode.ResponseType;
 
 /**
  * This class rapresent a thread that will handle a specific client.
@@ -30,6 +34,7 @@ public class ClientThread implements Runnable {
      * @throws NullPointerException If the socket is null.
      */
     public ClientThread(Socket socket) throws NullPointerException {
+        // Null check.
         if (socket == null)
             throw new NullPointerException("Socket cannot be null.");
 
@@ -78,23 +83,66 @@ public class ClientThread implements Runnable {
             // Output from our server to extern.
             // UTF-8 is the default encoding.
             InputStream in = socket.getInputStream();
+            @SuppressWarnings("unused")
             OutputStream out = socket.getOutputStream();
 
             Scanner scanner = new Scanner(in);
 
             while (true) {
 
+                // JSONs sent are always '\n' terminated.
                 String data = scanner.nextLine();
 
                 // TODO: Read API JSON requests from the client's socket.
 
-                // TODO: Remove this.
-                if ("42"==data && out.toString() == "a") break;
+                ResponseType response = null;
+                try {
+                    // Getting received operation.
+                    String operationDetected = null;
+                    JsonObject jsonObject = JsonParser.parseString(data).getAsJsonObject();
+                    operationDetected = jsonObject.get("operation").getAsString();
+                    operationDetected = operationDetected.toLowerCase().trim();
+
+                    // Checking if the operation is supported.
+                    for (ResponseType responseCurrent : ResponseType.values()) {
+                        String rstr = responseCurrent.name().toLowerCase().replaceAll("_", "");
+                        if (operationDetected.equals(rstr)) {
+                            response = responseCurrent;
+                            break;
+                        }
+                    }
+
+                    if (response == null) {
+                        throw new UnsupportedOperationException("Operation not supported.");
+                    }
+
+                }catch (JsonParseException | UnsupportedOperationException | IllegalStateException ex) {
+                    // TODO: Error handling.
+                }
+
+                Boolean exit = false;
+                switch (response) {
+                    case REGISTER:
+                    case UPDATE_CREDENTIALS:
+                    case LOGIN:
+                    case LOGOUT:
+                    case CANCEL_ORDER:
+                    case SERVER_FULL:
+                    case CLOSED_TRADES:
+                    case GET_PRICE_HISTORY:
+                    case EXIT:
+                        exit = true;
+                        break;
+                }
+
+                if (exit) break;
                 
-            }
+            } // End While.
 
             // Clean up.
             scanner.close();
+
+            // TODO: Finish.
 
         } catch (IOException e) {
                 // TODO: Error handling.
