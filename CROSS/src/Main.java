@@ -6,8 +6,9 @@ public class Main {
 
         try {
             Tests.AllTests();
+            System.exit(0);
         }catch (InterruptedException ex){
-            // This should never happens.
+            // This should never happens, needed for the Thread.sleep() in the tests.
             System.err.println("Interrupted exception in main.");
             ex.printStackTrace();
             System.exit(-1);

@@ -20,6 +20,10 @@ public class ResponseCode {
         LOGIN,
         LOGOUT,
         CANCEL_ORDER,
+        SERVER_FULL,
+        CLOSED_TRADES,
+        GET_PRICE_HISTORY,
+        EXIT,
     }
 
     // Contains ALL the possible responses regardless of the type.
@@ -34,7 +38,9 @@ public class ResponseCode {
         USER_CURRENTLY_LOGGED_IN,
         USER_ALREADY_LOGGED_IN,
         INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST_OR_USER_NOT_LOGGED_OR_OTHER_ERROR,
-        ORDER_DOES_NOT_EXIST_OR_BELONGS_TO_DIFFERENT_USER_OR_HAS_ALREADY_BEEN_FINALIZED_OR_OTHER_ERROR_CASES
+        ORDER_DOES_NOT_EXIST_OR_BELONGS_TO_DIFFERENT_USER_OR_HAS_ALREADY_BEEN_FINALIZED_OR_OTHER_ERROR_CASES,
+        SERVER_FULL,
+        EXIT
     }
 
     // Binding the response code and its content to the type of the response.
@@ -125,6 +131,34 @@ public class ResponseCode {
             return code;
         }
     }
+    private static enum serverFull {
+        SERVER_FULL(100);
+
+        private final int code;
+
+        serverFull(int code) {
+            // Checking of the code is not necessary, as it is an enum.
+            // It's done by the compiler.
+            this.code = code;
+        }
+        public int getCode() {
+            return code;
+        }   
+    }
+    private static enum exit {
+        EXIT(100);
+
+        private final int code;
+
+        exit(int code) {
+            // Checking of the code is not necessary, as it is an enum.
+            // It's done by the compiler.
+            this.code = code;
+        }
+        public int getCode() {
+            return code;
+        }   
+    }
 
     private ResponseType type;
     private AllResponses responseContent;
@@ -213,6 +247,12 @@ public class ResponseCode {
                 break;
             case CANCEL_ORDER:
                 i = cancelOrder.valueOf(responseContent.name()).getCode();
+                break;
+            case SERVER_FULL:
+                i = serverFull.valueOf(responseContent.name()).getCode();
+                break;
+            case EXIT:
+                i = exit.valueOf(responseContent.name()).getCode();
                 break;
             default:
                 i = -1;

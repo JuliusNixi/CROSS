@@ -1,11 +1,12 @@
 package CROSS.Client;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Scanner;
 
 /**
  * This class is responsible for handling the client CLI.
- * It's a thread.
+ * It's a thread. Can be started with the start() method from the Client class.
  * @version 1.0
  * @see Client
  * @see Thread
@@ -19,16 +20,14 @@ public class ClientCLIThread extends Thread {
      * Constructor of the class.
      * @param client The client object that will be used with the CLI.
      * @throws NullPointerException If the client object is null.
-     * @throws RuntimeException If the client's socket is null.
      */
-    public ClientCLIThread(Client client) throws NullPointerException, RuntimeException {
+    public ClientCLIThread(Client client) throws NullPointerException {
+        // Null check.
         if (client == null)
             throw new NullPointerException("The client object can't be null.");
 
-        if (client.getSocket() == null)
-            throw new RuntimeException("The client's socket in the CLI cannot be null.");
-
         this.client = client;
+
     }
     
     @Override
@@ -41,6 +40,7 @@ public class ClientCLIThread extends Thread {
 
             String command = scanner.nextLine().toLowerCase().trim();
 
+            // Also shutdown the client (not only the CLI).
             if (command.equals("exit") || command.equals("quit") || command.equals("q")) {
                 System.out.println("Exiting the client CLI.");
                 break;
@@ -67,26 +67,42 @@ public class ClientCLIThread extends Thread {
                 continue;
             }
 
-            String jsonToSend = ClientActionsUtils.getJSONRequest(client, action, args);
+            String jsonToSend = null;
+            synchronized (this.client) {
+                jsonToSend = ClientActionsUtils.getJSONRequest(client, action, args);
+            }
             if (jsonToSend == null) {
                 // This is not a critical error, just a invalid command.
-                System.out.println("Error processing your request.");
+                System.out.println("Error processing your request, please check it and try again.");
                 continue;
             }
 
             try {
                 this.client.sendJSONToServer(jsonToSend);
-            } catch (RuntimeException ex) {
+            } catch (Exception ex) {
                 // This is a critical error.
-                System.err.println("Error sending the request to the server.");
-                // TODO: Error handling.
-                break;
+                System.err.println("Error sending the request to the server. Your request will be ignored. Use 'exit' to close the client.");
+                continue;
             }
 
         } // End while.
 
-        // TODO: Clean up.
+        // Exiting...
+
         scanner.close();
+
+        try {
+            synchronized (this.client) {
+                this.client.disconnectClient();
+            }
+        } catch (IOException ex) {
+            System.err.println("Error disconnecting the client: " + ex.getMessage());
+        }
+
+        // The thread using the Client class will be stopped, since disconnectClient() will close the socket.
+
+        // Terminating this thread.
+        return;
         
     }
 

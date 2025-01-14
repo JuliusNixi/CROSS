@@ -1,8 +1,11 @@
 package CROSS.Tests;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import CROSS.Client.Client;
 import CROSS.Client.ClientCLIThread;
+import CROSS.Exceptions.InvalidConfig;
 import CROSS.Exceptions.InvalidUser;
 import CROSS.Orders.LimitOrder;
 import CROSS.Server.AcceptThread;
@@ -18,10 +21,9 @@ import CROSS.Users.Users;
 import CROSS.Utils.Separator;
 import CROSS.Utils.UniqueNumber;
 
-// TODO: Generate Javadoc.
 /**
  * This class is abstract, because it only contains some static methods.
- * These methods are used to perform some simple tests on the code.
+ * These methods are used to perform some tests on the code hoping to avoid bugs.
  * @version 1.0
  * @see Server
  * @see AcceptThread
@@ -46,13 +48,12 @@ public abstract class Tests {
     /**
      * To test the server.
      */
-    public static void TestServer() {
+    public static void TestServer() throws NullPointerException, InvalidConfig, FileNotFoundException, IOException, Exception{
 
         // Test server.
         System.out.println("Testing server...");
 
         String pathToConfigPropertiesFile = "./Configs/server-config.properties";
-
         Server server = new Server(pathToConfigPropertiesFile);
 
         try {
@@ -62,6 +63,7 @@ public abstract class Tests {
         }
 
         server.startServer();
+
         try {
             server.startServer();
         }catch (RuntimeException ex) {
@@ -89,7 +91,6 @@ public abstract class Tests {
         System.out.println("Testing client...");
 
         String pathToConfigPropertiesFile = "./Configs/client-config.properties";
-
         Client client = new Client(pathToConfigPropertiesFile);
 
         try {
@@ -389,16 +390,24 @@ public abstract class Tests {
 
     }
 
+    /**
+     * To perform all the tests.
+     */
     public static void AllTests() throws InterruptedException {
 
         Separator separator = new Separator("-");
 
         System.out.println(separator);
 
-        TestServer();
-        // USED ONLY TO SEE THE DEBUG PRINTS IN THE CORRECT ORDER!
-        Thread.sleep(1000 * 1);
-        System.out.println(separator);
+        try {
+            TestServer();
+            // USED ONLY TO SEE THE DEBUG PRINTS IN THE CORRECT ORDER!
+            Thread.sleep(1000 * 1);
+            System.out.println(separator);
+        }catch (Exception ex) {
+            System.out.println("TestServer() failed with exception: " + ex.getMessage());
+            System.exit(-1);
+        }
 
         TestClient();
         // USED ONLY TO SEE THE DEBUG PRINTS IN THE CORRECT ORDER!
@@ -450,7 +459,7 @@ public abstract class Tests {
         */
 
         Thread.sleep(1000 * 5);
-        System.exit(0);
+
 
     }
 

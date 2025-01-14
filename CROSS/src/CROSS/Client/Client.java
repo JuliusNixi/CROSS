@@ -11,6 +11,11 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import java.net.Socket;
 import java.net.SocketException;
+
+import CROSS.API.Responses.ResponseAndMessage;
+import CROSS.API.Responses.ResponseCode;
+import CROSS.API.Responses.ResponseCode.AllResponses;
+import CROSS.API.Responses.ResponseCode.ResponseType;
 import CROSS.Exceptions.InvalidConfig;
 import CROSS.Users.User;
 
@@ -34,6 +39,7 @@ public class Client {
 
     private OutputStream outputStream = null;
 
+    // Also checked server side.
     private User userLogged = null;
 
     /**
@@ -41,8 +47,12 @@ public class Client {
      * 
      * @param pathToConfigPropertiesFile Path to the client config file.
      * @throws NullPointerException If the path to the client config file is null.
+     * @throws InvalidConfig If the server's IP or port are invalid
+     * @throws FileNotFoundException If the client config file is not found.
+     * @throws IOException If there is an error reading the client config file.
+     * @throws Exception If there is an unknown error.
      */
-    public Client(String pathToConfigPropertiesFile) throws NullPointerException {
+    public Client(String pathToConfigPropertiesFile) throws NullPointerException, InvalidConfig, FileNotFoundException, IOException, Exception {
 
         if (pathToConfigPropertiesFile == null) {
             throw new NullPointerException("Path to client config file cannot be null.");
@@ -60,60 +70,63 @@ public class Client {
             String port = props.getProperty("server_port");
 
             if (server == null || port == null) {
-                throw new InvalidConfig("Invalid server IP or server port.");
+                throw new InvalidConfig("Invalid server IP or port to connect to.");
             }
 
-            // Parsing IP and port.
+            // Parsing port.
             this.serverPort = Integer.parseInt(port);
             if (serverPort < 0 || serverPort > 65535) {
-                throw new InvalidConfig("Invalid port number.");
+                throw new InvalidConfig("Invalid port number to connect to.");
             }
+
+            // Parsing IP.
             this.serverAddress = InetAddress.getByName(server);
 
             this.pathToConfigPropertiesFile = pathToConfigPropertiesFile;
 
         // Throwed by getByName.
         }catch (UnknownHostException ex) {
-            // TODO: Error handling.
+            throw new InvalidConfig("Invalid server IP to connect to.");
         }
 
         // Throwed by FileReader.
         catch (FileNotFoundException ex) {
-            // TODO: Error handling.
+            throw new FileNotFoundException("Client config file not found.");
         }
 
         // parseInt exception.
         catch (NumberFormatException ex) {
-            // TODO: Error handling.
+            throw new InvalidConfig("Invalid port number to connect to.");
         }
         
         // Throwed by Properties.load().
-        catch (IllegalArgumentException ex) {
-            // TODO: Error handling.
-        } catch (IOException ex) {
-            // TODO: Error handling.
+        catch (IOException ex) {
+            throw new IOException("Error reading client config file.");
         }
-        catch (NullPointerException ex) {
-            // TODO: Error handling.
-        } 
 
         // InvalidConfig exception.
         catch (InvalidConfig ex) {
-            // TODO: Error handling.
+            // Forward the exception.
+            throw new InvalidConfig(ex.getMessage());
         }
 
         // Generic exception.
         catch (Exception ex) {
-            // TODO: Error handling.
+            throw new Exception("Unknown error in client creation.");
         }
 
     }
-    
+  
     /**
      * Connects the client to the server.
      * @throws RuntimeException If the client is already connected.
+     * @throws NullPointerException If the server address is null.
+     * @throws IllegalArgumentException If the arguments are invalid.
+     * @throws SocketException If there is an error with the socket.
+     * @throws IOException If there is an I/O error.
+     * @throws Exception If there is an unknown error.
      */
-    public void connectClient() throws RuntimeException {
+    public void connectClient() throws RuntimeException, NullPointerException, IllegalArgumentException, SocketException, IOException, Exception {
 
         if (this.socket != null) {
             throw new RuntimeException("Client already connected.");
@@ -121,20 +134,89 @@ public class Client {
 
         try {
             this.socket = new Socket(serverAddress, serverPort);
+
             // 10 seconds timeout.
             socket.setSoTimeout(10 * 1000);
+
             this.outputStream = socket.getOutputStream();
+
             System.out.println("Client connected succesfully!");
         } catch (NullPointerException ex) {
-            // TODO: Error handling.
+            throw new RuntimeException("Server address to connect null.");
+
         } catch (IllegalArgumentException ex) {
-            // TODO: Error handling.
+            throw new IllegalArgumentException("Invalid arguments in client connection.");
+
         } catch (SocketException ex) {
-            // TODO: Error handling.
+            try {
+                if (this.socket != null) {
+                    this.socket.close();
+                }
+            } catch (IOException ex2) {
+                throw new IOException("Error closing the socket with the server.");
+            }
+            throw new SocketException("Error with the to server socket.");
         } catch (IOException ex) {
-            // TODO: Error handling.
+            try {
+                if (this.socket != null) {
+                    this.socket.close();
+                }
+            } catch (IOException ex2) {
+                throw new IOException("Error closing the socket with the server.");
+            }
+            throw new IOException("I/O error connecting to the server.");
         } catch (Exception ex) {
-            // TODO: Error handling.
+            try {
+                if (this.socket != null) {
+                    this.socket.close();
+                }
+            } catch (IOException ex2) {
+                throw new IOException("Error closing the socket with the server.");
+            }
+            throw new Exception("Unknown error in client connection.");
+
+        }
+
+    }
+    /**
+     * Disconnects the client from the server.
+     * 
+     * It's a synchronized method to avoid multiple disconnections at the same time.
+     * E.g: The main thread and the CLI thread.
+     * 
+     * @throws RuntimeException If the client is already disconnected.
+     * @throws IOException If there is an I/O error.
+     */
+    public synchronized void disconnectClient() throws RuntimeException, IOException {
+
+        // Already not connected check.
+        if (this.socket == null) {
+            throw new RuntimeException("Client already not connected.");
+        }
+
+        try {
+            // Create the response.
+            AllResponses responseContent = AllResponses.EXIT;
+            ResponseType responseType = ResponseType.EXIT;
+            ResponseCode responseCode = new ResponseCode(responseType, responseContent);
+            ResponseAndMessage response = new ResponseAndMessage(responseCode, "Client disconnection...");
+            String json = response.toJSON();
+
+            // Send the response.
+            this.outputStream.write(json.getBytes());
+            this.outputStream.flush();
+
+            // Close the socket.
+            this.socket.close();
+            this.socket = null;
+
+            // Close the output stream.
+            this.outputStream.close();
+            this.outputStream = null;
+
+            System.out.println("Client disconnected succesfully!");
+        } catch (IOException ex) {
+            throw new IOException("Error disconnecting the client.");
         }
 
     }
@@ -143,8 +225,9 @@ public class Client {
     /**
      * Command Line Interface.
      * Static, I cannot have multiple instances of the CLI.
+     * 
      * Returns the CLI thread.
-     * The check for the not null client's socket is performed inside the ClientCLIThread constructor.
+     * 
      * @param client The client to start the CLI for.
      * @return ClientCLIThread, the CLI thread.
      * @throws RuntimeException If the client's socket is null or the CLI is already started.
@@ -157,7 +240,11 @@ public class Client {
             throw new NullPointerException("Client cannot be null.");
         }
 
-        // Start the CLI.
+        if (client.getSocket() == null) {
+            throw new RuntimeException("Client's socket cannot be null. Call connectClient() before.");
+        }
+
+        // Check already started CLI.
         if (Client.clientCLI != null) {
             throw new RuntimeException("CLI already started.");
         }
@@ -220,6 +307,7 @@ public class Client {
      * @return User rapresenting the logged user or null if no user is logged.
      */
     public User getLoggedUser() {
+        // Null check.
         if (this.userLogged == null) {
             return null;
         }
@@ -232,13 +320,21 @@ public class Client {
      * Set the user logged.
      * @param userLogged The logged user.
      * @throws NullPointerException If the logged user is null.
+     * @throws RuntimeException If the output stream is null.
      */
-    public void setLoggedUser(User userLogged) throws NullPointerException {
+    public void setLoggedUser(User userLogged) throws NullPointerException, RuntimeException {
+        // Null check.
         if (userLogged == null) {
             throw new NullPointerException("User logged cannot be null.");
         }
 
-        this.userLogged = userLogged;
+        // No output stream check.
+        if (this.outputStream == null) {
+            throw new RuntimeException("Output stream cannot be null. Call connectClient() before.");
+        }
+
+        // Syncronized no needed, since username and password cannot be changed.
+        this.userLogged = new User(userLogged.getUsername(), userLogged.getPassword());
     }
 
     @Override
@@ -252,15 +348,19 @@ public class Client {
      * @param json The JSON to send to the server.
      * @throws NullPointerException If the json is null.
      * @throws RuntimeException If the outputStream is null.
+     * @throws IOException If there is an error sending the JSON to the server.
+     * @throws Exception If there is an unknown error.
      */
-    public void sendJSONToServer(String json) throws NullPointerException, RuntimeException {
+    public void sendJSONToServer(String json) throws NullPointerException, RuntimeException, IOException, Exception {
 
+        // No output stream check.
         if (this.outputStream == null) {
             throw new RuntimeException("Output stream cannot be null. Call connectClient() before.");
         }
 
+        // Null check.
         if (json == null) 
-            throw new NullPointerException("json cannot be null.");
+            throw new NullPointerException("JSON to send cannot be null.");
 
         try {
             // Buffered to optimize the performance.
@@ -268,9 +368,9 @@ public class Client {
             outputStreamBuff.write(json.getBytes());
             outputStreamBuff.flush();
         } catch (IOException ex) {
-            // TODO: Error handling.
+            throw new IOException("Error sending JSON to the server.");
         } catch (Exception ex) {
-            // TODO: Error handling.
+            throw new Exception("Unknown error sending JSON to the server.");
         }
 
     }
