@@ -1,5 +1,7 @@
 package CROSS.API.Requests.Orders;
 
+import CROSS.API.Responses.ResponseCode.ResponseType;
+
 /**
  * Stop is a class that extends Generic and is used to submit a stop order.
  * It is used to represent the request that is about the order's data.
@@ -21,6 +23,8 @@ public class Stop extends Generic {
      */
     public <O extends CROSS.Orders.Order> Stop(O order) {
         super(order);
+
+        super.setOperation(ResponseType.INSERT_STOP_ORDER);
         
         this.price = order.getPrice().getValue();
     }

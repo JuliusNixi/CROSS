@@ -1,2 +1,2 @@
-The assignment folder contains the various versions of the projects requirements.
-The report folder contains a summary of how I implemented it.
+The assignment folder contains the various versions of the project's requirements given by the teacher.
+The report folder, instead, contains a summary written by me, of how I implemented it.

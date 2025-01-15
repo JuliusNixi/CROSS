@@ -199,7 +199,7 @@ public class User implements Comparable<User> {
             }
             notification.addTrade(trade);
         }
-        String message = notification.toJSON();
+        String message = notification.toJSON(true);
         byte[] bytes = message.getBytes();
 
         // Packet.

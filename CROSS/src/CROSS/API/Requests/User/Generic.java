@@ -37,6 +37,8 @@ public abstract class Generic extends JSON {
             throw new NullPointerException("User cannot be null.");
         }
 
+        super(null);
+
         this.username = user.getUsername();
     }
 

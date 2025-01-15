@@ -15,42 +15,72 @@ import CROSS.API.Responses.ResponseCode.ResponseType;
  */
 public abstract class JSON {
     
-    private final ResponseType operation;
+    private ResponseType operation;
 
+    /**
+     * Constructor of the class.
+     * 
+     * @param operation The operation of the JSON object. Could be null to handle the generic classes.
+     */
     public JSON(ResponseType operation) {
-
-        // Null check.
-        if (operation == null)
-            throw new NullPointerException("Operation cannot be null.");
 
         this.operation = operation;
         
     }
 
+    public void setOperation(ResponseType operation) {
+
+        if (operation == null) {
+            throw new NullPointerException("The operation cannot be null.");
+        }
+
+        this.operation = operation;
+
+    }
+
+    public ResponseType getOperation() {
+
+        return ResponseType.valueOf(this.operation.name());
+
+    }
+
     /**
-     * Method that converts the object to a JSON string.
+     * Method that converts the object itself to a JSON string.
      * 
      * @return The JSON string of the object.
      */
-    public String toJSON() {
+    public String toJSON(Boolean serverSender) {
+
+        if (this.operation == null) {
+            throw new NullPointerException("The operation cannot be null.");
+        }
+
+        if (serverSender == null) {
+            throw new NullPointerException("The serverSender cannot be null.");
+        }
 
         Gson gson = new Gson();
-        JsonObject json = new JsonObject();
+        if (serverSender == false) {
+            JsonObject json = new JsonObject();
 
-        // Main object preparation.
-        json.addProperty("operation", this.operation.toString());
-        json.addProperty("values", gson.toJson(this));
-        json.remove("values");
+            // Main object preparation.
+            json.addProperty("operation", this.operation.toString());
+            json.addProperty("values", gson.toJson(this));
 
-        // Internal object preparation.
-        JsonObject internal = json.getAsJsonObject("values");
-        internal.remove("operation");
+            // Internal object preparation.
+            JsonObject internal = json.getAsJsonObject("values");
+            internal.remove("operation");
 
-        // Final main object restore.
-        json.add("values", internal);
+            // Final main object restore.
+            json.remove("values");
+            json.add("values", internal);
 
-        return json.toString().replace("\n", "").replace("\r", "").replace("\t", "").trim() + "\n";
+            return json.toString().replace("\n", "").replace("\r", "").replace("\t", "").trim() + "\n";
+        } else {
 
+            return gson.toJson(this).replace("\n", "").replace("\r", "").replace("\t", "").trim() + "\n";
+
+        }
     }
 
 }

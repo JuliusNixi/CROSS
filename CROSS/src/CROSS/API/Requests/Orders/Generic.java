@@ -38,6 +38,8 @@ public abstract class Generic extends JSON {
             throw new NullPointerException("The order cannot be null.");
         }
         
+        super(null);
+
         this.size = order.getQuantity().getQuantity();
         this.type = order.getPrice().getType().name().toLowerCase();
     }

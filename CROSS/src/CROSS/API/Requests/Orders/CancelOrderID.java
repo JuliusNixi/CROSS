@@ -1,6 +1,7 @@
 package CROSS.API.Requests.Orders;
 
 import CROSS.API.JSON;
+import CROSS.API.Responses.ResponseCode.ResponseType;
 
 /**
  * CancelOrderID is a class that extends JSON and is used to cancel an order by its id.
@@ -28,6 +29,8 @@ public class CancelOrderID extends JSON {
             throw new IllegalArgumentException("Order cannot be null.");
         }
 
+        super(ResponseType.CANCEL_ORDER);
+
         this.orderId = order.getId();
     }
     /**
@@ -46,6 +49,8 @@ public class CancelOrderID extends JSON {
             throw new IllegalArgumentException("Order ID cannot be negative.");
         }
         
+        super(ResponseType.CANCEL_ORDER);
+
         this.orderId = orderId;
     }
 

@@ -1,5 +1,8 @@
 package CROSS.API.Responses;
 
+import java.util.Arrays;
+import java.util.LinkedList;
+
 /**
  * ResponseCode is a class, it contains some enums.
  * These are used to represent the response status with its code (and its content) of a response to a request.
@@ -15,15 +18,39 @@ public class ResponseCode {
 
     // The type of the response.
     public enum ResponseType {
+        // As described in the assignment.
         REGISTER,
         UPDATE_CREDENTIALS,
         LOGIN,
         LOGOUT,
+        INSERT_LIMIT_ORDER,
+        INSERT_MARKET_ORDER,
+        INSERT_STOP_ORDER,
         CANCEL_ORDER,
-        SERVER_FULL,
         CLOSED_TRADES,
         GET_PRICE_HISTORY,
+
+        // Added by me.
+        SERVER_FULL,
         EXIT,
+        INVALID_REQUEST,
+        ORDER_INFO;
+
+        @Override
+        public String toString() {
+
+            String operation = this.name();
+            operation = operation.toLowerCase().replaceAll("_", " ");
+            LinkedList<String> list = new LinkedList<>(Arrays.asList(operation.split(" ")));
+            for (int i = 0; i < list.size(); i++) {
+                list.set(i, list.get(i).substring(0, 1).toUpperCase() + list.get(i).substring(1));
+            }
+            operation = String.join("", list);
+            operation = operation.substring(0, 1).toLowerCase() + operation.substring(1);
+
+            return operation;
+            
+        }
     }
 
     // Contains ALL the possible responses regardless of the type.
@@ -40,7 +67,9 @@ public class ResponseCode {
         INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST_OR_USER_NOT_LOGGED_OR_OTHER_ERROR,
         ORDER_DOES_NOT_EXIST_OR_BELONGS_TO_DIFFERENT_USER_OR_HAS_ALREADY_BEEN_FINALIZED_OR_OTHER_ERROR_CASES,
         SERVER_FULL,
-        EXIT
+        EXIT,
+        INVALID_REQUEST,
+        ORDER_INFO;
     }
 
     // Binding the response code and its content to the type of the response.
@@ -159,6 +188,34 @@ public class ResponseCode {
             return code;
         }   
     }
+    private static enum invalidRequest {
+        INVALID_REQUEST(100);
+
+        private final int code;
+
+        invalidRequest(int code) {
+            // Checking of the code is not necessary, as it is an enum.
+            // It's done by the compiler.
+            this.code = code;
+        }
+        public int getCode() {
+            return code;
+        }   
+    }
+    private static enum orderInfo {
+        ORDER_INFO(100);
+
+        private final int code;
+
+        orderInfo(int code) {
+            // Checking of the code is not necessary, as it is an enum.
+            // It's done by the compiler.
+            this.code = code;
+        }
+        public int getCode() {
+            return code;
+        }   
+    }
 
     private ResponseType type;
     private AllResponses responseContent;
@@ -231,7 +288,7 @@ public class ResponseCode {
      * @return The code of the response based on the type as an Integer.
      */
     public Integer getCode() {
-        int i;
+        int i = 0;
         switch (type) {
             case REGISTER:
                 i = Register.valueOf(responseContent.name()).getCode();
@@ -254,10 +311,18 @@ public class ResponseCode {
             case EXIT:
                 i = exit.valueOf(responseContent.name()).getCode();
                 break;
+            case INVALID_REQUEST:
+                i = invalidRequest.valueOf(responseContent.name()).getCode();
+                break;
+            case ORDER_INFO:
+                i = orderInfo.valueOf(responseContent.name()).getCode();
+                break;
             default:
-                i = -1;
+                // This should never happen.
+                System.exit(-1);
                 break;
         }
+        
         return Integer.valueOf(i);
     }
 

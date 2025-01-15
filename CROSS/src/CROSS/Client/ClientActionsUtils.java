@@ -2,7 +2,6 @@ package CROSS.Client;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-
 import CROSS.API.Requests.Orders.Limit;
 import CROSS.API.Requests.Orders.Market;
 import CROSS.API.Requests.Orders.Stop;
@@ -10,6 +9,10 @@ import CROSS.API.Requests.User.Login;
 import CROSS.API.Requests.User.Logout;
 import CROSS.API.Requests.User.Register;
 import CROSS.API.Requests.User.Update;
+import CROSS.API.Responses.ResponseAndMessage;
+import CROSS.API.Responses.ResponseCode;
+import CROSS.API.Responses.ResponseCode.AllResponses;
+import CROSS.API.Responses.ResponseCode.ResponseType;
 import CROSS.Orders.LimitOrder;
 import CROSS.Orders.MarketOrder;
 import CROSS.Orders.StopMarketOrder;
@@ -21,13 +24,19 @@ import CROSS.Types.Price.GenericPrice;
 
 /**
  * This class contains some utility functions for the client actions.
+ * With "actions" we mean the commands that the client can send to the server.
+ * 
  * It is used to parse and check the commands from the client's CLI.
- * It is not instantiable. It only contains static methods.
+ * 
+ * It is not instantiable. It only contains static methods, for this reason it is abstract.
+ * 
  * @version 1.0
  * @see CROSS.Client.ClientActionsUtils.ClientActions
+ * 
  * @see CROSS.Orders.LimitOrder
  * @see CROSS.Orders.MarketOrder
  * @see CROSS.Orders.StopMarketOrder
+ * 
  * @see CROSS.API.Requests.Orders.Limit
  * @see CROSS.API.Requests.Orders.Market
  * @see CROSS.API.Requests.Orders.Stop
@@ -35,7 +44,9 @@ import CROSS.Types.Price.GenericPrice;
  * @see CROSS.API.Requests.User.Logout
  * @see CROSS.API.Requests.User.Register
  * @see CROSS.API.Requests.User.Update
+ * 
  * @see CROSS.Users.User
+ * 
  * @see CROSS.Types.Price.SpecificPrice
  * @see CROSS.Types.Price.PriceType
  * @see CROSS.Types.Price.GenericPrice
@@ -53,7 +64,8 @@ public abstract class ClientActionsUtils {
         INSERT_LIMIT_ORDER,
         INSERT_STOP_ORDER,
         CANCEL_ORDER,
-        GET_PRICE_HISTORY
+        GET_PRICE_HISTORY,
+        EXIT
     }
 
     // Some mapping from enums to command strings.
@@ -67,37 +79,55 @@ public abstract class ClientActionsUtils {
         put(ClientActions.INSERT_STOP_ORDER, "insertStopOrder(type, size, stopPrice)");
         put(ClientActions.CANCEL_ORDER, "cancelOrder(orderID)");
         put(ClientActions.GET_PRICE_HISTORY, "getPriceHistory(month)");
+        put(ClientActions.EXIT, "exit()");
     }};
 
     // ACTIONS.
     // String command from enum.
     /**
+     * 
      * Get the command string from the action enum.
+     * 
      * @param action The action enum.
+     * 
      * @return The command string.
-     * @throws IllegalArgumentException If the action is invalid.
+     * 
+     * @throws IllegalArgumentException If the action is not associated with a command.
      * @throws NullPointerException If the action is null.
+     * 
      */
     public static String getCommand(ClientActions action) throws IllegalArgumentException, NullPointerException {
+        
+        // Null check.
         if (action == null){
             throw new NullPointerException("Action cannot be null.");
         }
 
+        // Invalid action.
         if (!commands.containsKey(action)){
             throw new IllegalArgumentException("Invalid action.");
         }
 
-        return commands.get(action).toLowerCase();
+        return commands.get(action).toLowerCase().trim();
+
     }
     // String command from enum, but without the parenthesis, only the keyword.
     /**
+     * 
      * Get the keyword command from the action enum.
+     * With keyword command we mean the command without the parenthesis and the parameters.
+     * 
      * @param action The action enum.
+     * 
      * @return The keyword command as a string.
-     * @throws IllegalArgumentException If the action is invalid.
+     * 
+     * @throws IllegalArgumentException If the action is not associated with a command.
      * @throws NullPointerException If the action is null.
+     * 
      */
     public static String getKeywordCommand(ClientActions action) throws IllegalArgumentException, NullPointerException {
+        
+        // Null check.
         if (action == null){
             throw new NullPointerException("Action cannot be null.");
         }
@@ -107,18 +137,26 @@ public abstract class ClientActionsUtils {
         }
 
         return ClientActionsUtils.getCommand(action).split("\\(")[0].toLowerCase();
+
     }
     // Action enum from string, ONLY CHECK THE COMMAND, NOT THE SYNTAX/PARAMETERS.
     /**
+     * 
      * Get the action enum from a string action.
+     * 
      * Note that this method only checks the action as keyword, not the syntax or the parameters of the whole command.
+     * 
      * @param action The string action.
+     * 
      * @return The action enum.
+     * 
      * @throws IllegalArgumentException If the string action is invalid.
      * @throws NullPointerException If the string action is null.
+     * 
      */
     public static ClientActions actionFromString(String action) throws IllegalArgumentException, NullPointerException {
 
+        // Null check.
         if (action == null){
             throw new NullPointerException("String action cannot be null.");
         }
@@ -138,19 +176,26 @@ public abstract class ClientActionsUtils {
     // Price type (order type direction buy/sell).
     // Price type enum from string.
     /**
+     * 
      * Get the price type enum from a string.
+     * 
      * @param priceType The string priceType.
+     * 
      * @return The PriceType enum.
+     * 
      * @throws IllegalArgumentException If the string priceType is invalid.
      * @throws NullPointerException If the string priceType is null.
      */
     public static PriceType priceTypeFromString(String priceType) throws IllegalArgumentException, NullPointerException {
+        
+        // Null check.
         if (priceType == null){
-            throw new NullPointerException("Price type (order type buy/sell) cannot be null.");
+            throw new NullPointerException("String price type (order type buy/sell) cannot be null.");
         }
 
         priceType = priceType.toLowerCase().trim();
 
+        // Check the string.
         for (PriceType priceTypeEn : PriceType.values()) {
             if (priceType.equals(priceTypeEn.name().toLowerCase())){
                 return priceTypeEn;
@@ -163,13 +208,20 @@ public abstract class ClientActionsUtils {
     // PRICE.
     // GenericPrice from string.
     /**
+     * 
      * Get the price from a string.
+     * 
      * @param price The string price.
+     * 
      * @return The price as a GenericPrice object.
+     * 
      * @throws IllegalArgumentException If the string price is invalid.
      * @throws NullPointerException If the string price is null.
+     * 
      */
     public static GenericPrice getPriceFromString(String price) throws IllegalArgumentException, NullPointerException {
+        
+        // Null check.
         if (price == null){
             throw new NullPointerException("String price cannot be null.");
         }
@@ -188,13 +240,20 @@ public abstract class ClientActionsUtils {
     // QUANTITY.
     // Quantity from string.
     /**
+     * 
      * Get the size (quantity) from a string.
+     * 
      * @param size The string size.
+     * 
      * @return The size as a Quantity object.
+     * 
      * @throws IllegalArgumentException If the string size is invalid.
      * @throws NullPointerException If the string size is null.
+     * 
      */
     public static Quantity getSizeFromString(String size) throws IllegalArgumentException, NullPointerException {
+        
+        // Null check.
         if (size == null){
             throw new NullPointerException("String size cannot be null.");
         }
@@ -208,17 +267,25 @@ public abstract class ClientActionsUtils {
             // If the size is negative.
             throw new IllegalArgumentException("Invalid negative size.");
         }
+
     }
     
     // MONTH/YEAR.
     /**
+     * 
      * Parse the month/year string with the format MMYYYY.
+     * 
      * Does not returns anything, only throws an exception if the string is invalid.
+     * 
      * @param monthyear The month/year string.
+     * 
      * @throws IllegalArgumentException If the month/year string is invalid.
      * @throws NullPointerException If the month/year string is null.
+     * 
      */
     public static void parseMonthFromString(String monthyear) throws IllegalArgumentException, NullPointerException {
+        
+        // Null check.
         if (monthyear == null){
             throw new NullPointerException("String month/year cannot be null.");
         }
@@ -245,18 +312,26 @@ public abstract class ClientActionsUtils {
         }catch (NumberFormatException | IndexOutOfBoundsException ex){
             throw new IllegalArgumentException("Invalid string month/year format.");
         }
+
     }
     
     // ORDER ID.
     // Integer order ID from string.
     /**
+     * 
      * Get the order ID from a string.
+     * 
      * @param orderID The order ID string.
+     * 
      * @throws IllegalArgumentException If the order ID string is invalid.
      * @throws NullPointerException If the order ID string is null.
+     * 
      * @return The order ID as a Integer.
+     * 
      */
     public static Integer getOrderIDFromString(String orderID) throws IllegalArgumentException, NullPointerException {
+        
+        // Null check.
         if (orderID == null){
             throw new NullPointerException("String order id cannot be null.");
         }
@@ -266,26 +341,36 @@ public abstract class ClientActionsUtils {
             if (orderIDI < 0){
                 throw new IllegalArgumentException("Negative string order ID.");
             }
+
             return orderIDI;
         }catch (NumberFormatException ex){
             throw new IllegalArgumentException("Invalid or negative string order ID.");
         }
+
     }
 
     // COMMAND AND ARGUMENTS.
     // Linked list is not a performance issue, the arguments are few.
     /**
+     * 
      * Parse the command from a string input, checking the syntax and the parameters.
+     * 
      * The action should be the correct associated with the command string, anyway it will be checked.
+     * 
      * NB: The validation of the arguments is done in the parseArgs method.
+     * 
      * @param command The string command, with the action and the parameters.
      * @param action The action enum associated with the command.
-     * @return A list of strings parsed with the parameters without the initial command. I.E. The parameters inside the parenthesis divided by commas.
+     * 
+     * @return A linked list of strings parsed with the parameters without the initial command. I.E. The parameters inside the parenthesis divided by commas.
+     * 
      * @throws IllegalArgumentException If the string command is invalid.
      * @throws NullPointerException If the string command or the action are null.
+     * 
      */
     public static LinkedList<String> parseCommandFromString(String command, ClientActions action) throws IllegalArgumentException, NullPointerException {
         
+        // Null checks.
         if (command == null){
             throw new NullPointerException("String command cannot be null.");
         }
@@ -299,18 +384,17 @@ public abstract class ClientActionsUtils {
         ClientActions internal;
         try {
             internal = ClientActionsUtils.actionFromString(command);
-        }catch (IllegalArgumentException ex){
+            // Parsing syntax.
+            // Checking parenthesis.
+            if (command.charAt(ClientActionsUtils.getKeywordCommand(action).length()) != '(' || command.charAt(command.length() - 1) != ')'){
+                throw new IllegalArgumentException("Invalid parenthesis.");
+            }
+        }catch (IllegalArgumentException | IndexOutOfBoundsException ex){
             throw new IllegalArgumentException("Invalid string command.");
         }
 
         if (internal != action){
             throw new IllegalArgumentException("Invalid string/action match.");
-        }
-
-        // Parsing syntax.
-        // Checking parenthesis.
-        if (command.charAt(ClientActionsUtils.getKeywordCommand(action).length()) != '(' || command.charAt(command.length() - 1) != ')'){
-            throw new IllegalArgumentException("Invalid parenthesis.");
         }
 
         // Checking commas.
@@ -321,7 +405,11 @@ public abstract class ClientActionsUtils {
         }
 
         // Removing initial command and parenthesis.
-        command = command.split("\\(")[1];
+        try {
+            command = command.split("\\(")[1];
+        }catch (IndexOutOfBoundsException ex){
+            throw new IllegalArgumentException("Invalid string command.");
+        }
 
         // Removing final parenthesis.
         try {
@@ -337,20 +425,28 @@ public abstract class ClientActionsUtils {
         }
 
         return parameters;
+
     }
     /**
+     * 
      * Parse the arguments from a list of strings.
      * This list should be obtained before from the parseCommandFromString method.
+     * 
      * Throws an exception if the arguments are invalid.
      * Otherwise, it will return nothing.
+     * 
      * @param args The list of strings with the arguments.
      * @param action The action enum associated with the arguments.
+     * 
      * @throws IllegalArgumentException If the arguments are invalid.
      * @throws NullPointerException If the arguments or the action are null.
+     * 
      * @see ClientActionsUtils#parseCommandFromString(String, ClientActions)
+     * 
      */
     public static void parseArgs(LinkedList<String> args, ClientActions action) throws IllegalArgumentException, NullPointerException {
 
+        // Null checks.
         if (args == null){
             throw new NullPointerException("Arguments list cannot be null.");
         }
@@ -365,6 +461,7 @@ public abstract class ClientActionsUtils {
         }
 
         // In case of invalid arguments, the exceptions will be thrown by the ClientActionsUtils other methods.
+        // Number of args is already checked in the parseCommandFromString step.
         switch (action) {
             case REGISTER:
                 break;
@@ -394,6 +491,8 @@ public abstract class ClientActionsUtils {
             case GET_PRICE_HISTORY:
                 ClientActionsUtils.parseMonthFromString(args.get(0));
                 break;
+            case EXIT:
+                break;
             default:
                 throw new IllegalArgumentException("Invalid action.");
         }
@@ -401,7 +500,8 @@ public abstract class ClientActionsUtils {
     }
 
     /**
-     * Get the JSON request to send to the server from the action and the arguments strings list.
+     * 
+     * Get the JSON request as string to send to the server from the action and the arguments strings list.
      * 
      * Action and arguments should be already checked before with parseCommandFromString and then parseArgs.
      * 
@@ -412,15 +512,32 @@ public abstract class ClientActionsUtils {
      * @param client The client object that will send the request.
      * @param action The action enum of the request.
      * @param args The arguments list of strings.
+     * 
      * @return The JSON request as a string if everything is correct, otherwise null.
+     * 
      */
     public static String getJSONRequest(Client client, ClientActions action, LinkedList<String> args) {
+
+        // Null checks.
+        if (client == null){
+            System.out.println("Client object cannot be null.");
+            return null;
+        }
+        if (action == null){
+            System.out.println("Action cannot be null.");
+            return null;
+        }
+        if (args == null){
+            System.out.println("Arguments string list cannot be null.");
+            return null;
+        }
 
         String jsonToSend = "";
 
           switch (action) {
 
                 case REGISTER:
+
                     if (client.getLoggedUser() != null) {
                         System.out.println("You are already logged in.");
                         return null;
@@ -434,13 +551,10 @@ public abstract class ClientActionsUtils {
                         return null;
                     }
 
-                    // Cannot be null if we reach this point.
                     Register registerRequest = new Register(registerUser);
 
-                    jsonToSend = registerRequest.toJSON();
+                    jsonToSend = registerRequest.toJSON(false);
                     return jsonToSend;
-
-                
                 
                 case LOGIN:
 
@@ -457,13 +571,10 @@ public abstract class ClientActionsUtils {
                         return null;
                     }
 
-                    // Cannot be null if we reach this point.
                     Login loginRequest = new Login(loginUser);
 
-                    jsonToSend = loginRequest.toJSON();
+                    jsonToSend = loginRequest.toJSON(false);
                     return jsonToSend;
-
-
 
                 case UPDATE_CREDENTIALS:
 
@@ -476,7 +587,7 @@ public abstract class ClientActionsUtils {
                     try {
                         currentUser = new User(args.get(0), args.get(1));
                     } catch (IllegalArgumentException | NullPointerException ex) {
-                        System.out.println("Error in update (old password): " + ex.getMessage());
+                        System.out.println("Error in update (username or old password): " + ex.getMessage());
                         return null;
                     }
 
@@ -496,11 +607,11 @@ public abstract class ClientActionsUtils {
                         return null;
                     }
 
-                    jsonToSend = updateRequest.toJSON();
+                    jsonToSend = updateRequest.toJSON(false);
                     return jsonToSend;
 
-
                 case LOGOUT:
+
                     if (client.getLoggedUser() == null) {
                         System.out.println("You are not logged in.");
                         return null;
@@ -508,9 +619,11 @@ public abstract class ClientActionsUtils {
 
                     Logout logoutRequest = new Logout();
 
-                    jsonToSend = logoutRequest.toJSON();
+                    jsonToSend = logoutRequest.toJSON(false);
                     return jsonToSend;
+
                 case INSERT_LIMIT_ORDER:
+
                     if (client.getLoggedUser() == null) {
                         System.out.println("You are not logged in.");
                         return null;
@@ -532,14 +645,13 @@ public abstract class ClientActionsUtils {
                     }
 
                     // API Objects.
-                    // No null checks needed, already done in the previous step.
                     Limit limitRequest = new Limit(limitOrder);
                     
-                    jsonToSend = limitRequest.toJSON();
+                    jsonToSend = limitRequest.toJSON(false);
                     return jsonToSend;
 
-
                 case INSERT_MARKET_ORDER:
+
                     if (client.getLoggedUser() == null) {
                         System.out.println("You are not logged in.");
                         return null;
@@ -560,14 +672,12 @@ public abstract class ClientActionsUtils {
 
                     // API Objects.
                     Market marketRequest = new Market(marketOrder);
-                    // No null checks needed, already done in the previous step.
 
-                    jsonToSend = marketRequest.toJSON();
+                    jsonToSend = marketRequest.toJSON(false);
                     return jsonToSend;
 
-
-
                 case INSERT_STOP_ORDER:
+
                     if (client.getLoggedUser() == null) {
                         System.out.println("You are not logged in.");
                         return null;
@@ -590,11 +700,12 @@ public abstract class ClientActionsUtils {
 
                     // API Objects.
                     Stop stopRequest = new Stop(stopOrder);
-                    // No null checks needed, already done in the previous step.
 
-                    jsonToSend = stopRequest.toJSON();
+                    jsonToSend = stopRequest.toJSON(false);
                     return jsonToSend;
+
                 case CANCEL_ORDER:  
+
                     if (client.getLoggedUser() == null) {
                         System.out.println("You are not logged in.");
                         return null;
@@ -606,13 +717,12 @@ public abstract class ClientActionsUtils {
 
                     // API Objects.
                     CROSS.API.Requests.Orders.CancelOrderID cancelRequest = new CROSS.API.Requests.Orders.CancelOrderID(orderID);
-                    // No null checks needed, already done in the previous step.
 
-                    jsonToSend = cancelRequest.toJSON();
+                    jsonToSend = cancelRequest.toJSON(false);
                     return jsonToSend;
 
-
                 case GET_PRICE_HISTORY: 
+
                     if (client.getLoggedUser() == null) {
                         System.out.println("You are not logged in.");
                         return null;
@@ -631,13 +741,26 @@ public abstract class ClientActionsUtils {
                         return null;
                     }
 
-                    jsonToSend = getPriceHistoryRequest.toJSON();
+                    jsonToSend = getPriceHistoryRequest.toJSON(false);
                     return jsonToSend;
+
+                case EXIT:
+
+                    AllResponses responseContent = AllResponses.EXIT;
+                    ResponseType responseType = ResponseType.EXIT;
+                    ResponseCode responseCode = new ResponseCode(responseType, responseContent);
+                    ResponseAndMessage response = new ResponseAndMessage(responseCode, "Client exiting.");
+                    
+                    jsonToSend = response.toJSON(false);
+                    return jsonToSend;
+
                 default:
+
                     // This should never happens.
                     System.err.println("Error in getJSONRequest.");
                     System.exit(-1);
                     return null;
+                    
             }
 
     }

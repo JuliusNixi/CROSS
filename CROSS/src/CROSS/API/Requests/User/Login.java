@@ -1,5 +1,6 @@
 package CROSS.API.Requests.User;
 
+import CROSS.API.Responses.ResponseCode.ResponseType;
 import CROSS.Users.User;
 
 /**
@@ -24,6 +25,8 @@ public class Login extends Generic {
      */
     public Login(User user) {
         super(user);
+
+        super.setOperation(ResponseType.LOGIN);
 
         this.password = user.getPassword();
     }

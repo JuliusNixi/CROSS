@@ -14,4 +14,4 @@ The "users.json" file contains the users' data. It SHOULD be in this format:
     ...
 ]
 
-That's because, by using these format, the project is optimized to append new users/orders without rewriting the whole file. If the files are .json, but not written in this format, the software when reading it to load the users/orders, will try to format them in this way.
+That's because, by using these format, the project is optimized to append new users/orders without rewriting the whole file. If the files are .json, but not written in this format, the software when reading it to load the users/orders, will try to format them in this way. 
