@@ -1,5 +1,9 @@
 package CROSS.API.Notifications;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import CROSS.API.Responses.ResponseCode.ResponseType;
 import CROSS.Utils.Separator;
 
 /**
@@ -19,6 +23,7 @@ public class Notification extends CROSS.API.JSON {
      * Constructor for the Notification class.
      */
     public Notification() {
+        super(ResponseType.CLOSED_TRADES);
         this.trades = new Trade[0];
     }
 
@@ -51,6 +56,25 @@ public class Notification extends CROSS.API.JSON {
             result += "\t" + trade.toString() + "\n";
         }
         return result;
+    }
+
+    @Override
+    public String toJSON(Boolean serverSender) {
+        
+        String superJSONString = super.toJSON(serverSender);
+        Gson gson = new Gson();
+        // Convert superJSONString to a JsonObject.
+        JsonObject jsonObject = gson.fromJson(superJSONString, JsonObject.class);
+
+        // Getting the JsonObject for the new notification.
+        JsonObject closedNameJson = gson.fromJson(ResponseType.CLOSED_TRADES.toString(), JsonObject.class);
+
+        // Replacing the operation key with the notification key.
+        jsonObject.remove("operation");
+        jsonObject.add("notification", closedNameJson);
+
+        return gson.toJson(jsonObject);
+
     }
 
 }

@@ -14,10 +14,11 @@ import CROSS.API.Responses.ResponseCode.ResponseType;
 /**
  * This thread is responsible for accepting new connections from clients for the server.
  * 
- * It's started after the server is started by the Server class.
+ * It's executed after the server starting by the Server class.
  * 
  * It creates a new ClientThread for each new client connection accepted.
  * This latter thread is then executed by the executor.
+ * 
  * @version 1.0
  * @see Server
  */
@@ -31,7 +32,9 @@ public class AcceptThread extends Thread {
 
     /**
      * Constructor of the AcceptThread class.
+     * 
      * @param server The server to be used.
+     * 
      * @throws NullPointerException If the server is null.
      */
     public AcceptThread(Server server) throws NullPointerException {
@@ -46,20 +49,22 @@ public class AcceptThread extends Thread {
     // ERRORS HANDLING
     /**
      * This method is called when the server is full and a new connection is refused.
+     * It try to send a response to the client to inform him that the server is full.
+     * 
      * The internal exception must be handled by the caller.
+     * 
      * @throws IOException If an I/O error occurs.
      */
-    private void acceptError() throws IOException {
+    private void fullError() throws IOException {
         OutputStream out = this.clientSocket.getOutputStream();
 
+        // Send a response to the client.
         // Create a response.
         AllResponses responseContent = AllResponses.SERVER_FULL;
         ResponseType responseType = ResponseType.SERVER_FULL;
         ResponseCode responseCode = new ResponseCode(responseType, responseContent);
         ResponseAndMessage response = new ResponseAndMessage(responseCode, "Server is full. Try again later.");
-        String responseString = response.toJSON();
-
-        System.err.printf("Connection refused from %s:%s.\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
+        String responseString = response.toJSON(true);
 
         // Write the response to the client.
         out.write(responseString.getBytes());
@@ -69,13 +74,15 @@ public class AcceptThread extends Thread {
         out.close();
         this.clientSocket.close();
 
+        System.err.printf("Connection refused from %s:%s.\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
+
     }
     /**
-     * This method is called when an error occurs and the server cannot close the connection peacefully.
+     * This method is called when an error occurs and the server cannot close the connection gracefully.
      */
-    private void writeError() {
+    private void criticalError() {
 
-        System.err.printf("An error occurred while closing the connection from %s:%s.\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
+        System.err.printf("An error occurred while handling the connection from %s:%s.\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
 
     }
 
@@ -88,6 +95,7 @@ public class AcceptThread extends Thread {
         while (true) {
             try {
                 // Accept connections from clients.
+
                 // Synchronization is not needed here because the server doesn't modify the clientSocket.
                 this.clientSocket = server.getServerSocket().accept();
 
@@ -97,21 +105,22 @@ public class AcceptThread extends Thread {
                 executor.execute(new ClientThread(clientSocket));
                 // Execution ok printed in the ClientThread class.
             }catch (IOException ex) {
-                writeError();
+                criticalError();
                  // Try to continue accepting new connections.
                  continue;
             } catch (RejectedExecutionException ex) {
                 try {
-                    acceptError();
+                    // Trying to refuse the connection gracefully.
+                    fullError();
                     // Try to continue accepting new connections.
                     continue;
                 }catch (IOException ex2) {
-                    writeError();
+                    criticalError();
                     // Try to continue accepting new connections.
                     continue;
                 }
             } catch (Exception ex) {
-                writeError();
+                criticalError();
                 // Try to continue accepting new connections.
                 continue;
             }
@@ -122,6 +131,7 @@ public class AcceptThread extends Thread {
     // GETTERS
     /**
      * Getter for the executor.
+     * 
      * @return The executor as a ThreadPoolExecutor.
      */
     public ThreadPoolExecutor getExecutor() {
@@ -129,6 +139,7 @@ public class AcceptThread extends Thread {
     } 
     /**
      * Getter for the server.
+     * 
      * @return The server.
      */
     public Server getServer() {

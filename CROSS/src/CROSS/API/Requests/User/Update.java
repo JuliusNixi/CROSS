@@ -1,5 +1,6 @@
 package CROSS.API.Requests.User;
 
+import CROSS.API.Responses.ResponseCode.ResponseType;
 import CROSS.Users.User;
 
 /**
@@ -36,6 +37,8 @@ public class Update extends Generic {
         if (new_password.equals(old_password)) {
             throw new IllegalArgumentException("New password is the same as the old password.");
         }
+
+        super.setOperation(ResponseType.UPDATE_CREDENTIALS);
 
         this.old_password = updateUser.getPassword();
         this.new_password = new_password;

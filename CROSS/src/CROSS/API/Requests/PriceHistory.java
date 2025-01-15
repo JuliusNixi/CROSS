@@ -7,6 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 
 import CROSS.API.JSON;
+import CROSS.API.Responses.ResponseCode.ResponseType;
 
 /**
  * PriceHistory is a class used to request the price history of a market.
@@ -40,6 +41,8 @@ public class PriceHistory extends JSON {
         if (month.length() != 6) {
             throw new IllegalArgumentException("Month must be in the format MMYYYY.");
         }
+
+        super(ResponseType.GET_PRICE_HISTORY);
 
         // Parsing the month string.
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()

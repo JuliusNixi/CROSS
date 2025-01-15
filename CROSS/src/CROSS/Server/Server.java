@@ -12,9 +12,13 @@ import CROSS.Exceptions.InvalidConfig;
 
 /**
  * The Server class.
- * When started, the server will accept clients.
+ * 
+ * When started, the server will accept clients after the call to startAccept() using a dedicated thread and sockets.
+ * 
  * For each client, a new thread will be created to handle it.
  * The thread will be submitted to a CachedThreadPool.
+ * 
+ * The server use a configuration file to set the server's IP, port and max connections.
  * 
  * @version 1.0
  * @see AcceptThread
@@ -30,6 +34,7 @@ public class Server {
     // TCP server socket.
     private ServerSocket serverSocket = null;
 
+    // Thread that accepts clients.
     private AcceptThread acceptThread = null;
 
     private static final Integer DEFAULT_MAX_CONNECTIONS = 42;
@@ -38,19 +43,22 @@ public class Server {
      * Constructor of the Server class.
      * 
      * @param pathToConfigPropertiesFile Path to the server's config file.
+     * 
      * @throws NullPointerException If the path to the server's config file is null.
      * @throws InvalidConfig If the server's IP or port are invalid.
      * @throws FileNotFoundException If the server's config file is not found.
      * @throws IOException If there is an error reading the server's config file.
+     * @throws IllegalArgumentException If there is an error reading the server's config file.
      * @throws Exception If there is an unknown error.
      */
-    public Server(String pathToConfigPropertiesFile) throws NullPointerException, InvalidConfig, FileNotFoundException, IOException, Exception {
+    public Server(String pathToConfigPropertiesFile) throws NullPointerException, InvalidConfig, FileNotFoundException, IOException, IllegalArgumentException, Exception {
 
+        // Null check.
         if (pathToConfigPropertiesFile == null) {
-            throw new NullPointerException("Path to server config file cannot be null.");
+            throw new NullPointerException("Path to server's config file cannot be null.");
         }
 
-        // Cannot be null.
+        // Cannot be null, no need to check the exception.
         File configFile = new File(pathToConfigPropertiesFile);
         Properties props = new Properties();
         
@@ -95,7 +103,7 @@ public class Server {
 
         // Throwed by FileReader.
         catch (FileNotFoundException ex) {
-            throw new FileNotFoundException("Server config file not found.");
+            throw new FileNotFoundException("Server's config file not found.");
         }
 
         // parseInt exception.
@@ -114,6 +122,10 @@ public class Server {
             throw new InvalidConfig(ex.getMessage());
         }
 
+        catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Illegal argument in server creation.");
+        }
+
         // Generic exception.
         catch (Exception ex) {
             throw new Exception("Unknown error in server creation.");
@@ -121,10 +133,12 @@ public class Server {
         
     } // End of constructor.
 
+    // SERVER START
     /**
      * Start the server, after the call to this method, to accept clients, call startAccept().
+     * 
      * @throws RuntimeException If the server is already started.
-     * @throws IllegalArgumentException If the arguments are invalid.
+     * @throws IllegalArgumentException If the socket arguments are invalid.
      * @throws IOException If there is an I/O error.
      * @throws Exception If there is an unknown error.
      */
@@ -141,7 +155,7 @@ public class Server {
             this.serverSocket = new ServerSocket(serverPort, maxConnections, serverAddress);
             System.out.printf("Server started succesfully.\n");
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid arguments in server start.");
+            throw new IllegalArgumentException("Invalid socket arguments in server start.");
         } catch (IOException ex) {
             throw new IOException("I/O error starting server.");
         } catch (Exception ex) {
@@ -155,6 +169,7 @@ public class Server {
      * Start accepting clients. Call this method after startServer().
      * 
      * @return The new thread that accepts clients.
+     * 
      * @throws RuntimeException If the server is not started (socket null) or if the accept thread is already started.
      */
     public AcceptThread startAccept() throws RuntimeException {
@@ -172,7 +187,59 @@ public class Server {
 
         this.acceptThread = acceptThread;
 
+        System.out.printf("Accept thread started.\n");
+
         return this.acceptThread;
+    }
+
+    // GETTERS
+    /**
+     * Get the path to the server's configuration file.
+     * 
+     * @return A string rapresenting the path to the server's configuration file.
+     */
+    public String getPathToConfigPropertiesFile() {
+        return String.format("%s", this.pathToConfigPropertiesFile);
+    }
+    /**
+     * Get the server's port.
+     * 
+     * @return Integer rapresenting the server's port.
+     */
+    public Integer getServerPort() {
+        return Integer.valueOf(this.serverPort);
+    }
+    /**
+     * Get the max connections number allowed from the server.
+     * 
+     * @return Integer rapresenting the max connections number allowed from the server.
+     */
+    public Integer getMaxConnections() {
+        return Integer.valueOf(this.maxConnections);
+    }
+    /**
+     * Get the server address.
+     * 
+     * @return InetAddress rapresenting the server's address.
+     */
+    public InetAddress getServerAddress() {
+        return this.serverAddress;
+    }
+    /**
+     * Get the socket.
+     * 
+     * @return Socket rapresenting the server's socket.
+     */
+    public ServerSocket getServerSocket() {
+        return this.serverSocket;
+    }
+    /**
+     * Get the default max connections number allowed from the server.
+     * 
+     * @return Integer rapresenting the default max connections number allowed from the server.
+     */
+    public Integer getDefaultMaxConnections() {
+        return DEFAULT_MAX_CONNECTIONS;
     }
     /**
      * Get the server acceptance's thread.
@@ -182,53 +249,9 @@ public class Server {
         return this.acceptThread;
     }
      
-    // GETTERS
-    /**
-     * Get the path to the server's configuration file.
-     * @return A string rapresenting the path to the server's configuration file.
-     */
-    public String getPathToConfigPropertiesFile() {
-        return String.format("%s", this.pathToConfigPropertiesFile);
-    }
-    /**
-     * Get the server's port.
-     * @return Integer rapresenting the server's port.
-     */
-    public Integer getServerPort() {
-        return Integer.valueOf(this.serverPort);
-    }
-    /**
-     * Get the max connections number allowed from the server.
-     * @return Integer rapresenting the max connections number allowed from the server.
-     */
-    public Integer getMaxConnections() {
-        return Integer.valueOf(this.maxConnections);
-    }
-    /**
-     * Get the server address.
-     * @return InetAddress rapresenting the server's address.
-     */
-    public InetAddress getServerAddress() {
-        return this.serverAddress;
-    }
-    /**
-     * Get the socket.
-     * @return Socket rapresenting the server's socket.
-     */
-    public ServerSocket getServerSocket() {
-        return this.serverSocket;
-    }
-    /**
-     * Get the default max connections number allowed from the server.
-     * @return Integer rapresenting the default max connections number allowed from the server.
-     */
-    public Integer getDefaultMaxConnections() {
-        return DEFAULT_MAX_CONNECTIONS;
-    }
-
     @Override
     public String toString() {
-        return String.format("Server IP [%s] - Server port [%s] - Max connections [%s] - Config file path [%s]", this.getServerAddress(), this.getServerPort(), this.getMaxConnections(), this.getPathToConfigPropertiesFile());
+        return String.format("Server Info's [Server IP [%s] - Server port [%s] - Max connections [%s] - Config file path [%s]]", this.getServerAddress(), this.getServerPort(), this.getMaxConnections(), this.getPathToConfigPropertiesFile());
     }
     
 }

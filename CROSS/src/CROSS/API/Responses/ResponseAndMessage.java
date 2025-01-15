@@ -33,6 +33,8 @@ public class ResponseAndMessage extends JSON {
             throw new NullPointerException("Error message of the response cannot be null.");
         }
 
+        super(code.getType());
+
         this.code = code.getCode();
         this.errorMessage = errorMessage.trim();
 

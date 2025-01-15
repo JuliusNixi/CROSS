@@ -1,5 +1,7 @@
 package CROSS.API.Responses;
 
+import CROSS.API.Responses.ResponseCode.ResponseType;
+
 /**
  * Order is a class.
  * This class is used to represent the response of a request that is about the orders.
@@ -19,6 +21,7 @@ public class Order extends CROSS.API.Requests.Orders.CancelOrderID {
      */
     public <O extends CROSS.Orders.Order> Order(O order) {
         super(order);
+        super.setOperation(ResponseType.ORDER_INFO);
     }
 
     // Getters defined in the super class.

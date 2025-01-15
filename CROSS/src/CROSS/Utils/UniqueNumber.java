@@ -1,9 +1,12 @@
 package CROSS.Utils;
 
 /**
+ * 
  * Class to generate unique numbers.
  * Used to generate unique IDs for orders or users.
+ * 
  * @version 1.0
+ * 
  */
 public class UniqueNumber {
     
@@ -23,6 +26,7 @@ public class UniqueNumber {
      * It is synchronized ON CLASS to avoid conflicts between threads.
      */
     public UniqueNumber() {
+
         synchronized (UniqueNumber.class) {
 
             long currentTime = System.currentTimeMillis();
@@ -36,11 +40,15 @@ public class UniqueNumber {
             this.number = lastTime + lastNumber;
 
         }
+
     }
 
     /**
+     * 
      * Get the unique number.
+     * 
      * @return The unique number as Long.
+     * 
      */
     public Long getNumber() {
         return Long.valueOf(this.number);

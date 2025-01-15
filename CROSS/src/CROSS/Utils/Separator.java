@@ -21,13 +21,13 @@ public class Separator {
      * @param characters The sequence of characters to be repeated.
      * @param length The number of times the sequence of characters is repeated.
      * 
-     * @throws NullPointerException If character or length are null.
+     * @throws NullPointerException If characters or length are null.
      * @throws IllegalArgumentException If length is less than or equal to 0.
      */
     public Separator(String characters, Integer length) throws NullPointerException, IllegalArgumentException {
         // Null checks.
         if (characters == null) {
-            throw new NullPointerException("Character cannot be null.");
+            throw new NullPointerException("Characters cannot be null.");
         }
         if (length == null) {
             throw new NullPointerException("Length cannot be null.");
@@ -57,6 +57,7 @@ public class Separator {
 
     /**
      * Returns the default length of the separator.
+     * 
      * @return The default length of the separator.
      */
     public static Integer getDefaultLength() {
@@ -64,14 +65,16 @@ public class Separator {
     }
     /**
      * Returns the characters of the separator.
+     * 
      * @return The characters of the separator.
      */
     public String getCharacters() {
         return String.format("%s", this.characters);
     }
     /**
-     * Returns the separator.
-     * @return The separator.
+     * Returns the separator as a string.
+     * 
+     * @return The separator as a string.
      */
     public String getSeparator() {
         return String.format("%s", this.separator);

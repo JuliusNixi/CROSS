@@ -1,5 +1,7 @@
 package CROSS.API.Requests.Orders;
 
+import CROSS.API.Responses.ResponseCode.ResponseType;
+
 /**
  * Limit is a class that extends Generic and is used to submit a limit order.
  * It is used to represent the request that is about the order's data.
@@ -22,6 +24,8 @@ public class Limit extends Generic {
     public <O extends CROSS.Orders.Order> Limit(O order) {
         super(order);
         
+        super.setOperation(ResponseType.INSERT_LIMIT_ORDER);
+
         this.price = order.getPrice().getValue();
     }
 
