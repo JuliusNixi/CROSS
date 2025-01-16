@@ -23,6 +23,7 @@ import CROSS.Users.User;
 import CROSS.Types.Price.GenericPrice;
 
 /**
+ * 
  * This class contains some utility functions for the client actions.
  * With "actions" we mean the commands that the client can send to the server.
  * 
@@ -51,6 +52,7 @@ import CROSS.Types.Price.GenericPrice;
  * @see CROSS.Types.Price.PriceType
  * @see CROSS.Types.Price.GenericPrice
  * @see CROSS.Types.Price.Quantity
+ * 
  */
 public abstract class ClientActionsUtils {
     
