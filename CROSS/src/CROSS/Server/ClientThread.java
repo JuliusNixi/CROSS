@@ -162,6 +162,7 @@ public class ClientThread implements Runnable {
                 case REGISTER:
                 case UPDATE_CREDENTIALS:
                 case LOGIN:
+                    
                 case LOGOUT:
                 case INSERT_LIMIT_ORDER:
                 case INSERT_MARKET_ORDER:

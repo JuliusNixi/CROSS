@@ -82,6 +82,8 @@ public class ClientCLIThread extends Thread {
                 continue;
             }
 
+            System.out.println("DEBUG: Request to send to the server: " + jsonToSend);
+
             try {
                 if (action != ClientActionsUtils.ClientActions.EXIT) {
                     this.client.sendJSONToServer(jsonToSend);

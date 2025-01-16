@@ -4,6 +4,7 @@ package CROSS.API;
 // It's used to convert the Java objects to JSON.
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import CROSS.API.Responses.ResponseCode.ResponseType; 
 
 /**
@@ -61,21 +62,18 @@ public abstract class JSON {
 
         Gson gson = new Gson();
         if (serverSender == false) {
-            JsonObject json = new JsonObject();
 
-            // Main object preparation.
-            json.addProperty("operation", this.operation.toString());
-            json.addProperty("values", gson.toJson(this));
+            JsonObject internalValues = JsonParser.parseString(gson.toJson(this)).getAsJsonObject();
+            internalValues.remove("operation");
 
-            // Internal object preparation.
-            JsonObject internal = json.getAsJsonObject("values");
-            internal.remove("operation");
+            JsonObject newJSON = new JsonObject();  
 
-            // Final main object restore.
-            json.remove("values");
-            json.add("values", internal);
+            newJSON.addProperty("operation", this.operation.toString());
 
-            return json.toString().replace("\n", "").replace("\r", "").replace("\t", "").trim() + "\n";
+            // Merging the two JSON objects.
+            newJSON.add("values", internalValues);
+
+            return newJSON.toString().replace("\n", "").replace("\r", "").replace("\t", "").trim() + "\n";
         } else {
 
             return gson.toJson(this).replace("\n", "").replace("\r", "").replace("\t", "").trim() + "\n";
