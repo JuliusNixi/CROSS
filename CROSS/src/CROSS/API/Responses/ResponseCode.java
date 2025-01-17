@@ -31,7 +31,6 @@ public class ResponseCode {
         GET_PRICE_HISTORY,
 
         // Added by me.
-        SERVER_FULL,
         EXIT,
         INVALID_REQUEST,
         ORDER_INFO;
@@ -66,7 +65,6 @@ public class ResponseCode {
         USER_ALREADY_LOGGED_IN,
         INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST_OR_USER_NOT_LOGGED_OR_OTHER_ERROR,
         ORDER_DOES_NOT_EXIST_OR_BELONGS_TO_DIFFERENT_USER_OR_HAS_ALREADY_BEEN_FINALIZED_OR_OTHER_ERROR_CASES,
-        SERVER_FULL,
         EXIT,
         INVALID_REQUEST,
         ORDER_INFO;
@@ -159,20 +157,6 @@ public class ResponseCode {
         public int getCode() {
             return code;
         }
-    }
-    private static enum serverFull {
-        SERVER_FULL(100);
-
-        private final int code;
-
-        serverFull(int code) {
-            // Checking of the code is not necessary, as it is an enum.
-            // It's done by the compiler.
-            this.code = code;
-        }
-        public int getCode() {
-            return code;
-        }   
     }
     private static enum exit {
         EXIT(100);
@@ -304,9 +288,6 @@ public class ResponseCode {
                 break;
             case CANCEL_ORDER:
                 i = cancelOrder.valueOf(responseContent.name()).getCode();
-                break;
-            case SERVER_FULL:
-                i = serverFull.valueOf(responseContent.name()).getCode();
                 break;
             case EXIT:
                 i = exit.valueOf(responseContent.name()).getCode();

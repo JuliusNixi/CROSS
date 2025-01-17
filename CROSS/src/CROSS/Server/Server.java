@@ -11,24 +11,27 @@ import java.util.Properties;
 import CROSS.Exceptions.InvalidConfig;
 
 /**
+ * 
  * The Server class.
  * 
  * When started, the server will accept clients after the call to startAccept() using a dedicated thread and sockets.
  * 
- * For each client, a new thread will be created to handle it.
- * The thread will be submitted to a CachedThreadPool.
+ * For each accepted client, a new thread will be created to handle it.
+ * Then, the thread will be submitted to a CachedThreadPool.
  * 
- * The server use a configuration file to set the server's IP, port and max connections.
+ * The server use a configuration file to set the server's IP and port.
+ * The extension of the file must be .properties.
  * 
  * @version 1.0
+ * @author Giulio Nisi
  * @see AcceptThread
+ * 
  */
 public class Server {
 
     // Path to the server's configuration file and the parameters read from it.
     private String pathToConfigPropertiesFile = null;
     private Integer serverPort = null;
-    private Integer maxConnections = null;
     private InetAddress serverAddress = null;
 
     // TCP server socket.
@@ -37,25 +40,30 @@ public class Server {
     // Thread that accepts clients.
     private AcceptThread acceptThread = null;
 
-    private static final Integer DEFAULT_MAX_CONNECTIONS = 42;
-
     /**
+     * 
      * Constructor of the Server class.
      * 
      * @param pathToConfigPropertiesFile Path to the server's config file.
      * 
      * @throws NullPointerException If the path to the server's config file is null.
-     * @throws InvalidConfig If the server's IP or port are invalid.
+     * @throws InvalidConfig If the server's IP or port are invalid, or if the file extension is not .properties.
      * @throws FileNotFoundException If the server's config file is not found.
-     * @throws IOException If there is an error reading the server's config file.
+     * @throws IOException If there is an I/O error reading the server's config file.
      * @throws IllegalArgumentException If there is an error reading the server's config file.
      * @throws Exception If there is an unknown error.
+     * 
      */
     public Server(String pathToConfigPropertiesFile) throws NullPointerException, InvalidConfig, FileNotFoundException, IOException, IllegalArgumentException, Exception {
 
         // Null check.
         if (pathToConfigPropertiesFile == null) {
             throw new NullPointerException("Path to server's config file cannot be null.");
+        }
+
+        // .properties file.
+        if (!pathToConfigPropertiesFile.endsWith(".properties")) {
+            throw new InvalidConfig("Invalid file extension. Must be .properties.");
         }
 
         // Cannot be null, no need to check the exception.
@@ -69,7 +77,6 @@ public class Server {
             props.load(reader);
             String server = props.getProperty("server_ip");
             String port = props.getProperty("server_port");
-            String maxConnections = props.getProperty("server_max_connections");
 
             if (server == null || port == null) {
                 throw new InvalidConfig("Invalid server IP or port.");
@@ -86,16 +93,6 @@ public class Server {
             
             this.pathToConfigPropertiesFile = pathToConfigPropertiesFile;
 
-            // Max connections checks.
-            if (maxConnections == null) {
-                maxConnections = DEFAULT_MAX_CONNECTIONS.toString();
-                System.out.printf("Max connections not set in %s file. Using the default one: %s.\n", pathToConfigPropertiesFile, maxConnections);
-            }
-            this.maxConnections = Integer.parseInt(maxConnections);
-            if (this.maxConnections < 1) {
-                throw new InvalidConfig("Invalid max connections number.");
-            }
-
         // Throwed by getByName.
         }catch (UnknownHostException ex) {
             throw new InvalidConfig("Invalid server IP.");
@@ -108,7 +105,7 @@ public class Server {
 
         // parseInt exception.
         catch (NumberFormatException ex) {
-            throw new InvalidConfig("Invalid port number or max connections.");
+            throw new InvalidConfig("Invalid port number.");
         }
         
         // Throwed by Properties.load().
@@ -135,29 +132,30 @@ public class Server {
 
     // SERVER START
     /**
-     * Start the server, after the call to this method, to accept clients, call startAccept().
+     * 
+     * Start the server. After the call to this method, to accept clients, call startAccept().
      * 
      * @throws RuntimeException If the server is already started.
      * @throws IllegalArgumentException If the socket arguments are invalid.
      * @throws IOException If there is an I/O error.
      * @throws Exception If there is an unknown error.
+     * 
      */
     public void startServer() throws RuntimeException, IllegalArgumentException, IOException, Exception {
 
+        // Already started check.
         if (this.serverSocket != null) {
             throw new RuntimeException("Server already started.");
         }
 
-        System.out.printf("Starting server with these following args...\n%s\n", this.toString());
-
         try {
             // Start the server.
-            this.serverSocket = new ServerSocket(serverPort, maxConnections, serverAddress);
-            System.out.printf("Server started succesfully.\n");
+            this.serverSocket = new ServerSocket(serverPort, 0, serverAddress);
+            System.out.printf("Started succesfully the server with these following args...\n%s\n", this.toString());
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Invalid socket arguments in server start.");
         } catch (IOException ex) {
-            throw new IOException("I/O error starting server.");
+            throw new IOException("I/O error starting the server.");
         } catch (Exception ex) {
             throw new Exception("Unknown error in server start.");
         }
@@ -166,18 +164,22 @@ public class Server {
 
     // CLIENTS ACCEPTANCE
     /**
+     * 
      * Start accepting clients. Call this method after startServer().
      * 
      * @return The new thread that accepts clients.
      * 
      * @throws RuntimeException If the server is not started (socket null) or if the accept thread is already started.
+     * 
      */
     public AcceptThread startAccept() throws RuntimeException {
 
+        // Server not started check.
         if (this.serverSocket == null) {
-            throw new RuntimeException("Server socket is null. Server not started. Call before startServer().");
+            throw new RuntimeException("Server not started. Call before startServer().");
         }
 
+        // Already started check.
         if (this.acceptThread != null) {
             throw new RuntimeException("Accept thread already started.");
         }
@@ -187,63 +189,57 @@ public class Server {
 
         this.acceptThread = acceptThread;
 
-        System.out.printf("Accept thread started.\n");
-
         return this.acceptThread;
+
     }
 
     // GETTERS
     /**
+     * 
      * Get the path to the server's configuration file.
      * 
      * @return A string rapresenting the path to the server's configuration file.
+     * 
      */
     public String getPathToConfigPropertiesFile() {
         return String.format("%s", this.pathToConfigPropertiesFile);
     }
     /**
+     * 
      * Get the server's port.
      * 
      * @return Integer rapresenting the server's port.
+     * 
      */
     public Integer getServerPort() {
         return Integer.valueOf(this.serverPort);
     }
     /**
-     * Get the max connections number allowed from the server.
      * 
-     * @return Integer rapresenting the max connections number allowed from the server.
-     */
-    public Integer getMaxConnections() {
-        return Integer.valueOf(this.maxConnections);
-    }
-    /**
      * Get the server address.
      * 
      * @return InetAddress rapresenting the server's address.
+     * 
      */
     public InetAddress getServerAddress() {
         return this.serverAddress;
     }
     /**
+     * 
      * Get the socket.
      * 
      * @return Socket rapresenting the server's socket.
+     * 
      */
     public ServerSocket getServerSocket() {
         return this.serverSocket;
     }
     /**
-     * Get the default max connections number allowed from the server.
      * 
-     * @return Integer rapresenting the default max connections number allowed from the server.
-     */
-    public Integer getDefaultMaxConnections() {
-        return DEFAULT_MAX_CONNECTIONS;
-    }
-    /**
      * Get the server acceptance's thread.
+     * 
      * @return The server acceptance's thread.
+     * 
      */ 
     public AcceptThread getAcceptThread()  {
         return this.acceptThread;
@@ -251,7 +247,7 @@ public class Server {
      
     @Override
     public String toString() {
-        return String.format("Server Info's [Server IP [%s] - Server port [%s] - Max connections [%s] - Config file path [%s]]", this.getServerAddress(), this.getServerPort(), this.getMaxConnections(), this.getPathToConfigPropertiesFile());
+        return String.format("Server Info's [Server IP [%s] - Server port [%s] - Config file path [%s]]", this.getServerAddress(), this.getServerPort(), this.getPathToConfigPropertiesFile());
     }
     
 }
