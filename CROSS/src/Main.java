@@ -1,4 +1,4 @@
-import CROSS.Tests.Tests; 
+import CROSS.Tests.Tests;
 
 public class Main {
 
@@ -12,7 +12,7 @@ public class Main {
             System.err.println("Interrupted exception in main.");
             ex.printStackTrace();
             System.exit(-1);
-        } 
+        }
 
     }
 
