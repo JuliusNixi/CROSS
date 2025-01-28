@@ -138,6 +138,9 @@ public abstract class Tests {
         c = Client.CLI(client);
 
         System.out.printf("Here's the client: %s.\n", client.toString());
+
+        client.responsesStart();
+        
         
     }
 

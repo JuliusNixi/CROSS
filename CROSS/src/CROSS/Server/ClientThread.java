@@ -142,9 +142,8 @@ public class ClientThread implements Runnable {
             String data = null;
             try {
                 data = scanner.nextLine();
-            }catch (NoSuchElementException ex) {
-                // Ignore request.
-                System.err.printf("Error while reading a line from %s:%s.\n", this.getClientIP(), this.getClientPort());
+            } catch (NoSuchElementException ex) {
+                // Nothing received.
                 continue;
             }
 
