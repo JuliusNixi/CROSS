@@ -1,9 +1,11 @@
 package CROSS.Utils;
 
 /**
- * This class is used to create a separator string.
- * It is used to format the output of the program and make it more readable.
+ * This class is used to create a very simple separator string.
+ * It is used to format the output of the program and make it more readable (useful for debugging).
+ * 
  * @version 1.0
+ * @author Giulio Nisi
  */
 public class Separator {
 
@@ -15,6 +17,7 @@ public class Separator {
     // A separator could be a sequence of characters, for that is String.
     private String characters;
     
+    // CONSTRUCTORS
     /**
      * Constructor with two parameters.
      * 
@@ -25,6 +28,7 @@ public class Separator {
      * @throws IllegalArgumentException If length is less than or equal to 0.
      */
     public Separator(String characters, Integer length) throws NullPointerException, IllegalArgumentException {
+        
         // Null checks.
         if (characters == null) {
             throw new NullPointerException("Characters cannot be null.");
@@ -45,23 +49,29 @@ public class Separator {
         }
 
         this.characters = characters;
+
     }
     /**
      * Constructor with one parameter. It uses the default length.
      * 
-     * @param characters The characters to be repeated.
+     * @param characters The sequence of characters to be repeated.
      */
     public Separator(String characters) {
+
         this(characters, DEFAULT_LENGTH);
+
     }
 
+    // GETTERS
     /**
      * Returns the default length of the separator.
      * 
      * @return The default length of the separator.
      */
     public static Integer getDefaultLength() {
+
         return Integer.valueOf(DEFAULT_LENGTH);
+
     }
     /**
      * Returns the characters of the separator.
@@ -69,7 +79,9 @@ public class Separator {
      * @return The characters of the separator.
      */
     public String getCharacters() {
+
         return String.format("%s", this.characters);
+
     }
     /**
      * Returns the separator as a string.
@@ -77,7 +89,9 @@ public class Separator {
      * @return The separator as a string.
      */
     public String getSeparator() {
+
         return String.format("%s", this.separator);
+
     }
 
     @Override

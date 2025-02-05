@@ -2,6 +2,8 @@ package CROSS.Client;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+
+import CROSS.API.RequestResponse;
 import CROSS.API.Requests.Orders.Limit;
 import CROSS.API.Requests.Orders.Market;
 import CROSS.API.Requests.Orders.Stop;
@@ -9,10 +11,9 @@ import CROSS.API.Requests.User.Login;
 import CROSS.API.Requests.User.Logout;
 import CROSS.API.Requests.User.Register;
 import CROSS.API.Requests.User.Update;
+import CROSS.API.RequestResponse.AllResponses;
+import CROSS.API.RequestResponse.ResponseType;
 import CROSS.API.Responses.ResponseAndMessage;
-import CROSS.API.Responses.ResponseCode;
-import CROSS.API.Responses.ResponseCode.AllResponses;
-import CROSS.API.Responses.ResponseCode.ResponseType;
 import CROSS.Orders.LimitOrder;
 import CROSS.Orders.MarketOrder;
 import CROSS.Orders.StopMarketOrder;
@@ -750,7 +751,7 @@ public abstract class ClientActionsUtils {
 
                     AllResponses responseContent = AllResponses.EXIT;
                     ResponseType responseType = ResponseType.EXIT;
-                    ResponseCode responseCode = new ResponseCode(responseType, responseContent);
+                    RequestResponse responseCode = new RequestResponse(responseType, responseContent);
                     ResponseAndMessage response = new ResponseAndMessage(responseCode, "Client exiting.");
                     
                     jsonToSend = response.toJSON(false);

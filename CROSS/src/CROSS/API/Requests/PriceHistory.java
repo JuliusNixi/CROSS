@@ -7,7 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 
 import CROSS.API.JSON;
-import CROSS.API.Responses.ResponseCode.ResponseType;
+import CROSS.API.RequestResponse.ResponseType;
 
 /**
  * PriceHistory is a class used to request the price history of a market.

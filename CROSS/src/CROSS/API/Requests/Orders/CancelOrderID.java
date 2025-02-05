@@ -1,7 +1,7 @@
 package CROSS.API.Requests.Orders;
 
 import CROSS.API.JSON;
-import CROSS.API.Responses.ResponseCode.ResponseType;
+import CROSS.API.RequestResponse.ResponseType;
 
 /**
  * CancelOrderID is a class that extends JSON and is used to cancel an order by its id.

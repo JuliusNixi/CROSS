@@ -10,13 +10,14 @@ import java.util.concurrent.ThreadPoolExecutor;
  * 
  * This thread is responsible for accepting new connections from clients for the server.
  * 
- * It's started after the server starting by the Server class.
+ * It's started after the server starting by the Server class itself.
  * 
  * It creates a new ClientThread for each new client connection accepted.
  * This latter thread is then executed by the a CachedThreadPool.
  * 
  * @version 1.0
  * @author Giulio Nisi
+ * 
  * @see Server
  * @see ClientThread
  * 
@@ -61,15 +62,17 @@ public class AcceptThread extends Thread {
             try {
                 // Accept connections from clients.
 
-                // Synchronization is not needed here because the server doesn't modify the clientSocket.
+                // Synchronization is not needed here because the server Class doesn't modify the clientSocket.
                 this.clientSocket = server.getServerSocket().accept();
 
                 System.out.printf("Connection accepted from %s:%s.\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
                 
                 // Create a new thread for the client.
                 executor.execute(new ClientThread(clientSocket));
+
                 // Execution ok printed in the ClientThread class.
             }catch (IOException ex) {
+                // This is a dediacted thread, so I don't backward the exception, instead I print it and I try to continue.
                 System.err.printf("An I/O error occurred while accepting a connection from %s:%s. Trying to continue...\n", clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
                 continue;
             } catch (RejectedExecutionException ex) {
@@ -86,23 +89,15 @@ public class AcceptThread extends Thread {
     // GETTERS
     /**
      * 
-     * Getter for the executor.
-     * 
-     * @return The executor as a ThreadPoolExecutor.
-     * 
-     */
-    public ThreadPoolExecutor getExecutor() {
-        return this.executor;
-    } 
-    /**
-     * 
      * Getter for the server.
      * 
      * @return The server.
      * 
      */
     public Server getServer() {
+
         return this.server;
+
     }   
 
 }

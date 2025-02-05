@@ -1,6 +1,6 @@
 package CROSS.API.Requests.Orders;
 
-import CROSS.API.Responses.ResponseCode.ResponseType;
+import CROSS.API.RequestResponse.ResponseType;
 
 /**
  * Limit is a class that extends Generic and is used to submit a limit order.

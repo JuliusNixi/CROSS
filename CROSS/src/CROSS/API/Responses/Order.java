@@ -1,6 +1,6 @@
 package CROSS.API.Responses;
 
-import CROSS.API.Responses.ResponseCode.ResponseType;
+import CROSS.API.RequestResponse.ResponseType;
 
 /**
  * Order is a class.

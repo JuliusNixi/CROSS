@@ -1,7 +1,7 @@
 package CROSS.API.Requests.User;
 
 import CROSS.API.JSON;
-import CROSS.API.Responses.ResponseCode.ResponseType;
+import CROSS.API.RequestResponse.ResponseType;
 
 /**
  * Logout is a class that is used to logout.

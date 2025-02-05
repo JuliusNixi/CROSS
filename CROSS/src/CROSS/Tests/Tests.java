@@ -25,7 +25,10 @@ import CROSS.Utils.UniqueNumber;
  * 
  * This class is abstract, because it only contains some static methods.
  * These methods are used to perform some simple tests on the code hoping to avoid bugs.
+ * 
  * @version 1.0
+ * @author Giulio Nisi
+ * 
  * @see Server
  * @see AcceptThread
  * 
@@ -61,13 +64,21 @@ public abstract class Tests {
     // SERVER AND CLIENT TESTS
     /**
      * To test the server.
+     * 
+     * @throws NullPointerException If the path to the config file is null.
+     * @throws InvalidConfig If the config file is invalid.
+     * @throws FileNotFoundException If the config file is not found.
+     * @throws IOException If there's an I/O error.
+     * @throws IllegalArgumentException If there is an error reading the server's config file, a malformed Unicode escape appears in the input.
+     * @throws Exception If there's an exception.
      */
-    public static void TestServer() throws NullPointerException, InvalidConfig, FileNotFoundException, IOException, Exception{
+    public static void TestServer() throws NullPointerException, InvalidConfig, FileNotFoundException, IOException, IllegalArgumentException, Exception {
 
         // Test server.
         System.out.println("Testing server...");
 
         String pathToConfigPropertiesFile = "./Configs/server-config.properties";
+        // The exceptions thrown by the constructor are backwarded to the caller.
         Server server = new Server(pathToConfigPropertiesFile);
 
         try {
@@ -81,7 +92,12 @@ public abstract class Tests {
         try {
             server.startServer();
         }catch (RuntimeException ex) {
+
+            // Capturing the specific exception that should be thrown (I expect this one).
+            // If something else is thrown, it's a problem and it's backwarded to the caller.
+
             System.out.println("Test passed, starting server multiple times.");
+            
         }
 
         @SuppressWarnings("unused")
@@ -146,6 +162,9 @@ public abstract class Tests {
 
     /**
      * To perform all the tests.
+     * Main method.
+     * 
+     * @throws InterruptedException If the thread is interrupted, needed for the Thread.sleep() in the tests. Should never happen.
      */
     public static void AllTests() throws InterruptedException {
 
@@ -169,15 +188,29 @@ public abstract class Tests {
             // To test a little bit the server and the client.
             Thread.sleep(1000 * 120);
 
+        }catch (InterruptedException ex) {
+
+            // This should never happens, needed for the Thread.sleep() in the tests. 
+
+            // Only for the InterruptedException in the Thread.sleep() in the tests.
+
+            // Backwarding the exception to the caller.
+            throw new InterruptedException(ex.getMessage());
+
         }catch (Exception ex) {
+
+            // Exceptions thrown by the tests (my methods, it's a problem).
+
             // This should never happen.
             System.err.println("Tests failed with exception: " + ex.getMessage());
+            ex.printStackTrace();
+
             System.exit(-1);
+
         }
 
 
-/* 
-
+        /* 
 
         TestPrices();
         System.out.println(separator);
@@ -198,10 +231,12 @@ public abstract class Tests {
         System.out.println(separator);
 
 
-
         Thread.sleep(1000 * 5);
 
-*/
+        */
+    
+    
     }
 
 }
+
