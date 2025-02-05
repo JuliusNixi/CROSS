@@ -1,5 +1,5 @@
-Create official method with server start and users load, ready to be tested.
+Create official method with server start and users load, ready to be used/tested.
 Concurrencies checks.
 Orders persistence on file.
-Add notification for market, limit, insert stop.
+Add notification for market, limit, insert stop orders.
 

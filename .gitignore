@@ -1,5 +1,4 @@
-# MacOS system files.
+# MacOS file system files.
 .DS_Store
-# LaTeX Texifier temporary files.
+# LaTeX Texifier temporary files, used for the report.
 .tex*
-  

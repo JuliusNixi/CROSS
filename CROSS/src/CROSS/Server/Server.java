@@ -14,7 +14,7 @@ import CROSS.Exceptions.InvalidConfig;
  * 
  * The Server class.
  * 
- * When started, the server will accept clients after the call to startAccept() using a dedicated thread and sockets.
+ * When started, the server will accept clients after the call to startAccept() by using a dedicated thread and sockets.
  * 
  * For each accepted client, a new thread will be created to handle it.
  * Then, the thread will be submitted to a CachedThreadPool.
@@ -24,6 +24,7 @@ import CROSS.Exceptions.InvalidConfig;
  * 
  * @version 1.0
  * @author Giulio Nisi
+ * 
  * @see AcceptThread
  * 
  */
@@ -50,7 +51,7 @@ public class Server {
      * @throws InvalidConfig If the server's IP or port are invalid, or if the file extension is not .properties.
      * @throws FileNotFoundException If the server's config file is not found.
      * @throws IOException If there is an I/O error reading the server's config file.
-     * @throws IllegalArgumentException If there is an error reading the server's config file.
+     * @throws IllegalArgumentException If there is an error reading the server's config file, a malformed Unicode escape appears in the input.
      * @throws Exception If there is an unknown error.
      * 
      */
@@ -61,16 +62,17 @@ public class Server {
             throw new NullPointerException("Path to server's config file cannot be null.");
         }
 
-        // .properties file.
+        // .properties file check.
         if (!pathToConfigPropertiesFile.endsWith(".properties")) {
-            throw new InvalidConfig("Invalid file extension. Must be .properties.");
+            throw new InvalidConfig("Invalid server's config file extension. Must be .properties.");
         }
 
-        // Cannot be null, no need to check the exception.
+        // Cannot be null, checked manually before, no need to check this exception.
         File configFile = new File(pathToConfigPropertiesFile);
         Properties props = new Properties();
         
         // Try with resources.
+        // All the resources will be closed.
         try (FileReader reader = new FileReader(configFile)) {
             
             // Read the properties file.
@@ -79,7 +81,7 @@ public class Server {
             String port = props.getProperty("server_port");
 
             if (server == null || port == null) {
-                throw new InvalidConfig("Invalid server IP or port.");
+                throw new InvalidConfig("Invalid (maybe null) server IP or port.");
             }
 
             // Parsing port.
@@ -115,12 +117,15 @@ public class Server {
 
         // InvalidConfig exception.
         catch (InvalidConfig ex) {
-            // Forward the exception.
+
+            // Forwarding the exception.
             throw new InvalidConfig(ex.getMessage());
+
         }
 
+        // Malformed Unicode escape.
         catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Illegal argument in server creation.");
+            throw new IllegalArgumentException("Illegal argument in server creation. Malformed Unicode escape appears in the input.");
         }
 
         // Generic exception.
@@ -133,7 +138,8 @@ public class Server {
     // SERVER START
     /**
      * 
-     * Start the server. After the call to this method, to accept clients, call startAccept().
+     * Start the server. 
+     * After the call to this method, to accept clients, call startAccept().
      * 
      * @throws RuntimeException If the server is already started.
      * @throws IllegalArgumentException If the socket arguments are invalid.
@@ -149,9 +155,12 @@ public class Server {
         }
 
         try {
+
             // Start the server.
             this.serverSocket = new ServerSocket(serverPort, 0, serverAddress);
+
             System.out.printf("Started succesfully the server with these following args...\n%s\n", this.toString());
+
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Invalid socket arguments in server start.");
         } catch (IOException ex) {
@@ -165,7 +174,8 @@ public class Server {
     // CLIENTS ACCEPTANCE
     /**
      * 
-     * Start accepting clients. Call this method after startServer().
+     * Start accepting clients.
+     * Call this method after startServer().
      * 
      * @return The new thread that accepts clients.
      * 
@@ -176,7 +186,7 @@ public class Server {
 
         // Server not started check.
         if (this.serverSocket == null) {
-            throw new RuntimeException("Server not started. Call before startServer().");
+            throw new RuntimeException("Server not started. Call startServer() before.");
         }
 
         // Already started check.
@@ -184,6 +194,7 @@ public class Server {
             throw new RuntimeException("Accept thread already started.");
         }
 
+        // Exceptions not possible.
         AcceptThread acceptThread = new AcceptThread(this);
         acceptThread.start();
 
@@ -202,7 +213,9 @@ public class Server {
      * 
      */
     public String getPathToConfigPropertiesFile() {
+
         return String.format("%s", this.pathToConfigPropertiesFile);
+
     }
     /**
      * 
@@ -212,7 +225,9 @@ public class Server {
      * 
      */
     public Integer getServerPort() {
+
         return Integer.valueOf(this.serverPort);
+
     }
     /**
      * 
@@ -222,7 +237,9 @@ public class Server {
      * 
      */
     public InetAddress getServerAddress() {
+
         return this.serverAddress;
+
     }
     /**
      * 
@@ -232,22 +249,16 @@ public class Server {
      * 
      */
     public ServerSocket getServerSocket() {
+
         return this.serverSocket;
+
     }
-    /**
-     * 
-     * Get the server acceptance's thread.
-     * 
-     * @return The server acceptance's thread.
-     * 
-     */ 
-    public AcceptThread getAcceptThread()  {
-        return this.acceptThread;
-    }
-     
+
     @Override
     public String toString() {
+
         return String.format("Server Info's [Server IP [%s] - Server port [%s] - Config file path [%s]]", this.getServerAddress(), this.getServerPort(), this.getPathToConfigPropertiesFile());
+    
     }
     
 }

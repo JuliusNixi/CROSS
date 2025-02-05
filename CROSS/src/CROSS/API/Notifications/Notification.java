@@ -3,7 +3,7 @@ package CROSS.API.Notifications;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import CROSS.API.Responses.ResponseCode.ResponseType;
+import CROSS.API.RequestResponse.ResponseType;
 import CROSS.Utils.Separator;
 
 /**

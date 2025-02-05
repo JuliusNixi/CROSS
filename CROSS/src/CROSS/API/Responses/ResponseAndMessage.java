@@ -1,31 +1,43 @@
 package CROSS.API.Responses;
 
 import CROSS.API.JSON;
+import CROSS.API.RequestResponse;
 
 /**
- * ResponseAndMessage is a class.
- * This class is used to represent the response of a request.
+ * 
+ * ResponseAndMessage is used to represent the response of a request.
+ * 
  * It's include a response code and a message.
+ * 
  * It's extends the JSON class.
+ * 
  * It's used the ResponseCode class as core.
  * 
  * @version 1.0
- * @see ResponseCode
+ * @author Giulio Nisi
+ * 
+ * @see RequestResponse
  * @see JSON
+ * 
  */
 public class ResponseAndMessage extends JSON {
     
-    private Integer code;
-    private String errorMessage;
+    private Integer code = null;
+    private String errorMessage = null;
 
     /**
      * Constructor of the ResponseAndMessage class.
+     * 
      * If the errorMessage is empty, the error message is set to the name of the response content.
+     * 
      * @param code The code of the response.
      * @param errorMessage The message of the response.
-     * @throws NullPointerException If the code or the errorMessage are null.
+     * 
+     * @throws NullPointerException If the code or the message are null.
      */
-    public ResponseAndMessage(ResponseCode code, String errorMessage) throws NullPointerException {
+    public ResponseAndMessage(RequestResponse code, String errorMessage) throws NullPointerException {
+        
+        // Null check.
         if (code == null) {
             throw new NullPointerException("Code of the response cannot be null.");
         }

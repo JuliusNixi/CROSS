@@ -1,6 +1,6 @@
 package CROSS.API.Requests.User;
 
-import CROSS.API.Responses.ResponseCode.ResponseType;
+import CROSS.API.RequestResponse.ResponseType;
 import CROSS.Users.User;
 
 /**

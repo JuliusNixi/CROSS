@@ -6,13 +6,19 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+
+import CROSS.API.RequestResponse;
+import CROSS.API.RequestResponse.AllResponses;
+import CROSS.API.RequestResponse.RequestResponseType;
+import CROSS.API.RequestResponse.ResponseType;
 import CROSS.API.Responses.ResponseAndMessage;
-import CROSS.API.Responses.ResponseCode;
-import CROSS.API.Responses.ResponseCode.AllResponses;
-import CROSS.API.Responses.ResponseCode.ResponseType;
+
 import java.io.BufferedInputStream;
 
 /**
@@ -21,11 +27,11 @@ import java.io.BufferedInputStream;
  * Each client will have its own dedicated thread.
  * 
  * This thread is started after a new client connection acceptance by the AcceptThread class.
- * 
  * This thread is then submitted to CachedThreadPool.
  * 
  * @version 1.0
  * @author Giulio Nisi
+ * 
  * @see AcceptThread
  * 
  */
@@ -35,11 +41,11 @@ public class ClientThread implements Runnable {
     private final Socket socket;
 
     // Output and input streams for the client's socket.
-    private InputStream in;
-    private OutputStream out;
+    private InputStream in = null;
+    private OutputStream out = null;
 
     // Buffered stream for the client's socket.
-    private BufferedInputStream bin;
+    private BufferedInputStream bin = null;
     
     /**
      * 
@@ -63,23 +69,15 @@ public class ClientThread implements Runnable {
     // GETTERS
     /**
      * 
-     * Getter for the client's socket.
-     * 
-     * @return The client's socket.
-     * 
-     */
-    public Socket getSocket() {
-        return this.socket;
-    }
-    /**
-     * 
      * Getter for the client's IP.
      * 
      * @return The client's IP as String.
      * 
      */
     public String getClientIP() {
+
         return this.socket.getInetAddress().getHostAddress();
+
     }
     /**
      * 
@@ -89,12 +87,16 @@ public class ClientThread implements Runnable {
      * 
      */
     public Integer getClientPort() {
+
         return Integer.parseInt(this.socket.getPort() + "");
+
     }
 
     @Override
     public String toString() {
+
         return String.format("Client thread ID [%s] - IP [%s] - Port [%s]", Thread.currentThread().threadId(), this.getClientIP(), this.getClientPort());
+    
     }
     
     // Main loop for client's actions handling logic.
@@ -112,26 +114,46 @@ public class ClientThread implements Runnable {
             this.in = in;
             this.out = out;
         }catch (IOException ex) {
+
+            // This is a dediacted thread, so I don't backward the exception, instead I print it and I try to continue.
+
             System.err.printf("Error while getting input and output streams from %s:%s. Closing this connection...\n", this.getClientIP(), this.getClientPort());
+            
             try {
                 this.socket.close();
             }catch (IOException ex2) {
                 System.err.printf("Error while closing socket %s:%s.\n", this.getClientIP(), this.getClientPort());
             }
+
+            if (this.in != null) {
+                try {
+                    this.in.close();
+                }catch (IOException ex2) {
+                    System.err.printf("Error while closing input stream from %s:%s.\n", this.getClientIP(), this.getClientPort());
+                }
+            }
+
             return;
+
         }
 
         // Buffered input stream.
         try (BufferedInputStream bin = new BufferedInputStream(this.in)) {
             this.bin = bin;
         }catch (IOException ex) {
+
+            // This is a dediacted thread, so I don't backward the exception, instead I print it and I try to continue.
+
             System.err.printf("Error while getting buffered input stream from %s:%s. Closing this connection...\n", this.getClientIP(), this.getClientPort());
+            
             try {
                 this.socket.close();
             }catch (IOException ex2) {
                 System.err.printf("Error while closing socket %s:%s.\n", this.getClientIP(), this.getClientPort());
             }
+
             return;
+
         }
 
         Scanner scanner = new Scanner(this.in);
@@ -142,45 +164,61 @@ public class ClientThread implements Runnable {
             String data = null;
             try {
                 data = scanner.nextLine();
+                if (data == null) {
+                    // Message printed in the catch block.
+                    throw new NoSuchElementException("");
+                }
             } catch (NoSuchElementException ex) {
-                // Nothing received.
+                // Nothing received or '\n' NOT received.
+                // Ignore request.
                 continue;
             }
 
             // Checking if the received JSON is valid and getting the operation.
-            ResponseType response = null;
+            RequestResponseType receivedRequest = null;
             try {
                 
                 // Getting received operation.
                 String operationDetected = null;
-                JsonObject jsonObject = JsonParser.parseString(data).getAsJsonObject();
-                operationDetected = jsonObject.get("operation").getAsString();
-                operationDetected = operationDetected.toLowerCase().trim();
 
-                // Checking if the operation is supported.
-                for (ResponseType responseCurrent : ResponseType.values()) {
-                    String rstr = responseCurrent.toString().toLowerCase().trim();
-                    if (operationDetected.equals(rstr)) {
-                        response = responseCurrent;
-                        break;
-                    }
-                }
-                if (response == null) {
+                JsonObject jsonObject = JsonParser.parseString(data).getAsJsonObject();
+
+                JsonElement jsonElement = jsonObject.get("operation");
+                if (jsonElement == null) {
                     // Message printed in the catch block.
                     throw new UnsupportedOperationException("");
                 }
 
-            }catch (JsonParseException | UnsupportedOperationException | IllegalStateException ex) {
+                operationDetected = jsonElement.getAsString();
+                operationDetected = operationDetected.toLowerCase().trim();
+
+                // Checking if the operation is supported.
+                for (RequestResponseType requestResponseType : RequestResponseType.values()) {
+
+                    String rstr = requestResponseType.toString().toLowerCase().trim();
+                    if (operationDetected.equals(rstr)) {
+                        receivedRequest = requestResponseType;
+                        break;
+                    }
+                    
+                }
+
+                if (receivedRequest == null) {
+                    // Message printed in the catch block.
+                    throw new UnsupportedOperationException("");
+                }
+
+            } catch (JsonParseException | UnsupportedOperationException | IllegalStateException ex) {
 
                 // Received an invalid JSON or an unsupported operation.
 
                 // Sending an error response to the client.
+
                 // Create a response.
-                ResponseType responseType = ResponseType.INVALID_REQUEST;
-                AllResponses responseContent = AllResponses.INVALID_REQUEST;
-                ResponseCode responseCode = new ResponseCode(responseType, responseContent);
-                ResponseAndMessage responseErr = new ResponseAndMessage(responseCode, "Invalid request.");
-                String responseErrString = responseErr.toJSON(true);
+                RequestResponseType type = RequestResponseType.INVALID_REQUEST;
+                // No content - code for this response's type.
+                RequestResponse response = new RequestResponse(type);
+                String responseString = response.toJSON(true);
 
                 System.err.printf("Invalid request from %s:%s.\n", this.socket.getInetAddress().getHostAddress(), this.socket.getPort());
 
@@ -227,6 +265,7 @@ public class ClientThread implements Runnable {
         
         // Clean up.
         try {
+
             this.bin.close();
             this.in.close();
 
@@ -235,9 +274,12 @@ public class ClientThread implements Runnable {
             scanner.close();
 
             this.socket.close();
+
         }catch (IOException ex) {
+
             System.err.printf("Error while closing all resources from %s:%s.\n", this.getClientIP(), this.getClientPort());
             return;
+
         }
 
         System.out.printf("%s closed all resources successfully.\n", this.toString());

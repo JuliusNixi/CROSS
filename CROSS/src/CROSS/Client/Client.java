@@ -11,10 +11,11 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import java.net.Socket;
 import java.net.SocketException;
+
+import CROSS.API.RequestResponse;
+import CROSS.API.RequestResponse.AllResponses;
+import CROSS.API.RequestResponse.ResponseType;
 import CROSS.API.Responses.ResponseAndMessage;
-import CROSS.API.Responses.ResponseCode;
-import CROSS.API.Responses.ResponseCode.AllResponses;
-import CROSS.API.Responses.ResponseCode.ResponseType;
 import CROSS.Exceptions.InvalidConfig;
 import CROSS.Users.User;
 
@@ -251,7 +252,7 @@ public class Client {
             // Create the response.
             ResponseType responseType = ResponseType.EXIT;
             AllResponses responseContent = AllResponses.EXIT;
-            ResponseCode responseCode = new ResponseCode(responseType, responseContent);
+            RequestResponse responseCode = new RequestResponse(responseType, responseContent);
             ResponseAndMessage response = new ResponseAndMessage(responseCode, "Client disconnection...");
             String json = response.toJSON(false);
 
