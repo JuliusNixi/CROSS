@@ -63,14 +63,16 @@ public abstract class Tests {
     
     // SERVER AND CLIENT TESTS
     /**
+     * 
      * To test the server.
      * 
-     * @throws NullPointerException If the path to the config file is null.
-     * @throws InvalidConfig If the config file is invalid.
-     * @throws FileNotFoundException If the config file is not found.
+     * @throws NullPointerException If the path to the server's config file is null.
+     * @throws InvalidConfig If the server's config file is invalid.
+     * @throws FileNotFoundException If the server's config file is not found.
      * @throws IOException If there's an I/O error.
      * @throws IllegalArgumentException If there is an error reading the server's config file, a malformed Unicode escape appears in the input.
-     * @throws Exception If there's an exception.
+     * @throws Exception If there's an unknown exception.
+     * 
      */
     public static void TestServer() throws NullPointerException, InvalidConfig, FileNotFoundException, IOException, IllegalArgumentException, Exception {
 
@@ -81,6 +83,7 @@ public abstract class Tests {
         // The exceptions thrown by the constructor are backwarded to the caller.
         Server server = new Server(pathToConfigPropertiesFile);
 
+        // TODO: Qui ero rimasto prima di passare al server....
         try {
             server.startAccept();
         }catch (RuntimeException ex) {
@@ -100,8 +103,7 @@ public abstract class Tests {
             
         }
 
-        @SuppressWarnings("unused")
-        AcceptThread s = server.startAccept();
+        server.startAccept();
 
         try {
             server.startAccept();
@@ -135,10 +137,8 @@ public abstract class Tests {
             System.out.println("Test passed, blocked disconnecting without client connection.");
         }
 
-        @SuppressWarnings("unused")
-        ClientCLIThread c = null;
         try {
-            c = Client.CLI(client);
+            Client.CLI(client);
         }catch (RuntimeException ex) {
             System.out.println("Test passed, blocked starting CLI before client connection.");
         }
@@ -151,7 +151,7 @@ public abstract class Tests {
             System.out.println("Test passed, blocked multiple client connections.");
         }
 
-        c = Client.CLI(client);
+        Client.CLI(client);
 
         System.out.printf("Here's the client: %s.\n", client.toString());
 
@@ -179,6 +179,8 @@ public abstract class Tests {
             Thread.sleep(1000 * 1);
             System.out.println(separator);
 
+            // TODO: Qui ero rimasto prima di passare al server (sopra/tests)....
+
             TestClient();
             // USED ONLY TO SEE THE DEBUG PRINTS IN THE CORRECT ORDER!
             Thread.sleep(1000 * 1);
@@ -201,7 +203,7 @@ public abstract class Tests {
 
             // Exceptions thrown by the tests (my methods, it's a problem).
 
-            // This should never happen.
+            // This should never happen, otherwise the tests failed.
             System.err.println("Tests failed with exception: " + ex.getMessage());
             ex.printStackTrace();
 

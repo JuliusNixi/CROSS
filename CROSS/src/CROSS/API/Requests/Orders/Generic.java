@@ -1,69 +1,77 @@
 package CROSS.API.Requests.Orders;
 
-import CROSS.API.JSON;
 import CROSS.Types.Quantity;
 import CROSS.Types.Price.PriceType;
 
 /**
- * Generic is an abstract class.
+ * 
+ * Generic is an abstract class used as base to be extended by the client's requests about orders.
  * 
  * It is used to represent the requests that are about the orders.
  * 
- * This class is not a concrete request, but an abstract one, used to represent the common data of the requests.
+ * This class is not a concrete request, it's used to represent the common data of the requests about orders.
  * It's extended by other classes that represent the concrete requests.
  * 
  * It contains the type and the size of the order.
  * 
  * @version 1.0
- * @see JSON
+ * @author Giulio Nisi
+ * 
  * @see CROSS.Orders.Order
+ * @see CROSS.Types.Price.PriceType
+ * @see CROSS.Types.Quantity
  * 
  * @see Limit
  * @see Market
- * @see Stop
+ * @see StopMarket
+ * 
  */
-public abstract class Generic extends JSON {
+public abstract class Generic {
     
-    private String type;
-    private Integer size;
+    private final String type;
+    private final Integer size;
 
     /**
-     * Constructor of the Generic class.
+     * 
+     * Constructor of the class.
      * 
      * @param order The order to get the type and the size from.
+     * 
      * @throws NullPointerException If the order is null.
+     * 
      */
-    public <O extends CROSS.Orders.Order> Generic(O order) throws NullPointerException {
-        if (order == null) {
-            throw new NullPointerException("The order cannot be null.");
-        }
+    public Generic(CROSS.Orders.Order order) throws NullPointerException {
         
-        super(null);
+        // Null check.
+        if (order == null) {
+            throw new NullPointerException("The order in the request cannot be null.");
+        }
 
-        this.size = order.getQuantity().getQuantity();
+        this.size = order.getQuantity().getValue();
         this.type = order.getPrice().getType().name().toLowerCase();
+
     }
 
+    // GETTERS
     /**
+     * 
      * Getter for the type of the order.
      * 
-     * @return The type of the order.
+     * @return The type of the order as PriceType.
+     * 
      */
     public PriceType getType() {
         return PriceType.valueOf(this.type.toUpperCase());
     }
     /**
+     * 
      * Getter for the size of the order.
      * 
-     * @return The size of the order.
+     * @return The size of the order as Quantity.
+     * 
      */
     public Quantity getSize() {
         return new Quantity(this.size);
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Type [%s] - Size [%s]", this.getType().name(), this.getSize().getQuantity());
     }
 
 }

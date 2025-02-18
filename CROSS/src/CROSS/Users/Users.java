@@ -1,60 +1,87 @@
 package CROSS.Users;
 
-import java.util.TreeSet;
 import CROSS.Exceptions.InvalidUser;
+import java.io.IOException;
+import java.util.TreeSet;
 
 /**
- * Users class.
- * Abstract class. I assume that i don't want to handle different users dabatases at the same time.
- * This class will rapresent the users database in RAM.
+ * 
+ * Users class is an abstract one.
+ * That's because I assume that I don't want to handle different users dabatases at the same time.
+ * 
+ * This class will rapresent the users database file in RAM.
+ * It will be synchronized (best effort will be made to do so) with the database file on disk.
+ * That's will be done with the support of the DBUsersInterface class.
+ * ALL OPERATIONS MUST BE DONE THROUGH THIS CLASS, THE DBUsersInterface CLASS IS NOT TO BE USED DIRECTLY.
+ * 
+ * It uses a TreeSet to store the users in memory to add and search in complexity O(log n).
+ * 
  * @version 1.0
+ * @author Giulio Nisi
+ * 
  * @see User
+ * 
  * @see DBUsersInterface
+ * 
  * @see InvalidUser
+ * 
  */
 public abstract class Users {
     
     // Add and search in complexity O(log n).
     private static TreeSet<User> users = new TreeSet<User>();
 
+    // USERS HANDLING
     /**
+     * 
      * Add a user to the database.
-     * The user is added to the TreeSet and to the file.
-     * If not present, the user line id is set to the current size of the database, since it's appended at the end of the file.
+     * The user is added BOTH to the TreeSet in memory and to the database file if not present.
+     * 
+     * If not present, the user line id is set to the current size of the database file, since it's appended at the end of the file.
+     * 
+     * Synchronized method to prevent multiple threads to write on the file at the same time.
+     * 
      * @param user The user to add.
+     * 
      * @throws InvalidUser If the user already exists.
      * @throws NullPointerException If the user is null.
-     * @throws RuntimeException If an error occurs while writing the user on file or if the method loadUsers() is not found.
+     * @throws RuntimeException If the method loadUsers() is not found.
+     * @throws IOException If an error occurs while writing the user on file.
+     * 
      */
-    public static void addUser(User user) throws InvalidUser, NullPointerException, RuntimeException {
+    public static synchronized void addUser(User user) throws InvalidUser, NullPointerException, RuntimeException, IOException {
 
+        // Null checks.
         if (user == null) {
-            throw new NullPointerException("User is null.");
+            throw new NullPointerException("User to add cannot be null.");
         }
 
+        // Already exists.
         if (users.contains(user)) {
-            throw new InvalidUser("User already exists.");
+            throw new InvalidUser("User to add already exists.");
         }
 
+        // Set the file line id if not present.
         if (user.getFileLineId() == null) {
             user.setFileLineId(DBUsersInterface.calculateFileLines() + 1);
         }
 
-        // Added user to the TreeSet.
+        // Adds user to the TreeSet.
         users.add(user);
 
         // Prevent double file writes when the method is called from DBUsersInterface.loadUsers().
-        // That because:
+        // That's because:
         // loadUsers() read from file user X -> call addUser() to add it in RAM -> writeUserOnFile() write user X on file AGAIN.
         String method = null;
         try {
             method = DBUsersInterface.class.getMethod("loadUsers").getName();
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException("Method loadUsers() not found.");
+        } catch (NoSuchMethodException ex) {
+            throw new RuntimeException("Method loadUsers() not found in the DBUsersInterface class.");
         }
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         for (StackTraceElement stackTraceElement : stackTrace) {
             if (stackTraceElement.getMethodName().equals(method)) {
+                // Exit before writing on file.
                 return;
             }
         }
@@ -62,88 +89,140 @@ public abstract class Users {
         // Write user on file.
         try {
             DBUsersInterface.writeUserOnFile(user);
-        } catch (RuntimeException ex) {
+        } catch (IOException ex) {
+            // Remove user from TreeSet.
             users.remove(user);
-            throw new RuntimeException("Error writing user on file.");
+
+            throw new IOException("Error writing user on file while adding it.");
         }
 
     }
-
     /**
+     * 
      * Update a user in the database.
-     * The user is updated in the TreeSet and in the file.
-     * The method will updated the password of the userOld with the password of the userNew.
-     * @param userOld The user to update.
+     * 
+     * The user is updated BOTH in the TreeSet and in the database file.
+     * 
+     * The method will update the password of the old user with the password of the new user.
+     * 
+     * Synchronized method to prevent multiple threads to write on the file at the same time.
+     * 
+     * @param userOld The old user to update.
      * @param userNew The new user to replace the old one.
-     * @throws InvalidUser If the userOld does not exist.
-     * @throws NullPointerException If the userOld or userNew are null.
-     * @throws RuntimeException If an error occurs while writing the newUser on file.
+     * 
+     * @throws InvalidUser If the old user does not exist.
+     * @throws NullPointerException If the old user or the new user are null.
+     * @throws RuntimeException If an error occurs while writing the new user on file.
+     * 
      */
-    public static void updateUser(User userOld, User userNew) throws InvalidUser, NullPointerException, RuntimeException {
+    public static synchronized void updateUser(User userOld, User userNew) throws InvalidUser, NullPointerException, RuntimeException {
 
+        // Null checks.
         if (userOld == null) {
-            throw new NullPointerException("Old user is null.");
+            throw new NullPointerException("Old user to update cannot be null.");
         }
         if (userNew == null) {
-            throw new NullPointerException("New user is null.");
+            throw new NullPointerException("New user to update cannot be null.");
         }
 
+        // User does not exist.
         if (!users.contains(userOld)) {
-            throw new InvalidUser("User does not exist.");
+            throw new InvalidUser("User to update does not exist.");
         }
 
+        // Remove old user from TreeSet.
         users.remove(userOld);
 
-        // Write newUser on file and remove old user from file.
+        // Write the new user on file and remove old user from file.
+        // Also add the new user to the TreeSet.
         try {
             DBUsersInterface.updateUserOnFile(userOld, userNew);
         } catch (RuntimeException ex) {
+            // Add the old user back to the TreeSet.
             users.add(new User(userOld.getUsername(), userOld.getPassword()));
-            throw new RuntimeException("Error writing newUser on file.");
+
+            throw new RuntimeException("Error writing the new user on file while updating it.");
+        }
+
+    }
+    /**
+     * 
+     * Load all the users from the JSON database file.
+     * 
+     * It's a synchronized method to prevent multiple threads to read from the file at the same time.
+     * 
+     * The users are loaded in the TreeSet in memory from the database file.
+     * 
+     * It's a wrapper method for the DBUsersInterface.loadUsers() method.
+     * 
+     * @throws RuntimeException If an error occurs while loading the users from the database file.
+     * 
+     */
+    public static synchronized void loadUsers() throws RuntimeException {
+
+        try {
+            DBUsersInterface.loadUsers();
+        } catch (RuntimeException | IOException e) {
+            throw new RuntimeException("Error loading JSON database users from file.");
         }
 
     }
 
     // GETTERS
     /**
-     * Find a user with its username in the database and get its password.
-     * @param username The username of the user to find.
-     * @return A string with the password of the user if the user is found, null otherwise.
+     * 
+     * Find a user with its username as String in the database.
+     * 
+     * @param username The username of the user to find as String.
+     * 
+     * @return A User object if the user is found, null otherwise.
+     * 
      * @throws NullPointerException If the username is null.
+     * 
      */
-    public static String getUserPassword(String username) throws NullPointerException {
+    public static User getUser(String username) throws NullPointerException {
 
+        // Null check.
         if (username == null) {
-            throw new NullPointerException("Username cannot be null.");
+            throw new NullPointerException("Username to search in the database cannot be null.");
         }
         
         // Search by username, password is a placeholder, cannot be null due to check in User constructor.
         User toSearch = new User(username, "placeholder");
         User result = users.ceiling(toSearch);
         if (result != null && result.getUsername().equals(username)) {
-            return String.format("%s", result.getPassword());
+            return new User(result.getUsername(), result.getPassword());
         }
         return null;
         
     }
     /**
+     * 
      * Get the size of the database.
+     * 
      * @return The size of the database (number of users) as an Integer.
+     * 
      */
     public static Integer getUsersSize() {
         return users.size();
     }
 
     /**
-     * Get the users database as list of string lines, one for each user.
-     * @return The users database as list of string lines.
+     * 
+     * Get a string with the users database as list of string lines, one for each user.
+     * 
+     * @return The users database as list of string lines joined by '\n'.
+     * 
      */
     public static String toStringUsers() {
+
         String result = "";
         for (User user : users) {
             result += user.toString() + "\n";
         }
+        
         return result;
+
     }
 
 }

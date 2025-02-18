@@ -1,27 +1,30 @@
 package CROSS.API.Requests.Orders;
 
-import CROSS.API.RequestResponse.ResponseType;
-
 /**
- * Market is a class that extends Generic and is used to submit a market order.
+ * 
+ * Market is a class that extends Generic and is used to submit a market order API request.
+ * 
  * It is used to represent the request that is about the order's data.
  * 
  * @version 1.0
+ * @author Giulio Nisi
+ * 
  * @see Generic
- * @see CROSS.Orders.Order
+ * 
+ * @see CROSS.Orders.MarketOrder
+ * 
  */
 public class Market extends Generic {
 
     /**
-     * Constructor of the Market class.
      * 
-     * @param order The order to be submitted.
+     * Constructor of the class.
+     * 
+     * @param order The market order to get the price from.
+     * 
      */
-    public <O extends CROSS.Orders.Order> Market(O order) {
+    public Market(CROSS.Orders.MarketOrder order) {
         super(order);
-        super.setOperation(ResponseType.INSERT_MARKET_ORDER);
     }
-
-    // Getters defined in the super class.
-
+    
 }

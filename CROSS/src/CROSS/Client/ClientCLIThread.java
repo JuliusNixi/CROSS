@@ -2,7 +2,6 @@ package CROSS.Client;
 
 import java.io.IOException;
 import java.util.LinkedList;
-
 import org.jline.terminal.Attributes;
 import org.jline.terminal.Attributes.InputFlag;
 import org.jline.terminal.Attributes.LocalFlag;
@@ -13,11 +12,12 @@ import org.jline.utils.NonBlockingReader;
 /**
  * 
  * This class is responsible for handling the client CLI.
- * It's a thread started with the start() method from the Client class.
+ * It's a dedicated thread started with the CLI() method from the Client class.
  * It has an associated client that will be used.
  * 
  * @version 1.0
  * @author Giulio Nisi
+ * 
  * @see Client
  * @see ClientActionsUtils
  * 
@@ -25,9 +25,10 @@ import org.jline.utils.NonBlockingReader;
 public class ClientCLIThread extends Thread {
 
     // The client object that will be used with the CLI.
-    private Client client = null;
+    private final Client client;
 
-    private final String PROMPT_STRING = "Client CLI -> ";
+    // The prompt string to show to the user.
+    private final static String PROMPT_STRING = "Client CLI -> ";
 
     /**
      * 
@@ -42,21 +43,33 @@ public class ClientCLIThread extends Thread {
         
         // Null check.
         if (client == null)
-            throw new NullPointerException("The client object cannot be null.");
+            throw new NullPointerException("The client object in the CLI cannot be null.");
 
         this.client = client;
 
     }
     
-    // true == i need to exit.
-    private Boolean processCommand(String command) throws NullPointerException, RuntimeException {
+    /**
+     * 
+     * This method is responsible for processing the command string received from the user.
+     * Private method, called only by the run() method to make a cleaner code.
+     * 
+     * @param command The command string to process.
+     * 
+     * @return An Integer. -1: A critical error occurred, exit. 0: A NON critical error occurred, continue. 1: Request completed successfully, continue. 2: Exit request received, exit.
+     * 
+     */
+    private Integer processCommand(String command) {
 
         // Null check.
-        if (command == null)
-            throw new NullPointerException("The command string cannot be null.");
+        if (command == null) {
+            System.err.println("Null command to process received.");
+            return -1;
+        }
         
         // Trim the command and convert it to lowercase.
-        command = command.trim().toLowerCase();
+        // No lowercase conversion for the command, the args are case sensitive.
+        command = command.trim();
 
         // Check if the command is valid.
         ClientActionsUtils.ClientActions action = null;
@@ -65,74 +78,61 @@ public class ClientCLIThread extends Thread {
         } catch (IllegalArgumentException | NullPointerException ex) {
             // This is not a critical error, just an invalid command.
             System.out.println("Invalid string command.");
-            return false;
+            return 0;
         }
         
         // Parse the arguments.
         LinkedList<String> args = null;
         try {
-            args = ClientActionsUtils.parseCommandFromString(command, action);
+            args = ClientActionsUtils.parseCommandFromString(command);
             ClientActionsUtils.parseArgs(args, action);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | NullPointerException ex) {
             // This is not a critical error, just a invalid command.
             System.out.println("Invalid arguments.");
-            return false;
+            return 0;
         }
         
-        // Getting the JSON string to send to the server.
+        // TODO: Getting the JSON string to send to the server. NEED TO WRITE THE METHOD TO GET THE JSON STRING TO SEND IN THE CLIENTACTIONUTILS CLASS.
+        // TODO: Correct the code since here.
         String jsonToSend = null;
-        jsonToSend = ClientActionsUtils.getJSONRequest(client, action, args);
+        try {
+            jsonToSend = ClientActionsUtils.getJSONRequest(action, args);
+        }catch (Exception ex) {
+            // TODO: Handle exception.
+        }
         if (jsonToSend == null) {
             // This is not a critical error, just a invalid command.
             System.out.println("Error processing your request, please check it and try again.");
-            return false;
+            return 0;
         }
-        
-        System.out.println("DEBUG: Request to send to the server: " + jsonToSend);
+        // TODO: Correct the code since here.
 
-        // Loging checks (also performed server-side, but here to avoid spam).
-        // TODO: Set log state after login and register in the readed responses from the server.
-        if (action != ClientActionsUtils.ClientActions.LOGIN && action != ClientActionsUtils.ClientActions.REGISTER) {
-            if (this.client.getLoggedUser() == null) {
-                System.out.println("You must be logged in to perform this action.");
-                return false;
-            }
-        }else {
-            if (this.client.getLoggedUser() != null) {
-                System.out.println("You are already logged in. Please logout to perform this action.");
-                return false;
-            }
-        }
+        System.out.println("DEBUG: Request to send to the server: " + jsonToSend);
         
+        // Send the JSON request to the server.
         try {
             this.client.sendJSONToServer(jsonToSend);
             System.out.println("Request succesfully sent to the server.");
         } catch (Exception ex) {
             // This is a critical error.
-            System.err.println("Error sending the request to the server. Your request will be ignored. Trying to disconnect the client...");
-            try {
-                this.client.disconnectClient();
-            } catch (Exception ex2) {
-                System.err.println("Error disconnecting the client after failing to send the request to the server. Exiting...");
-            }
-            throw new RuntimeException("Error sending the request to the server.");
+            System.err.println("Error sending the request to the server. Your request will be ignored. Trying to disconnecting you...");
+
+            // Disconnect the client in the run() method.
+            return -1;
+            
         }
         
+        // Normal exit request.
+        // Request to the server to exit gracefully already sent before above.
         if (action == ClientActionsUtils.ClientActions.EXIT) {
-            System.out.println("Exit request sent to the server. Exiiting...");
+            System.out.println("Exit request sent to the server. Exiting...");
 
-            try {
-                this.client.disconnectClient();
-            } catch (Exception ex) {
-                System.err.println("Error disconnecting after an exit request sent.");
-                throw new RuntimeException("Error while exiting.");
-            }
+            // Disconnect the client in the run() method.
+            return 2;
             
-            // Exit OK.
-            return true;
         }
 
-        return false;
+        return 1;
 
     }
 
@@ -140,25 +140,29 @@ public class ClientCLIThread extends Thread {
     @Override
     public void run() {
 
+        Integer exitStatus = 0;
+
+        // Will store the user input command.
         StringBuffer buffer = new StringBuffer();
 
+        // Try-with-resources to close the terminal at the end.
         try (Terminal terminal = TerminalBuilder.builder()
-                .system(true)         // Usa stdin/stdout di sistema.
+                .system(true)         // Use system's stdin/stdout.
                 .build()) {
 
-            // Salva gli attributi "originali" per ripristinarli al termine.
+            // Store the original terminal attributes to restore them at the end.
             Attributes originalAttributes = terminal.getAttributes();
 
-            // Entra in raw mode.
+            // Enter in raw mode to have a better control of the input / terminal settings.
             terminal.enterRawMode();
 
-            // Dopo essere entrati in raw mode, otteniamo gli attributi attuali per modificarli.
+            // We get the raw attributes to modify them.
             Attributes rawAttributes = terminal.getAttributes();
-            // Riabilitiamo l’ECHO (mostra tasto premuto) di default disabilitato in raw mode.
+            // Re-enable the echo (to see what we are typing) disabled by raw mode.
             rawAttributes.setLocalFlag(LocalFlag.ECHO, true);
-            // Disabilitiamo il CR/NL (carriage return / new line) in raw mode.
+            // Disable the new line / carriage return conversion.
             rawAttributes.setInputFlag(InputFlag.ICRNL, true); 
-            // Applichiamo i nuovi attributi.
+            // Apply the new attributes.
             terminal.setAttributes(rawAttributes);
 
             NonBlockingReader reader = terminal.reader();
@@ -168,81 +172,112 @@ public class ClientCLIThread extends Thread {
             Boolean running = true;
             while (running) {
 
-                // Legge una riga con timeout (ms). Se scade -> ch == NonBlockingReader.READ_EXPIRED.
+                // It reads a char with the given timeout (ms). If the timeout expires -> ch == NonBlockingReader.READ_EXPIRED.
                 int ch = reader.read(100);
 
                 if (ch == NonBlockingReader.READ_EXPIRED) {
-                    // Nessun tasto premuto entro il timeout.
+                    // No input received within the timeout, continue the loop.
                     continue;
                 }
 
                 if (ch == -1) {
-                    // EOF ricevuto (terminale chiuso).
+                    // EOF received.
                     System.out.println("EOF (-1) received. Exiting CLI...");
                     running = false;
+                    continue;
                 } else if (ch == 4) {
                     // ASCII 4 = Ctrl + D in raw mode.
                     System.out.println("Ctrl + D captured. Exiting CLI...");
                     running = false;
+                    continue;
                 } else if (ch >= 0) {
-                    // Altro carattere digitato, aggiungilo al buffer.
+                    // Valid char received, append it to the buffer.
                     char c = (char) ch;
                     buffer.append(c);
                 }
 
                 if (buffer.length() > 0 && buffer.toString().endsWith("\n")) {
-                    // Fine riga, '\n' rilevato.
+                    // End of line '\n' received, process the command.
                     String line = buffer.toString();
 
                     if (!line.trim().equals("\n"))
                         System.out.printf("Command received: %s\n", line.replace("\n", ""));
+                    else
+                        // Empty command, continue the loop.
+                        continue;
 
                     // Processing the command.
-                    try {
-                        running = processCommand(line);
-                    } catch (Exception ex) {
-                        // This is a critical error.
+                    Integer commandStatus = null;
+                    commandStatus = this.processCommand(line);
+                    if (commandStatus == -1) {
+                        // A critical error occurred, exit.
                         System.err.println("Error processing the command. Exiting...");
-
                         running = false;
+                        exitStatus = -1;
+                        // Exit the loop at the next iteration.
+                        continue;
                     }
-                    if (!running) continue;
+                    if (commandStatus == 0) {
+                        // Invalid command, continue.
+                        // Message already printed.
+                    }
+                    if (commandStatus == 1) {
+                        // Request completed successfully, continue.
+                        System.out.println("Request sent successfully.");
+                    }
+                    if (commandStatus == 2) {
+                        // Exit request received, exit.
+                        // NO ERROR, just an exit request.
+                        running = false;
+                        exitStatus = 0;
+                        try {
+                            this.client.disconnectClient();
+                        } catch (Exception ex) {
+                            exitStatus = -1;
+                            System.err.println("Error disconnecting the client after an exit request received. Exiting...");
+                        }
+                        // Exit the loop at the next iteration.
+                        continue;
+                    }
 
                     // Reset buffer.
                     buffer.setLength(0);
 
+                    // Print the prompt string.
                     System.out.print(PROMPT_STRING);
+
                 }
 
             }
 
-            System.out.println("Exiting CLI...");
+            // Exiting...
+            System.out.println("Exiting the client CLI.");
 
-            // Ripristina gli attributi originali.
+            // Restore the original terminal attributes.
             terminal.setAttributes(originalAttributes);
 
         } catch (IOException ex) {
+            // This is a critical error.
+            // Need to show the error to the user and exit.
 
-            // TODO: Handle exception.
+            exitStatus = -1;
+
             System.err.println("Error in starting the Client CLI or in reading the user input. Exiting...");
 
-            if (this.client.getSocket() != null) {
+            if (this.client.isClientConnected()) {
                 try {
                     this.client.disconnectClient();
                 } catch (Exception ex2) {
-                    System.err.println("Error disconnecting the client. Exiting...");
+                    System.err.println("Error disconnecting the client after a critical error in the CLI. Exiting...");
                 }
             }
             
         }
 
-        // Exiting...
-        System.out.println("Exiting the client CLI.");
-
         // Assuming the client is already disconnected.
 
         // Terminating ALL threads, since the client is exited, to avoid someone else thread use the dead client object.
-        System.exit(0);
+        System.exit(exitStatus);
 
     }
 

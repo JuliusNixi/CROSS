@@ -1,34 +1,54 @@
 package CROSS.API.Notifications;
 
 import java.time.Instant;
+import CROSS.Orders.Order;
+import CROSS.Types.Price.GenericPrice;
 
 /**
+ * 
  * This class is used in the notification system to represent a trade.
  * 
- * It extends the Limit class, attention the Limit class used here is from API and rapresent a request.
- * It's used the Limit class because it's the one with the most information about the order.
+ * It extends the Generic order class.
+ * It's used the Generic order class because it's the one with the most information about an order and has the more generic constructor.
  * 
- * This class adds an order id, order type, and timestamp.
+ * This class adds a price, an order id, order type, and timestamp.
+ * 
  * @version 1.0
- * @see CROSS.API.Requests.Orders.Limit
+ * @author Giulio Nisi
+ * 
+ * @see CROSS.API.Requests.Orders.Generic
+ * 
  * @see CROSS.Orders.Order
+ * 
+ * @see GenericPrice
+ * 
  */
-public class Trade extends CROSS.API.Requests.Orders.Limit {
+public class Trade extends CROSS.API.Requests.Orders.Generic {
 
-    private Integer orderId;
-    private String orderType;
-    private Long timestamp;
+    private final Integer price;
+    private final Integer orderId;
+    private final String orderType;
+    private final Long timestamp;
 
     /**
-     * Constructor for the Trade class.
      * 
-     * @param <O> The type of order that was traded.
+     * Constructor for the class.
+     * 
+     * @param <GenericOrder> The type of the order that was traded. Not used the generic Order class object since I need to know the type of the order, so keep its class.
      * @param order The order that was traded.
+     * 
+     * @throws RuntimeException If there is an error while setting the timestamp.
+     * 
      */
-    public <O extends CROSS.Orders.Order> Trade(O order) {
+    public <GenericOrder extends CROSS.Orders.Order> Trade(GenericOrder order) throws RuntimeException {
 
-        super(order);
+        Order baseOrder = order;
+        super(baseOrder);
 
+        // Setting the price of the trade.
+        this.price = order.getPrice().getValue();
+
+        // Setting the order id.
         this.orderId = order.getId();
 
         // Removing the "Order" part of the class name and converting to lowercase.
@@ -37,39 +57,56 @@ public class Trade extends CROSS.API.Requests.Orders.Limit {
         this.orderType = orderType;
 
         // Setting the timestamp to the current time.
-        this.timestamp = Long.valueOf(Instant.now().toEpochMilli());
+        try {
+            this.timestamp = Long.valueOf(Instant.now().toEpochMilli());
+        } catch (ArithmeticException ex) {
+            throw new RuntimeException("Error while setting the timestamp for the trade.");
+        }
         
     }
 
     // GETTERS
     /**
-     * Gets the order id.
      * 
-     * @return The order id.
+     * Gets the price of the trade.
+     * 
+     * @return The price of the trade as GenericPrice.
+     * 
+     */
+    public GenericPrice getPrice() {
+        return new GenericPrice(this.price);
+    }
+    /**
+     * 
+     * Gets the order's id.
+     * 
+     * @return The order's id as Integer.
+     * 
      */
     public Integer getOrderId() {
         return Integer.valueOf(this.orderId);
     }
     /**
+     * 
      * Gets the order type as a String.
      * 
      * @return The order type as String.
+     * 
      */
     public String getOrderType() {
         return String.format("%s", this.orderType);
     }
     /**
+     * 
      * Gets the timestamp.
      * 
-     * @return The timestamp.
+     * @return The timestamp as Long.
+     * 
      */
     public Long getTimestamp() {
         return Long.valueOf(this.timestamp);
     }
 
-    @Override
-    public String toString() {
-        return String.format("Order ID [%s] - Order Type [%s] - Timestamp [%s] - %s", this.getOrderId(), this.getOrderType(), this.getTimestamp(), super.toString());
-    }
+    // TODO: Implement the toString method used in the notification system.
 
 }

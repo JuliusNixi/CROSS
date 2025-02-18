@@ -4,30 +4,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-
-import CROSS.API.RequestResponse;
-import CROSS.API.RequestResponse.AllResponses;
-import CROSS.API.RequestResponse.RequestResponseType;
-import CROSS.API.RequestResponse.ResponseType;
-import CROSS.API.Responses.ResponseAndMessage;
-
+import CROSS.Client.ClientActionsUtils;
+import CROSS.Client.ClientActionsUtils.ClientActions;
 import java.io.BufferedInputStream;
 
 /**
  * 
  * This class rapresent a thread that will handle a specific client.
- * Each client will have its own dedicated thread.
+ * Each client will have its own dedicated thread with this class.
  * 
  * This thread is started after a new client connection acceptance by the AcceptThread class.
- * This thread is then submitted to CachedThreadPool.
+ * This thread is then submitted to CachedThreadPool to be executed.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -38,6 +32,7 @@ import java.io.BufferedInputStream;
 public class ClientThread implements Runnable {
     
     // Specific client socket.
+    // Will not change, so it's final.
     private final Socket socket;
 
     // Output and input streams for the client's socket.
@@ -49,7 +44,7 @@ public class ClientThread implements Runnable {
     
     /**
      * 
-     * Constructor of the ClientThread class.
+     * Constructor of the class.
      * 
      * @param socket The socket of the client that this thread will handle.
      * 
@@ -60,7 +55,7 @@ public class ClientThread implements Runnable {
 
         // Null check.
         if (socket == null)
-            throw new NullPointerException("Socket in the client's thread cannot be null.");
+            throw new NullPointerException("Client socket in the client's thread cannot be null.");
 
         this.socket = socket;
 
@@ -76,7 +71,7 @@ public class ClientThread implements Runnable {
      */
     public String getClientIP() {
 
-        return this.socket.getInetAddress().getHostAddress();
+        return String.format("%s", this.socket.getInetAddress().getHostAddress());
 
     }
     /**
@@ -110,48 +105,39 @@ public class ClientThread implements Runnable {
         // UTF-8 is the default encoding.
 
         // Getting input and output streams.
-        try (InputStream in = this.socket.getInputStream(); OutputStream out = this.socket.getOutputStream()) {
-            this.in = in;
-            this.out = out;
+        try {
+            this.in = this.socket.getInputStream();
+            this.out = this.socket.getOutputStream();
+            this.bin = new BufferedInputStream(this.in);
         }catch (IOException ex) {
 
             // This is a dediacted thread, so I don't backward the exception, instead I print it and I try to continue.
 
-            System.err.printf("Error while getting input and output streams from %s:%s. Closing this connection...\n", this.getClientIP(), this.getClientPort());
-            
-            try {
-                this.socket.close();
-            }catch (IOException ex2) {
-                System.err.printf("Error while closing socket %s:%s.\n", this.getClientIP(), this.getClientPort());
-            }
+            System.err.printf("Error while getting input and output streams from client %s:%s. Closing this connection...\n", this.getClientIP(), this.getClientPort());
 
             if (this.in != null) {
                 try {
                     this.in.close();
                 }catch (IOException ex2) {
-                    System.err.printf("Error while closing input stream from %s:%s.\n", this.getClientIP(), this.getClientPort());
+                    System.err.printf("Error while closing input stream from client %s:%s.\n", this.getClientIP(), this.getClientPort());
                 }
             }
 
-            return;
+            if (this.out != null) {
+                try {
+                    this.out.close();
+                }catch (IOException ex2) {
+                    System.err.printf("Error while closing output stream from client %s:%s.\n", this.getClientIP(), this.getClientPort());
+                }
+            }
 
-        }
-
-        // Buffered input stream.
-        try (BufferedInputStream bin = new BufferedInputStream(this.in)) {
-            this.bin = bin;
-        }catch (IOException ex) {
-
-            // This is a dediacted thread, so I don't backward the exception, instead I print it and I try to continue.
-
-            System.err.printf("Error while getting buffered input stream from %s:%s. Closing this connection...\n", this.getClientIP(), this.getClientPort());
-            
             try {
                 this.socket.close();
             }catch (IOException ex2) {
-                System.err.printf("Error while closing socket %s:%s.\n", this.getClientIP(), this.getClientPort());
+                System.err.printf("Error while closing client socket %s:%s.\n", this.getClientIP(), this.getClientPort());
             }
 
+            // Terminate the thread.
             return;
 
         }
@@ -160,12 +146,12 @@ public class ClientThread implements Runnable {
 
         while (true) {
 
-            // JSONs sent are always '\n' terminated.
             String data = null;
             try {
+                // JSONs sent are always '\n' terminated.
                 data = scanner.nextLine();
-                if (data == null) {
-                    // Message printed in the catch block.
+
+                if (data == null || data.isEmpty() || data.isBlank() || !data.endsWith("\n")) {
                     throw new NoSuchElementException("");
                 }
             } catch (NoSuchElementException ex) {
@@ -174,115 +160,127 @@ public class ClientThread implements Runnable {
                 continue;
             }
 
-            // Checking if the received JSON is valid and getting the operation.
-            RequestResponseType receivedRequest = null;
+            ClientActions action = null;
+            LinkedList<String> values = new LinkedList<String>();
             try {
+                JsonElement jsonElement = JsonParser.parseString(data);
+                JsonObject jsonObject = jsonElement.getAsJsonObject();
+
+                String operation = jsonObject.get("operation").getAsString();
+                action = ClientActionsUtils.actionFromString(operation);
+
+                JsonObject jsonObjectValues = jsonObject.get("values").getAsJsonObject();
                 
-                // Getting received operation.
-                String operationDetected = null;
-
-                JsonObject jsonObject = JsonParser.parseString(data).getAsJsonObject();
-
-                JsonElement jsonElement = jsonObject.get("operation");
-                if (jsonElement == null) {
-                    // Message printed in the catch block.
-                    throw new UnsupportedOperationException("");
+                for (String key : jsonObjectValues.keySet()) {
+                    String value = jsonObjectValues.get(key).getAsString();
+                    values.add(value);
                 }
 
-                operationDetected = jsonElement.getAsString();
-                operationDetected = operationDetected.toLowerCase().trim();
+                // This check IS ONLY FOR SYNTAX, THE SEMANTIC MUST BE CHECKED BELOW.
+                ClientActionsUtils.parseArgs(values, action);
 
-                // Checking if the operation is supported.
-                for (RequestResponseType requestResponseType : RequestResponseType.values()) {
-
-                    String rstr = requestResponseType.toString().toLowerCase().trim();
-                    if (operationDetected.equals(rstr)) {
-                        receivedRequest = requestResponseType;
-                        break;
-                    }
-                    
-                }
-
-                if (receivedRequest == null) {
-                    // Message printed in the catch block.
-                    throw new UnsupportedOperationException("");
-                }
-
-            } catch (JsonParseException | UnsupportedOperationException | IllegalStateException ex) {
-
-                // Received an invalid JSON or an unsupported operation.
-
-                // Sending an error response to the client.
-
-                // Create a response.
-                RequestResponseType type = RequestResponseType.INVALID_REQUEST;
-                // No content - code for this response's type.
-                RequestResponse response = new RequestResponse(type);
-                String responseString = response.toJSON(true);
-
-                System.err.printf("Invalid request from %s:%s.\n", this.socket.getInetAddress().getHostAddress(), this.socket.getPort());
-
-                // Write the response to the client.
-                try {
-                    out.write(responseErrString.getBytes());
-                    out.flush();
-                }catch (IOException ex2) {
-                    // Ignore request.
-                    System.err.printf("Error while writing an 'invalid request' response to %s:%s.\n", this.getClientIP(), this.getClientPort());
-                    continue;
-                }
-
+            } catch (JsonParseException | IllegalStateException | IllegalArgumentException | UnsupportedOperationException | NullPointerException ex) {
+                // Error while parsing the JSON.
+                // Ignore request after logging.
+                System.out.printf("Error while parsing the JSON request from %s:%s.\n", this.getClientIP(), this.getClientPort());
                 continue;
-        
-            }
-        
-            // TODO: Read API JSON requests from the client's socket.
-            Boolean exit = false;
-            switch (response) {
-                case REGISTER:
-                case UPDATE_CREDENTIALS:
-                case LOGIN:
-                    
-                case LOGOUT:
-                case INSERT_LIMIT_ORDER:
-                case INSERT_MARKET_ORDER:
-                case INSERT_STOP_ORDER:
-                case CANCEL_ORDER:
-                case CLOSED_TRADES:
-                case GET_PRICE_HISTORY:
-                case EXIT:
-                    exit = true;
-                    break;
-                case INVALID_REQUEST:
-                case ORDER_INFO:
             }
 
-            if (exit) break;
+            Boolean exit = false;
+            // TODO: Parse the JSON request.
+            switch (action) {
+                case REGISTER:
+
+                    break;
+                
+                case LOGIN:
+                
+                    break;
+                
+                case UPDATE_CREDENTIALS:
+                
+                    break;
+
+                case LOGOUT:
+                
+                    break;
+
+                case INSERT_LIMIT_ORDER:
+                
+                    break;
+
+                case INSERT_MARKET_ORDER:
+
+                    break;
+                
+                case INSERT_STOP_ORDER:
+
+                    break;
+                
+                case CANCEL_ORDER:
+
+                    break;
+
+                case GET_PRICE_HISTORY:
+
+                    break;
+
+                case EXIT:
+
+                    exit = true;
+
+                    break;
+            
+                default:
+                    // This should never happen.
+                    System.exit(-1);
+                    break;
+
+            }
+
+            if (exit)
+                break;
+
                 
         } // End While.
 
-        // I received an exit request.
+        // Disconnect the client.
         
         // Clean up.
+        Boolean error = false;
         try {
-
             this.bin.close();
-            this.in.close();
-
-            this.out.close();
-
-            scanner.close();
-
-            this.socket.close();
-
         }catch (IOException ex) {
-
-            System.err.printf("Error while closing all resources from %s:%s.\n", this.getClientIP(), this.getClientPort());
-            return;
-
+            error = true;
+            System.err.printf("Error while closing buffered input stream from %s:%s.\n", this.getClientIP(), this.getClientPort());
+        }
+        try {
+            this.in.close();
+        }catch (IOException ex) {
+            error = true;
+            System.err.printf("Error while closing input stream from %s:%s.\n", this.getClientIP(), this.getClientPort());
+        }
+        try {
+            this.out.close();
+        }catch (IOException ex) {
+            error = true;
+            System.err.printf("Error while closing output stream from %s:%s.\n", this.getClientIP(), this.getClientPort());
+        }
+        try {
+            scanner.close();
+        }catch (Exception ex) {
+            error = true;
+            System.err.printf("Error while closing scanner from %s:%s.\n", this.getClientIP(), this.getClientPort());
+        }
+        try {
+            this.socket.close();
+        }catch (IOException ex) {
+            error = true;
+            System.err.printf("Error while closing socket from %s:%s.\n", this.getClientIP(), this.getClientPort());
         }
 
-        System.out.printf("%s closed all resources successfully.\n", this.toString());
+        if (!error)
+            System.out.printf("%s closed all resources successfully.\n", this.toString());
 
         // Terminate the thread.
         return;

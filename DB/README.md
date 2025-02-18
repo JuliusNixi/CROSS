@@ -1,4 +1,4 @@
-This folder contains some databases.
+This folder contains some databases files.
 
 The "orders.json" file contains the received orders' data. It SHOULD be in this format:
 {

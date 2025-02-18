@@ -14,12 +14,12 @@ import CROSS.Exceptions.InvalidConfig;
  * 
  * The Server class.
  * 
- * When started, the server will accept clients after the call to startAccept() by using a dedicated thread and sockets.
+ * When started, the server will accept clients after the call to startAccept() by using a dedicated thread and TCP sockets.
  * 
  * For each accepted client, a new thread will be created to handle it.
  * Then, the thread will be submitted to a CachedThreadPool.
  * 
- * The server use a configuration file to set the server's IP and port.
+ * The server use a configuration file to set the server's IP and port to listen on.
  * The extension of the file must be .properties.
  * 
  * @version 1.0
@@ -31,9 +31,9 @@ import CROSS.Exceptions.InvalidConfig;
 public class Server {
 
     // Path to the server's configuration file and the parameters read from it.
-    private String pathToConfigPropertiesFile = null;
-    private Integer serverPort = null;
-    private InetAddress serverAddress = null;
+    private final String pathToConfigPropertiesFile;
+    private final Integer serverPort;
+    private final InetAddress serverAddress;
 
     // TCP server socket.
     private ServerSocket serverSocket = null;
@@ -45,7 +45,7 @@ public class Server {
      * 
      * Constructor of the Server class.
      * 
-     * @param pathToConfigPropertiesFile Path to the server's config file.
+     * @param pathToConfigPropertiesFile Path to the server's config file as String.
      * 
      * @throws NullPointerException If the path to the server's config file is null.
      * @throws InvalidConfig If the server's IP or port are invalid, or if the file extension is not .properties.
@@ -87,7 +87,7 @@ public class Server {
             // Parsing port.
             this.serverPort = Integer.parseInt(port);
             if (serverPort < 0 || serverPort > 65535) {
-                throw new InvalidConfig("Invalid port number.");
+                throw new InvalidConfig("Invalid server's port number.");
             }            
 
             // Parsing IP.
@@ -107,20 +107,18 @@ public class Server {
 
         // parseInt exception.
         catch (NumberFormatException ex) {
-            throw new InvalidConfig("Invalid port number.");
+            throw new InvalidConfig("Invalid server's port number.");
         }
         
         // Throwed by Properties.load().
         catch (IOException ex) {
-            throw new IOException("Error reading server config file.");
+            throw new IOException("Error reading server's config file.");
         }
 
         // InvalidConfig exception.
         catch (InvalidConfig ex) {
-
             // Forwarding the exception.
             throw new InvalidConfig(ex.getMessage());
-
         }
 
         // Malformed Unicode escape.
@@ -141,13 +139,15 @@ public class Server {
      * Start the server. 
      * After the call to this method, to accept clients, call startAccept().
      * 
+     * Syncronized method to avoid multiple starts.
+     * 
      * @throws RuntimeException If the server is already started.
      * @throws IllegalArgumentException If the socket arguments are invalid.
      * @throws IOException If there is an I/O error.
      * @throws Exception If there is an unknown error.
      * 
      */
-    public void startServer() throws RuntimeException, IllegalArgumentException, IOException, Exception {
+    public synchronized void startServer() throws RuntimeException, IllegalArgumentException, IOException, Exception {
 
         // Already started check.
         if (this.serverSocket != null) {
@@ -177,12 +177,12 @@ public class Server {
      * Start accepting clients.
      * Call this method after startServer().
      * 
-     * @return The new thread that accepts clients.
+     * Syncronized method to avoid multiple starts.
      * 
      * @throws RuntimeException If the server is not started (socket null) or if the accept thread is already started.
      * 
      */
-    public AcceptThread startAccept() throws RuntimeException {
+    public synchronized void startAccept() throws RuntimeException {
 
         // Server not started check.
         if (this.serverSocket == null) {
@@ -195,12 +195,11 @@ public class Server {
         }
 
         // Exceptions not possible.
+        // Confirmation printed in the AcceptThread class.
         AcceptThread acceptThread = new AcceptThread(this);
         acceptThread.start();
 
         this.acceptThread = acceptThread;
-
-        return this.acceptThread;
 
     }
 
@@ -244,11 +243,12 @@ public class Server {
     /**
      * 
      * Get the socket.
+     * Protected method, only to be used in AcceptThread.
      * 
      * @return Socket rapresenting the server's socket.
      * 
      */
-    public ServerSocket getServerSocket() {
+    protected ServerSocket getServerSocket() {
 
         return this.serverSocket;
 

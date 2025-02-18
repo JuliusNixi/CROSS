@@ -3,99 +3,129 @@ package CROSS.Types.Price;
 import CROSS.OrderBook.Market;
 
 /**
+ * 
  * SpecificPrice is a class that extends GenericPrice and implements Comparable<SpecificPrice>.
  * 
- * It is used to represent a price with a specific type (ask/bid) in a specific market.
- * 
- * A type is an enum that represents the type of the price in the PriceType enum.
+ * It is used to represent a price with a specific type (ask / bid) in a specific market.
+ * A type is an enum that represents the type of the price in the PriceType enum format.
  * 
  * The implementation of the Comparable interface is used to compare two prices.
- * 
  * It's used to sort a list of prices and to use it in the OrderBook.
  * 
+ * The price also has a market attribute that represents the market of the price.
+ * 
  * @version 1.0
+ * @author Giulio Nisi
+ * 
  * @see GenericPrice
+ * 
  * @see PriceType
- * @see Comparable
  * @see Market
+ * 
+ * @see Comparable
+ * 
  */
 public class SpecificPrice extends GenericPrice implements Comparable<SpecificPrice> {
     
-    private PriceType type;
-    private Market market;
+    private final PriceType type;
+
+    // The market of the price.
+    private final Market market;
 
     /**
-     * Constructor of the SpecificPrice class.
-     * It takes an integer value and a PriceType type.
      * 
-     * @param value The value of the price.
-     * @param type The type of the price.
-     * @param market The market of the price.
+     * Constructor of the class.
+     * It takes an integer value and an enum PriceType type.
      * 
-     * @throws NullPointerException If the type or market are null.
+     * @param value The value of the price as an integer.
+     * @param type The type of the price as an enum PriceType.
+     * @param market The market of the price as a Market object.
+     * 
+     * @throws NullPointerException If the value or the type or the market are null.
+     * 
      */
     public SpecificPrice(Integer value, PriceType type, Market market) throws NullPointerException {
 
+        // Null checks.
         if (type == null) {
-            throw new NullPointerException("Type cannot be null.");
+            throw new NullPointerException("Type of a price cannot be null.");
         }
         if (market == null)
-            throw new NullPointerException("Market cannot be null.");
+            throw new NullPointerException("Market of a price cannot be null.");
 
         super(value);
 
         this.type = type;
         this.market = market;
+
     }
 
+    // GETTERS
     /**
+     * 
      * Getter of the type attribute.
      * 
-     * @return The type of the price.
+     * @return The type of the price as an enum PriceType.
+     * 
      */
     public PriceType getType() {
         return this.type;
     }
     /**
-     * Getter of the market attribute.
      * 
-     * @return The market of the price.
+     * Getter of the market attribute as a copy of the market.
+     * 
+     * @return The market of the price as a Market object.
+     * 
      */
     public Market getMarket() {
-        return this.market;
+        return Market.copyMarket(this.market);
     }
 
+    // TO STRING METHODS
     @Override
     public String toString() {
         return String.format("Type [%s] - Price [%s] - Market [%s]", this.getType().name(), super.toString(), market.toString());
     }
     /**
+     * 
      * A short to string method for the price with the currency.
-     * @return A short to string method for the price with the currency.
+     * 
+     * @return A short string for the price with the currency.
+     * 
      */
     public String toStringShort() {
-        return String.format("%s %s", super.toString(), this.getMarket().getPrimaryCurrency().name());
+
+        return String.format("%s %s", super.toString(), this.market.getPrimaryCurrency().name());
+
     }
     /**
+     * 
      * A to string method for the price without the market.
      * Used to avoid infinite loops in the toString method of the Market class.
      * 
-     * @return A to string method for the price without the market.
+     * @return A to string with the price but without the market.
+     * 
      */
     public String toStringWithoutMarket() {
+
         return String.format("Type [%s] - Price [%s]", this.getType().name(), super.toString());
+
     }
 
     @Override
     public int compareTo(SpecificPrice price) throws IllegalArgumentException, NullPointerException  {
 
+        // Null check.
         if (price == null)
-            throw new NullPointerException("Cannot compare a SpecificPrice to null.");
+            throw new NullPointerException("Cannot compare a specific price to a null one.");
 
-        if (!price.getMarket().equals(this.getMarket()))
-            throw new IllegalArgumentException("Cannot compare SpecificPrices from different markets to prevent errors.");
+        // Check if the prices are from the same market.
+        if (!price.getMarket().equals(this.market))
+            throw new IllegalArgumentException("Cannot compare specific prices from different markets to prevent introducing bugs.");
         
         return Integer.compare(price.getValue(), this.getValue());
+
     }
     
 }
