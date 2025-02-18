@@ -1,40 +1,54 @@
 package CROSS.API.Notifications;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-
-import CROSS.API.RequestResponse.ResponseType;
+import CROSS.API.JSON;
 import CROSS.Utils.Separator;
 
 /**
- * The Notification class is used to store a list of trades that need to be notified to the client.
- * It's extend the JSON class to be able to serialize the object to JSON.
+ * 
+ * The Notification class is used to store an array of trades of the Trade class that need to be notified to the client.
+ * 
+ * It extends the JSON class to use the JSON string conversion method.
+ * 
  * @version 1.0
+ * @author Giulio Nisi
+ * 
  * @see Trade
- * @see CROSS.API.Responses.Notify
+ * 
  * @see JSON
+ * 
+ * @see Separator
+ * 
  */
-public class Notification extends CROSS.API.JSON {
+public class Notification extends JSON {
     
+    // The string field as described in the assignment.
+    private final static String notification = "closedTrades";
     // Simple array of trades to be notified to avoid problems with JSON serialization.
-    Trade[] trades;
+    private Trade[] trades;
 
     /**
-     * Constructor for the Notification class.
+     * Constructor for the class.
      */
     public Notification() {
-        super(ResponseType.CLOSED_TRADES);
+
         this.trades = new Trade[0];
+
     }
 
     /**
-     * Add a trade to the list of trades to be notified.
+     * 
+     * Add a trade to the array of trades to be notified.
+     * 
      * @param trade The trade to be added.
+     * 
      * @throws NullPointerException If the trade is null.
+     * 
      */
     public void addTrade(Trade trade) throws NullPointerException {
+
+        // Null check.
         if (trade == null) {
-            throw new NullPointerException("Trade cannot be null.");
+            throw new NullPointerException("Trade to be added to a notification cannot be null.");
         }
         
         // Copying the trades array to a new array with one more element.
@@ -42,38 +56,39 @@ public class Notification extends CROSS.API.JSON {
         for (int i = 0; i < trades.length; i++) {
             newTrades[i] = trades[i];
         }
+
         // Appending the new trade to the end of the new array.
         newTrades[trades.length] = trade;
-        trades = newTrades;
+
+        // Setting the new array as the trades array.
+        this.trades = newTrades;
+
+    }
+
+    /**
+     * 
+     * Getter for the notification field.
+     * 
+     * @return The notification field as a String.
+     * 
+     */
+    public String getNotificationField() {
+        return notification;
     }
 
     @Override
     public String toString() {
-        Separator separator = new Separator("=", 5);
+
+        Separator separator = new Separator("=", 6);
+
         String result = separator + " " + "Notification" + " " + separator + "\n";
         result += "Trades:\n";
+
         for (Trade trade : trades) {
             result += "\t" + trade.toString() + "\n";
         }
+
         return result;
-    }
-
-    @Override
-    public String toJSON(Boolean serverSender) {
-        
-        String superJSONString = super.toJSON(serverSender);
-        Gson gson = new Gson();
-        // Convert superJSONString to a JsonObject.
-        JsonObject jsonObject = gson.fromJson(superJSONString, JsonObject.class);
-
-        // Getting the JsonObject for the new notification.
-        JsonObject closedNameJson = gson.fromJson(ResponseType.CLOSED_TRADES.toString(), JsonObject.class);
-
-        // Replacing the operation key with the notification key.
-        jsonObject.remove("operation");
-        jsonObject.add("notification", closedNameJson);
-
-        return gson.toJson(jsonObject);
 
     }
 

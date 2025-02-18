@@ -10,15 +10,14 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// IT: Documentazione di questo file in italiano. 
-// EN: Documentation of this file only in Italian.
+// IT: Documentazione di questo file solo in italiano. 
+// EN: Documentation of this file only in italian.
 
 /**
  * Esempio di lettura non bloccante da terminale con la libreria JLine 3.
  * Utilizzata nel progetto CROSS, nella CLI del client per la gestione dell'input.
  * Risolve il problema di dover leggere l'input e contemporaneamente ricevere dati asincronamente da stampare.
  */
-
 public class AsyncIOTests {
 
     private static StringBuffer buffer = new StringBuffer();
@@ -46,7 +45,7 @@ public class AsyncIOTests {
                     String str = "\n";
                     str += "SPAM.\n";
                     str += "-> ";
-                    // Per riscriere, se presente, il buffer, cioè i caratteri digitati dall'utente nel caso 1.
+                    // Per riscriere, se presente, il buffer, cioè i caratteri digitati dall'utente nel caso 2.
                     str += buffer.toString();
 
                     // Effettuare la stampa in un'unica istruzione per evitare l'interleaving di stampe tra i thread.
@@ -54,7 +53,8 @@ public class AsyncIOTests {
 
                 }
             } catch (Exception ex) {
-                // TODO: Gestire l'eccezione.
+                System.err.println("Errore nello spamming thread: " + ex.getMessage());
+                System.exit(1);
             }
         });
 
@@ -86,11 +86,11 @@ public class AsyncIOTests {
             Boolean running = true;
             while (running) {
 
-                // Legge una riga con timeout (ms). Se scade -> ch == NonBlockingReader.READ_EXPIRED.
+                // Legge un carattere con timeout (ms). Se scade -> ch == NonBlockingReader.READ_EXPIRED.
                 int ch = reader.read(100);
 
                 if (ch == NonBlockingReader.READ_EXPIRED) {
-                    // Nessun tasto premuto entro il timeout.
+                    // Nessun tasto premuto entro il timeout. Torna all'inizio del ciclo a leggere nuovamente.
                     continue;
                 }
 
@@ -98,10 +98,12 @@ public class AsyncIOTests {
                     // EOF ricevuto (terminale chiuso).
                     System.out.println("EOF (-1) ricevuto. Uscita...");
                     running = false;
+                    continue;
                 } else if (ch == 4) {
                     // ASCII 4 = Ctrl + D in raw mode.
                     System.out.println("Ctrl + D catturato. Uscita...");
                     running = false;
+                    continue;
                 } else if (ch >= 0) {
                     // Altro carattere digitato, aggiungilo al buffer.
                     char c = (char) ch;
@@ -111,6 +113,7 @@ public class AsyncIOTests {
                 if (buffer.length() > 0 && buffer.toString().endsWith("\n")) {
                     // Fine riga, '\n' rilevato.
                     String line = buffer.toString();
+                    // '\n' presente nel buffer inserito dall'utente.
                     System.out.print("Riga letta: " + line);
 
                     // Reset buffer.
@@ -127,7 +130,8 @@ public class AsyncIOTests {
             terminal.setAttributes(originalAttributes);
 
         } catch (IOException ex) {
-            // TODO: Gestire l'eccezione.
+            System.err.println("Errore I/O durante il setting o l'uso del terminale: " + ex.getMessage());
+            System.exit(1);
         }
 
     }

@@ -7,15 +7,18 @@ package CROSS.Exceptions;
  * 
  * @version 1.0
  * @author Giulio Nisi
+ * 
  * @see Exception
  * 
  */
 public class InvalidConfig extends Exception {
 
     /**
+     * 
      * Constructor of the exception.
      * 
      * @param message Message of the exception.
+     * 
      */
     public InvalidConfig(String message) {
 

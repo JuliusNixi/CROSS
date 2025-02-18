@@ -1,24 +1,21 @@
 package CROSS.API.Requests.User;
 
-import CROSS.API.JSON;
-import CROSS.API.RequestResponse.ResponseType;
-
 /**
- * Logout is a class that is used to logout.
+ * 
+ * Logout is a class that is used to logout the user from the server.
  * 
  * It is used to represent the request that is about the user's data.
  * 
- * It's empty.
- * 
- * It's extended from the JSON class.
+ * It's empty, but inserted for clarity and future implementations.
  * 
  * @version 1.0
- * @see JSON
+ * @author Giulio Nisi
+ * 
  */
-public class Logout extends JSON {
+public class Logout {
     
     public Logout() {
-        super(ResponseType.LOGOUT);
+        // Empty constructor.
     }
 
 }

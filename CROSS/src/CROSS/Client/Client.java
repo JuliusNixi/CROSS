@@ -5,53 +5,51 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Properties;
 import java.net.Socket;
-import java.net.SocketException;
-
-import CROSS.API.RequestResponse;
-import CROSS.API.RequestResponse.AllResponses;
-import CROSS.API.RequestResponse.ResponseType;
-import CROSS.API.Responses.ResponseAndMessage;
+import CROSS.API.Requests.Request;
 import CROSS.Exceptions.InvalidConfig;
-import CROSS.Users.User;
 
 /**
  * 
- * The client class.
+ * The Client class.
  * 
- * The idea is I could have multiple instances of the client, but only one CLI.
+ * The idea is I could have multiple instances of the client class, but only one CLI per class.
+ * This since the CLI use the terminal I/O.
  * The CLI is handled by a dedicated thread.
  * 
  * The client is used to connect to the server and send requests.
+ * The requests are JSON strings sent to the server through the socket.
  * 
  * The client use a configuration file to set the server's IP and port to connect to.
  * The file must have .properties extension.
  * 
- * There is also a dedicated thread to handle the responses from the server.
+ * There is also a dedicated thread to handle the responses / notifications from the server.
  * 
  * @version 1.0
  * @author Giulio Nisi
+ * 
  * @see ClientCLIThread
  * @see ResponsesThread
- * @see User
  * 
  */
 public class Client {
 
     // Thread for the CLI.
+    // Static, I cannot have multiple instances of the CLI.
     private static ClientCLIThread clientCLI = null;
 
-    // Thread for responses from server.
+    // Thread for responses / notifications from server.
     private ResponsesThread responsesThread = null;
 
     // Path to the client's configuration file and the parameters read from it.
-    private String pathToConfigPropertiesFile = null;
-    private Integer serverPort = null;
-    private InetAddress serverAddress = null;
+    private final String pathToConfigPropertiesFile;
+    private final Integer serverPort;
+    private final InetAddress serverAddress;
 
     // TCP server socket.
     private Socket socket = null;
@@ -59,21 +57,17 @@ public class Client {
     // Used to send requests to the server.
     private OutputStream outputStream = null;
 
-    // Also checked server side.
-    // Also checked client side to avoid spamming the server with wrong requests.
-    private User userLogged = null;
-
     /**
      * 
-     * Constructor of the Client class.
+     * Constructor of the class.
      * 
-     * @param pathToConfigPropertiesFile Path to the client's config file.
+     * @param pathToConfigPropertiesFile Path to the client's config file as String.
      * 
      * @throws NullPointerException If the path to the client's config file is null.
      * @throws InvalidConfig If the server's IP or port are invalid or the file has not a .properties extension.
      * @throws FileNotFoundException If the client's config file is not found.
      * @throws IOException If there is I/O an error reading the client's config file.
-     * @throws IllegalArgumentException If there is an error reading the client's config file.
+     * @throws IllegalArgumentException If there is an error reading the client's config file, a malformed Unicode escape appears in the input.
      * @throws Exception If there is an unknown error.
      * 
      */
@@ -84,9 +78,9 @@ public class Client {
             throw new NullPointerException("Path to client's config file cannot be null.");
         }
 
-        // Check for .properties extension.
+        // .properties file check.
         if (!pathToConfigPropertiesFile.endsWith(".properties")) {
-            throw new InvalidConfig("Client's config file must have .properties extension.");
+            throw new InvalidConfig("Invalid client's config file extension. Must be .properties.");
         }
 
         // Cannot be null, no need to check the exception.
@@ -94,6 +88,7 @@ public class Client {
         Properties props = new Properties();
         
         // Try with resources.
+        // All the resources will be closed.
         try (FileReader reader = new FileReader(configFile)) {
             
             // Read the properties file.
@@ -102,7 +97,7 @@ public class Client {
             String port = props.getProperty("server_port");
 
             if (server == null || port == null) {
-                throw new InvalidConfig("Invalid server IP or port to connect to.");
+                throw new InvalidConfig("Invalid (maybe null) server IP or port to connect to.");
             }
 
             // Parsing port.
@@ -133,7 +128,7 @@ public class Client {
         
         // Throwed by Properties.load().
         catch (IOException ex) {
-            throw new IOException("Error reading client config file.");
+            throw new IOException("Error reading client's config file.");
         }
 
         // InvalidConfig exception.
@@ -142,8 +137,9 @@ public class Client {
             throw new InvalidConfig(ex.getMessage());
         }
 
+        // Malformed Unicode escape.
         catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Illegal argument in client creation.");
+            throw new IllegalArgumentException("Illegal argument in client creation. Malformed Unicode escape appears in the input.");
         }
 
         // Generic exception.
@@ -151,8 +147,9 @@ public class Client {
             throw new Exception("Unknown error in client creation.");
         }
 
-    }
+    } // End of constructor.
   
+    // CONNECTION / DISCONNECTION
     /**
      * 
      * Connects the client to the server.
@@ -161,14 +158,10 @@ public class Client {
      * E.g: The main thread and the CLI thread could try to connect at the same time.
      * 
      * @throws RuntimeException If the client is already connected.
-     * @throws NullPointerException If the server address is null.
-     * @throws IllegalArgumentException If the arguments are invalid.
-     * @throws SocketException If there is an error with the socket.
      * @throws IOException If there is an I/O socket error.
-     * @throws Exception If there is an unknown error.
      * 
      */
-    public synchronized void connectClient() throws RuntimeException, NullPointerException, IllegalArgumentException, SocketException, IOException, Exception {
+    public synchronized void connectClient() throws RuntimeException, IOException {
 
         // Already connected check.
         if (this.socket != null) {
@@ -178,52 +171,31 @@ public class Client {
         try {
             this.socket = new Socket(serverAddress, serverPort);
 
-            // 10 seconds timeout.
-            socket.setSoTimeout(10 * 1000);
-
             this.outputStream = socket.getOutputStream();
 
             System.out.println("Client connected succesfully!");
-        } catch (NullPointerException ex) {
-            throw new NullPointerException("Server address to connect null.");
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid arguments in client connection.");
-        } catch (SocketException ex) {
-            try {
-                if (this.outputStream != null) {
+        }catch (IOException ex) {
+
+            String messageError = "First I/O error in connecting to the server.";
+
+            if (this.outputStream != null) {
+                try {
                     this.outputStream.close();
+                } catch (IOException ex2) {
+                    messageError += " Another I/O error closing the output stream with the server.";
                 }
-                if (this.socket != null) {
-                    this.socket.close();
-                }
-            } catch (IOException ex2) {
-                throw new IOException("Error closing the socket with the server.");
             }
-            throw new SocketException("Error with the server socket to connect to.");
-        } catch (IOException ex) {
-            try {
-                if (this.outputStream != null) {
-                    this.outputStream.close();
-                }
-                if (this.socket != null) {
+
+            if (this.socket != null) {
+                try {
                     this.socket.close();
+                } catch (IOException ex2) {
+                    messageError += " Another I/O error closing the socket with the server.";
                 }
-            } catch (IOException ex2) {
-                throw new IOException("Error closing the socket with the server.");
             }
-            throw new IOException("I/O error connecting to the server.");
-        } catch (Exception ex) {
-            try {
-                if (this.outputStream != null) {
-                    this.outputStream.close();
-                }
-                if (this.socket != null) {
-                    this.socket.close();
-                }
-            } catch (IOException ex2) {
-                throw new IOException("Error closing the socket with the server.");
-            }
-            throw new Exception("Unknown error in client connection.");
+
+            throw new IOException(messageError);
+
         }
 
     }
@@ -234,7 +206,9 @@ public class Client {
      * It's a synchronized method to avoid multiple disconnections at the same time.
      * E.g: The main thread and the CLI thread could try to disconnect at the same time.
      * 
-     * It closes the output stream and the socket. After that, the client is disconnected and the object will be dead.
+     * It sends an EXIT request to the server to notify the disconnection.
+     * It closes the output stream and the socket.
+     * After that, the client is disconnected and the object will be dead.
      * 
      * @throws RuntimeException If the client is already disconnected.
      * @throws IOException If there is a socket I/O error.
@@ -247,101 +221,118 @@ public class Client {
             throw new RuntimeException("Client already not connected.");
         }
 
+        String messageError = null;
         try {
 
-            // Create the response.
-            ResponseType responseType = ResponseType.EXIT;
-            AllResponses responseContent = AllResponses.EXIT;
-            RequestResponse responseCode = new RequestResponse(responseType, responseContent);
-            ResponseAndMessage response = new ResponseAndMessage(responseCode, "Client disconnection...");
-            String json = response.toJSON(false);
-
-            // Send the response.
+            // Send an EXIT request to the server to exit gracefully.
+            ClientActionsUtils.ClientActions action = ClientActionsUtils.ClientActions.EXIT;
+            Request request = new Request(action, null);
+            String json = request.toJSONString();
             try {
-                this.outputStream.write(json.getBytes());
-                this.outputStream.flush();
-            } catch (IOException ex) {
-                System.err.println("Error sending the exit message to the server, closing connection anyway.");
-                // Continue with the disconnection below.
+                this.sendJSONToServer(json);
+            }catch (IOException ex) {
+                // Trying to continue to close the output stream and the socket anyway.
+                System.err.println("Error sending EXIT request to the server while disconnecting.");
             }
 
             // Close the output stream.
             this.outputStream.close();
             this.outputStream = null;
 
+        } catch (IOException ex) {
+            messageError = "Error closing the output stream while disconnecting the client from the server.";
+        }
+
+        try {
             // Close the socket.
             this.socket.close();
             this.socket = null;
-
-            // Reset the user logged.
-            this.userLogged = null;
-
-            System.out.println("Client disconnected succesfully!");
-        } catch (IOException ex) {
-            throw new IOException("Error disconnecting the client from the server.");
+        }catch (IOException ex) {
+            if (messageError != null) {
+                messageError += " Error closing the socket while disconnecting the client from the server.";
+            }else {
+                messageError = "Error closing the socket while disconnecting the client from the server.";
+            }
         }
 
+        if (messageError != null)
+            throw new IOException(messageError);
+        
+        System.out.println("Client disconnected succesfully!");
+
+    }
+    /**
+     * 
+     * Check if the client is connected to the server.
+     * Used in the CLI.
+     * 
+     * @return Boolean true if the client is connected, false otherwise.
+     * 
+     */
+    public Boolean isClientConnected() {
+        return this.socket != null;
     }
 
     // CLI
     /**
      * 
-     * Command Line Interface to interact with the server by using the client.
+     * Command Line Interface to interact with the server.
      * Static, I cannot have multiple instances of the CLI.
      * 
-     * Returns the CLI thread.
+     * Syncronized ON THE CLASS to avoid multiple CLI starts.
      * 
      * @param client The client to start the CLI for.
      * 
-     * @return ClientCLIThread, the CLI thread.
-     * 
-     * @throws RuntimeException If the client's socket is null or the CLI is already started.
+     * @throws RuntimeException If the client's socket is null (not connected to the server yet) or the CLI is already started.
      * @throws NullPointerException If the client is null.
      * 
      */
-    public static ClientCLIThread CLI(Client client) throws RuntimeException, NullPointerException {
+    public static void CLI(Client client) throws RuntimeException, NullPointerException {
         
-        // Check for null client.
-        if (client == null) {
-            throw new NullPointerException("Client cannot be null.");
+        // Syncronized ON THE CLASS to avoid multiple CLI starts.
+        synchronized (Client.class) {
+
+            // Check for null client.
+            if (client == null) {
+                throw new NullPointerException("Client in CLI cannot be null.");
+            }
+
+            // Check for null socket.
+            if (client.getSocket() == null) {
+                throw new RuntimeException("Client's socket cannot be null in CLI. Call connectClient() before.");
+            }
+
+            // Check already started CLI.
+            if (Client.clientCLI != null) {
+                throw new RuntimeException("CLI already started.");
+            }
+
+            // Get and start the CLI thread.
+            ClientCLIThread clientCLI = new ClientCLIThread(client);
+            clientCLI.start();
+            
+            Client.clientCLI = clientCLI;
+
         }
-
-        // Check for null socket.
-        if (client.getSocket() == null) {
-            throw new RuntimeException("Client's socket cannot be null. Call connectClient() before.");
-        }
-
-        // Check already started CLI.
-        if (Client.clientCLI != null) {
-            throw new RuntimeException("CLI already started.");
-        }
-
-        // Get and start a thread.
-        ClientCLIThread clientCLI = new ClientCLIThread(client);
-        clientCLI.start();
-        
-        Client.clientCLI = clientCLI;
-
-        return Client.clientCLI;
 
     }
 
     // RESPONSES
     /**
      * 
-     * Start the thread to handle the responses from the server.
+     * Start a dedicated thread to handle the responses from the server.
      * Cuold be used indipendently from the CLI.
      * 
-     * @return ResponsesThread, the thread to handle the responses.
+     * Syncronized to avoid multiple starts by different threads.
      * 
      * @throws RuntimeException If the client's socket is null or the responses thread is already started.
      * 
      */
-    public ResponsesThread responsesStart() throws RuntimeException {
+    public synchronized void responsesStart() throws RuntimeException {
         
         // Check for null socket.
-        if (this.getSocket() == null || this.getOutputStream() == null) {
-            throw new RuntimeException("Client's socket cannot be null. Call connectClient() before.");
+        if (this.getSocket() == null || this.outputStream == null) {
+            throw new RuntimeException("Client's socket / output stream cannot be null to handle server's responses. Call connectClient() before.");
         }
 
         // Check already started responses thread.
@@ -354,8 +345,6 @@ public class Client {
         responsesThread.start();
 
         this.responsesThread = responsesThread;
-
-        return this.responsesThread;
 
     }
 
@@ -382,123 +371,70 @@ public class Client {
     }
     /**
      * 
-     * Get the server address.
-     * 
-     * @return InetAddress rapresenting the server's address to connect.
-     * 
-     */
-    public InetAddress getServerAddress() {
-        return this.serverAddress;
-    }
-    /**
-     * 
-     * Get the socket.
+     * Get the socket. Private, used only in the class (CLI).
      * 
      * @return Socket rapresenting the client's socket.
      * 
      */
-    public Socket getSocket() {
+    private Socket getSocket() {
         return this.socket;
     }
     /**
      * 
-     * Get the output stream.
+     * Get the input stream.
+     * Visible only to the package, used only in the ResponsesThread.
      * 
-     * @return OutputStream of the client.
+     * @return InputStream rapresenting the client's input stream.
      * 
-     */
-    public OutputStream getOutputStream() {
-        return this.outputStream;
-    }
-    /**
-     * 
-     * Get the logged user.
-     * 
-     * The logging status is also indipendently managed by the server to ensure more security.
-     * 
-     * @return User rapresenting the logged user or null if no user is logged.
+     * @throws RuntimeException If the client is not connected.
+     * @throws IOException If there is an I/O error getting the input stream.
      * 
      */
-    public User getLoggedUser() {
+    InputStream getInputStream() throws RuntimeException, IOException {
 
-        // Null check.
-        if (this.userLogged == null) {
-            return null;
-        }
-        
-        // Syncronized no needed, since username and password cannot be changed.
-        return new User(this.userLogged.getUsername(), this.userLogged.getPassword());
-
-    }
-    /**
-     * 
-     * Get the client CLI's thread.
-     * 
-     * @return The client CLI's thread.
-     * 
-     */
-    public static ClientCLIThread getClientCLI() {
-        return Client.clientCLI;
-    }    
-    
-    // SETTERS
-    /**
-     * 
-     * Set the user logged. Call this method after a successful login.
-     * 
-     * @param userLogged The now logged user.
-     * 
-     * @throws NullPointerException If the now logged user is null.
-     * @throws RuntimeException If the output stream is null.
-     * 
-     */
-    public void setLoggedUser(User userLogged) throws NullPointerException, RuntimeException {
-        
-        // Null check.
-        if (userLogged == null) {
-            throw new NullPointerException("User now logged cannot be null.");
+        // Connection check.
+        if (this.socket == null) {
+            throw new RuntimeException("Client's socket cannot be null to read from the server. Call connectClient() before.");
         }
 
-        // No output stream check.
-        if (this.outputStream == null || this.socket == null) {
-            throw new RuntimeException("Output stream cannot be null. Call connectClient() before.");
+        try {
+            return this.socket.getInputStream();
+        } catch (IOException ex) {
+            throw new IOException("Error getting the input stream from the server socket.");
         }
-
-        // Syncronized no needed, since username and password cannot be changed.
-        this.userLogged = new User(userLogged.getUsername(), userLogged.getPassword());
 
     }
 
     @Override
     public String toString() {
-        return String.format("Client Info's [Server IP [%s] - Server port [%s] - Config file path [%s]]", this.getServerAddress(), this.getServerPort(), this.getPathToConfigPropertiesFile());
+        return String.format("Client Info's [Server IP [%s] - Server port [%s] - Config file path [%s]]", this.serverAddress, this.getServerPort(), this.getPathToConfigPropertiesFile());
     }
 
     /**
      * 
-     * Send a JSON to the server.
+     * Send a JSON string to the server.
+     * The JSON is sent through the socket and rapresent a request to the server.
      * 
      * Syncronized to avoid multiple requests at the same time on the same socket.
      * E.g: The main thread and the CLI thread could try to send a request at the same time.
      * 
      * @param json The JSON to send to the server.
      * 
-     * @throws NullPointerException If the json is null.
+     * @throws NullPointerException If the JSON is null.
      * @throws RuntimeException If the client is not connected.
      * @throws IOException If there is an I/O error sending the JSON to the server.
-     * @throws Exception If there is an unknown error.
      * 
      */
-    public synchronized void sendJSONToServer(String json) throws NullPointerException, RuntimeException, IOException, Exception {
+    public synchronized void sendJSONToServer(String json) throws NullPointerException, RuntimeException, IOException {
 
-        // No output stream check.
+        // No output stream / socket check.
         if (this.outputStream == null || this.socket == null) {
-            throw new RuntimeException("Output stream cannot be null. Call connectClient() before.");
+            throw new RuntimeException("Output stream / socket cannot be null to send JSON to the server. Call connectClient() before.");
         }
 
         // Null check.
         if (json == null) 
-            throw new NullPointerException("JSON to send cannot be null.");
+            throw new NullPointerException("JSON to send to the server cannot be null.");
 
         try {
             // Buffered to optimize the performance.
@@ -507,9 +443,8 @@ public class Client {
             outputStreamBuff.write(json.getBytes());
             outputStreamBuff.flush();
         } catch (IOException ex) {
-            throw new IOException("Error sending JSON to the server.");
-        } catch (Exception ex) {
-            throw new Exception("Unknown error sending JSON to the server.");
+            System.err.println("Error sending JSON request to the server.");
+            // I decided to not close the output stream and the socket here.
         }
 
     }

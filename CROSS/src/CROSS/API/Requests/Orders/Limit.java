@@ -1,46 +1,54 @@
 package CROSS.API.Requests.Orders;
 
-import CROSS.API.RequestResponse.ResponseType;
+import CROSS.Orders.LimitOrder;
+import CROSS.Types.Price.GenericPrice;
 
 /**
- * Limit is a class that extends Generic and is used to submit a limit order.
+ * 
+ * Limit is a class that extends Generic and is used to submit a limit order API request.
+ * 
  * It is used to represent the request that is about the order's data.
  * 
  * It contains the order's price.
  * 
  * @version 1.0
+ * @author Giulio Nisi
+ * 
  * @see Generic
- * @see CROSS.Orders.Order
+ * 
+ * @see CROSS.Orders.LimitOrder
+ * 
+ * @see CROSS.Types.Price.GenericPrice
+ * 
  */
 public class Limit extends Generic {
 
-    private Integer price;
+    private final Integer price;
 
     /**
-     * Constructor of the Limit class.
      * 
-     * @param order The order to get the price from.
+     * Constructor of the class.
+     * 
+     * @param order The limit order to get the price from.
+     * 
      */
-    public <O extends CROSS.Orders.Order> Limit(O order) {
+    public Limit(LimitOrder order) {
+
         super(order);
-        
-        super.setOperation(ResponseType.INSERT_LIMIT_ORDER);
 
         this.price = order.getPrice().getValue();
+
     }
 
     /**
+     * 
      * Getter of the price.
      * 
-     * @return The price of the order.
+     * @return The price of the order as GenericPrice.
+     * 
      */
-    public Integer getPrice() {
-        return Integer.valueOf(this.price);
-    }
-    
-    @Override
-    public String toString() {
-        return String.format("Price [%s] - %s", this.getPrice(), super.toString());
+    public GenericPrice getPrice() {
+        return new GenericPrice(this.price);
     }
 
 }

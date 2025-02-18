@@ -15,7 +15,7 @@ So, if the user now digits "something else", on the enter press, the final comma
         1.2.2 No problem, I will use an additional new one dedicated thread to do this dirty job. So I wasted my time in writing ad hoc classes to do this. So now I had 3 threads. The main, the reader and the notifier (sounds like "Il buono, il brutto, il cattivo").
         Problem: How to distinguish when the input is valid (i.e., coming from a real read) from when it is not (i.e., coming from a read performed only to clear the buffer)?
 
-            1.2.2.2 I thought it was simple, just sync the threads. So, when a notification arrives, the dedicated thread, notifies the other one, to stop reading (or discard the readed characters).
+            1.2.2.2 I thought it was simple, just sync the threads. So, when a notification arrives, the dedicated thread, notifies the other one, to stop reading and discard the readed characters if present.
             Problem: Readings were incorrect, sometimes (but quite often) characters at the beginning were skipped (unread) when the user confirmed just before a notification. Example:
             -> hello (enter pressed)
             -> NOTIFICATION (arrived a little bit after sending 'hello').
@@ -30,4 +30,4 @@ So, if the user now digits "something else", on the enter press, the final comma
 TL;DR
 2. Very dejected with the last of my remaining energy, I discovered the existence of the JLine library that allows you to control the terminal in much more detail. Also, with this, I am not forced to empty the stdin buffer, but can keep it and rewrite it to the screen after receiving a notification, making it even more beautiful and professional, AMAZING! Problem: NONE, FINALLY IT WORKS!
 
-Note: The text is about a received notification (of executed orders) but the problem is still the same with any response received from the server (also to the client's requests).
+Note: The text is about a received notification (of executed orders) but the problem is still the same with any response received from the server (to the client's requests) if we permit to the user to continue writing commands without waiting for the response to the previous sent request.

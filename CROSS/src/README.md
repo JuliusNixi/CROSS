@@ -1,4 +1,4 @@
-All the project's files are inside the package CROSS, divided in subfolders by themes.
+All the project's files are inside the package CROSS, divided in subfolders by area.
 To use it in the code, an import example could be CROSS.Utils.Separator.
 
 So, e.g.:

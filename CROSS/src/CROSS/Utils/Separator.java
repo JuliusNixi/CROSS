@@ -1,11 +1,13 @@
 package CROSS.Utils;
 
 /**
+ * 
  * This class is used to create a very simple separator string.
  * It is used to format the output of the program and make it more readable (useful for debugging).
  * 
  * @version 1.0
  * @author Giulio Nisi
+ * 
  */
 public class Separator {
 
@@ -14,11 +16,12 @@ public class Separator {
     // Will contain the final created separator.
     private String separator;
 
-    // A separator could be a sequence of characters, for that is String.
+    // A separator could be a sequence of characters, for that is a String.
     private String characters;
     
     // CONSTRUCTORS
     /**
+     * 
      * Constructor with two parameters.
      * 
      * @param characters The sequence of characters to be repeated.
@@ -26,20 +29,21 @@ public class Separator {
      * 
      * @throws NullPointerException If characters or length are null.
      * @throws IllegalArgumentException If length is less than or equal to 0.
+     * 
      */
     public Separator(String characters, Integer length) throws NullPointerException, IllegalArgumentException {
         
         // Null checks.
         if (characters == null) {
-            throw new NullPointerException("Characters cannot be null.");
+            throw new NullPointerException("Characters used in Separator cannot be null.");
         }
         if (length == null) {
-            throw new NullPointerException("Length cannot be null.");
+            throw new NullPointerException("Length used in Separator cannot be null.");
         }
 
         // Length check.
         if (length <= 0) {
-            throw new IllegalArgumentException("Length must be greater than 0.");
+            throw new IllegalArgumentException("Length used in Separator must be greater than 0.");
         }
 
         // Create the separator.
@@ -52,9 +56,11 @@ public class Separator {
 
     }
     /**
+     * 
      * Constructor with one parameter. It uses the default length.
      * 
      * @param characters The sequence of characters to be repeated.
+     * 
      */
     public Separator(String characters) {
 
