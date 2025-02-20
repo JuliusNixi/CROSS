@@ -37,7 +37,7 @@ public abstract class Users {
      * Add a user to the database.
      * The user is added BOTH to the TreeSet in memory and to the database file if not present.
      * 
-     * If not present, the user line id is set to the current size of the database file, since it's appended at the end of the file.
+     * If not present in the file, the user line id is set to the current size of the database file, since it's appended at the end of the file.
      * 
      * Synchronized method to prevent multiple threads to write on the file at the same time.
      * 
@@ -45,20 +45,20 @@ public abstract class Users {
      * 
      * @throws InvalidUser If the user already exists.
      * @throws NullPointerException If the user is null.
-     * @throws RuntimeException If the method loadUsers() is not found.
-     * @throws IOException If an error occurs while writing the user on file.
+     * @throws NoSuchMethodException If the method loadUsers() is not found.
+     * @throws Exception If an error occurs while writing the user on file.
      * 
      */
-    public static synchronized void addUser(User user) throws InvalidUser, NullPointerException, RuntimeException, IOException {
+    public static synchronized void addUser(User user) throws InvalidUser, NullPointerException, NoSuchMethodException, Exception {
 
         // Null checks.
         if (user == null) {
-            throw new NullPointerException("User to add cannot be null.");
+            throw new NullPointerException("User to add to the database cannot be null.");
         }
 
-        // Already exists.
+        // Already exists check.
         if (users.contains(user)) {
-            throw new InvalidUser("User to add already exists.");
+            throw new InvalidUser("User to add to the database already exists.");
         }
 
         // Set the file line id if not present.
@@ -71,12 +71,12 @@ public abstract class Users {
 
         // Prevent double file writes when the method is called from DBUsersInterface.loadUsers().
         // That's because:
-        // loadUsers() read from file user X -> call addUser() to add it in RAM -> writeUserOnFile() write user X on file AGAIN.
+        // DBUsersInterface.loadUsers() read from file user X -> call addUser() to add it in RAM -> writeUserOnFile() write user X on file AGAIN.
         String method = null;
         try {
             method = DBUsersInterface.class.getMethod("loadUsers").getName();
         } catch (NoSuchMethodException ex) {
-            throw new RuntimeException("Method loadUsers() not found in the DBUsersInterface class.");
+            throw new NoSuchMethodException("Method loadUsers() not found in the DBUsersInterface class.");
         }
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         for (StackTraceElement stackTraceElement : stackTrace) {
@@ -89,11 +89,12 @@ public abstract class Users {
         // Write user on file.
         try {
             DBUsersInterface.writeUserOnFile(user);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             // Remove user from TreeSet.
             users.remove(user);
 
-            throw new IOException("Error writing user on file while adding it.");
+            // Forwarding the exception's message.
+            throw new IOException(ex.getMessage());
         }
 
     }
@@ -112,10 +113,10 @@ public abstract class Users {
      * 
      * @throws InvalidUser If the old user does not exist.
      * @throws NullPointerException If the old user or the new user are null.
-     * @throws RuntimeException If an error occurs while writing the new user on file.
+     * @throws Exception If an error occurs while writing the new user on file.
      * 
      */
-    public static synchronized void updateUser(User userOld, User userNew) throws InvalidUser, NullPointerException, RuntimeException {
+    public static synchronized void updateUser(User userOld, User userNew) throws InvalidUser, NullPointerException, Exception {
 
         // Null checks.
         if (userOld == null) {
@@ -127,7 +128,7 @@ public abstract class Users {
 
         // User does not exist.
         if (!users.contains(userOld)) {
-            throw new InvalidUser("User to update does not exist.");
+            throw new InvalidUser("Old user to update does not exist.");
         }
 
         // Remove old user from TreeSet.
@@ -137,11 +138,12 @@ public abstract class Users {
         // Also add the new user to the TreeSet.
         try {
             DBUsersInterface.updateUserOnFile(userOld, userNew);
-        } catch (RuntimeException ex) {
+        } catch (Exception ex) {
             // Add the old user back to the TreeSet.
             users.add(new User(userOld.getUsername(), userOld.getPassword()));
 
-            throw new RuntimeException("Error writing the new user on file while updating it.");
+            // Forwarding the exception's message.
+            throw new Exception(ex.getMessage());
         }
 
     }
@@ -155,15 +157,16 @@ public abstract class Users {
      * 
      * It's a wrapper method for the DBUsersInterface.loadUsers() method.
      * 
-     * @throws RuntimeException If an error occurs while loading the users from the database file.
+     * @throws Exception If an error occurs while loading the users from the database file.
      * 
      */
-    public static synchronized void loadUsers() throws RuntimeException {
+    public static synchronized void loadUsers() throws Exception {
 
         try {
             DBUsersInterface.loadUsers();
-        } catch (RuntimeException | IOException e) {
-            throw new RuntimeException("Error loading JSON database users from file.");
+        } catch (Exception ex) {
+            // Forwarding the exception's message.
+            throw new Exception(ex.getMessage());
         }
 
     }
@@ -175,7 +178,7 @@ public abstract class Users {
      * 
      * @param username The username of the user to find as String.
      * 
-     * @return A User object if the user is found, null otherwise.
+     * @return A User object found with the given username if the user is found, null otherwise.
      * 
      * @throws NullPointerException If the username is null.
      * 
@@ -209,9 +212,9 @@ public abstract class Users {
 
     /**
      * 
-     * Get a string with the users database as list of string lines, one for each user.
+     * Get a string with the whole users database as list of string lines, one for each user.
      * 
-     * @return The users database as list of string lines joined by '\n'.
+     * @return The users database as list of string lines, joined in an unique string by '\n'.
      * 
      */
     public static String toStringUsers() {

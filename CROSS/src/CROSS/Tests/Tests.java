@@ -29,6 +29,10 @@ import CROSS.Utils.UniqueNumber;
  * @version 1.0
  * @author Giulio Nisi
  * 
+ * @see User
+ * @see DBUsersInterface
+ * @see Users
+ * 
  * @see Server
  * @see AcceptThread
  * 
@@ -50,10 +54,6 @@ import CROSS.Utils.UniqueNumber;
  * @see LimitOrder
  * @see MarketOrder
  * @see StopOrderOrder
- * 
- * @see User
- * @see DBUsersInterface
- * @see Users
  * 
  * @see Separator
  * @see UniqueNumber
@@ -160,11 +160,59 @@ public abstract class Tests {
         
     }
 
+    // USERS TESTS
+    public static void TestUsers() throws NullPointerException, IllegalArgumentException {
+        
+        // Test users.
+        System.out.println("Testing users...");
+
+        String[] badUsernames = {
+            null,
+            "",
+            "s",
+            "thisusernameiswaytoolonggggggggggggggggggggggggggg",
+            "THISISUPPERCASE",
+            "$pecialcharacter",
+        };
+        String[] badPasswords = {
+            null,
+            "",
+            "s",
+            "thispasswordiswaytoolonggggggggggggggggggggggggggg",
+        };
+        String validUser = "testuser";
+        String validPassword = "testpassword";
+
+        User user = null;
+        for (String badUser : badUsernames) {
+            try {
+                user = new User(badUser, validPassword);
+            }catch (Exception ex) {
+                System.out.printf("Test passed, blocked invalid username: %s.\n", badUser);
+            }
+        }
+        for (String badPassword : badPasswords) {
+            try {
+                user = new User(validUser, badPassword);
+            }catch (Exception ex) {
+                System.out.printf("Test passed, blocked invalid password: %s.\n", badPassword);
+            }
+        }
+
+        user = new User(validUser, validPassword);
+
+        System.out.printf("Here's the user: %s.\n", user.toString());
+
+    }
+
     /**
+     * 
      * To perform all the tests.
+     * 
      * Main method.
      * 
      * @throws InterruptedException If the thread is interrupted, needed for the Thread.sleep() in the tests. Should never happen.
+     * 
      */
     public static void AllTests() throws InterruptedException {
 
@@ -174,18 +222,19 @@ public abstract class Tests {
 
         try {
 
-            TestServer();
-            // USED ONLY TO SEE THE DEBUG PRINTS IN THE CORRECT ORDER!
-            Thread.sleep(1000 * 1);
+            TestUsers();
             System.out.println(separator);
 
-            // TODO: Qui ero rimasto prima di passare al server (sopra/tests)....
-
-            TestClient();
+            // TestServer();
             // USED ONLY TO SEE THE DEBUG PRINTS IN THE CORRECT ORDER!
-            Thread.sleep(1000 * 1);
+            // Thread.sleep(1000 * 1);
+            // System.out.println(separator);
+
+            // TestClient();
+            // USED ONLY TO SEE THE DEBUG PRINTS IN THE CORRECT ORDER!
+            // Thread.sleep(1000 * 1);
             // To go on a new line after user input prompt.
-            System.out.println(separator);
+            // System.out.println(separator);
 
             // To test a little bit the server and the client.
             Thread.sleep(1000 * 120);
