@@ -15,6 +15,7 @@ import CROSS.Users.User;
 import CROSS.Utils.Separator;
 
 /**
+ * 
  * The order book is the core of a market.
  * 
  * It extends the Market class.
@@ -22,19 +23,27 @@ import CROSS.Utils.Separator;
  * It contains all the orders both limit and stop.
  * 
  * It's used to match and execute the orders.
+ * 
  * @version 1.0
+ * @author Giulio Nisi
+ * 
  * @see Market
+ * 
  * @see OrderBookLine
+ * 
  * @see LimitOrder
  * @see StopMarketOrder
+ * 
+ * @see SpecificPrice
+ * 
  * @see MarketOrder
  * @see Order
  * @see Currency
  * @see Quantity
- * @see SpecificPrice
  * @see GenericPrice
  * @see Separator
  * @see PriceType
+ * 
  */
 public class OrderBook extends Market {
 
@@ -43,13 +52,33 @@ public class OrderBook extends Market {
 
     // Technically the order book contains only the limit orders.
     // The majority of the brokers not show the stop orders in the order book.
-    // The stop orders are hidden and are only executed when the price hits the stop price.
-    // So i will follow this philosophy.
+    // The stop orders are hidden and are only executed when the price hits the stop price becoming a market order.
+    // So I will follow this philosophy.
 
     // I will use the same data structure because I think that it fits well also for the stop orders.
     // But, the OFFICIAL order book is the limit orders book, that contains only the limit orders.
-    // The stop orders book is "opaque".
+    // So the stop orders book is "opaque".
     private TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>> stopBook;
+
+    /**
+     * 
+     * Constructor of the class.
+     * 
+     * @param primary_currency The primary currency of the market.
+     * @param secondary_currency The secondary currency of the market.
+     * @param actualPriceAsk The actual ask price.
+     * @param actualPriceBid The actual bid price.
+     * @param increment The price increment.
+     * 
+     */
+    public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid, GenericPrice increment) {
+        
+        super(primary_currency, secondary_currency, actualPriceAsk, actualPriceBid, increment);
+
+        limitBook = new TreeMap<SpecificPrice, OrderBookLine<LimitOrder>>();
+        stopBook = new TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>>();
+
+    }
 
     // LINES MANAGEMENT
     /**
@@ -227,24 +256,6 @@ public class OrderBook extends Market {
             throw new IllegalArgumentException("Order type not supported.");
         }
 
-    }
-
-    /**
-     * Constructor of the OrderBook class.
-     * 
-     * @param primary_currency The primary currency of the market.
-     * @param secondary_currency The secondary currency of the market.
-     * 
-     * @param actualPriceAsk The actual ask price.
-     * @param actualPriceBid The actual bid price.
-     * 
-     * @param increment The price increment.
-     */
-    public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid, GenericPrice increment) {
-        super(primary_currency, secondary_currency, actualPriceAsk, actualPriceBid, increment);
-
-        limitBook = new TreeMap<SpecificPrice, OrderBookLine<LimitOrder>>();
-        stopBook = new TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>>();
     }
 
     // Super info + limit book lines.

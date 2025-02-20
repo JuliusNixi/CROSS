@@ -11,15 +11,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import CROSS.FileHandler;
-import CROSS.Exceptions.InvalidUser;
+import CROSS.Utils.FileHandler;
 
 /**
  * 
  * This class is an interface to handle users database file.
- * It's used by the Users class to load and save users from and to a JSON file.
+ * It's used by the Users class as support to load and save users from and to a JSON database file.
  * 
- * Abstract class because I assume that i don't want to handle different users databases at the same time.
+ * Abstract class because I assume that I don't want to handle different users databases at the same time.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -55,14 +54,15 @@ public abstract class DBUsersInterface {
      * 
      * Synchronized to avoid multiple threads to set the file at the same time.
      * 
-     * @param filePath The path to the file.
+     * @param filePath The path to the database file.
      * 
      * @throws IllegalArgumentException If the file is not a JSON file.
      * @throws NullPointerException If the file path is null.
      * @throws RuntimeException If the file is already attached.
+     * @throws IOException If there's an I/O error.
      * 
      */
-    public static synchronized void setFile(String filePath) throws IllegalArgumentException, NullPointerException, RuntimeException {
+    public static synchronized void setFile(String filePath) throws IllegalArgumentException, NullPointerException, RuntimeException, IOException {
 
         // Null check.
         if (filePath == null) {
@@ -89,7 +89,7 @@ public abstract class DBUsersInterface {
             System.out.printf("DB Users file %s attached.\n", filePath);
         } catch (FileNotFoundException ex) {
 
-            System.out.printf("DB Users file %s not found.\n", filePath);
+            System.out.printf("DB Users file %s not found. Creeating it.\n", filePath);
 
             // Create an empty file.
             try {
@@ -101,7 +101,7 @@ public abstract class DBUsersInterface {
 
                 System.out.printf("DB Users file %s created and attached.\n", filePath);
             } catch (IOException ex2) {
-                throw new RuntimeException("Error creating the database users file.");
+                throw new IOException("Error creating the database users file.");
             }
 
         }
@@ -111,23 +111,24 @@ public abstract class DBUsersInterface {
      * 
      * Read the file attached previously with setFile().
      * 
-     * This fills the file content variable.
+     * This fills the file content variable with the file content as String.
      * 
      * Synchronized to avoid multiple threads to read the file at the same time.
      * 
-     * @throws RuntimeException If the file is not attached.
+     * @throws RuntimeException If the file is not attached or the file content is already readed.
+     * @throws IOException If there's an I/O error.
      * 
      */
-    public static synchronized void readFile() throws RuntimeException {
+    public static synchronized void readFile() throws IOException, RuntimeException {
 
         // File not attached.
         if (fileIn == null || DBUsersInterface.filePath == null) {
-            throw new RuntimeException("Database file not attached. Set file before with setFile().");
+            throw new RuntimeException("Database users file not attached. Set file before with setFile().");
         }
 
         // File content already readed.
         if (DBUsersInterface.fileContent != null) {
-            throw new RuntimeException("Database file already readed.");
+            throw new RuntimeException("Database users file already readed.");
         }
 
         // Initialize empty file lines.
@@ -154,7 +155,7 @@ public abstract class DBUsersInterface {
 
             System.out.printf("File %s readed.\n", filePath);
         } catch (IOException ex) {
-            throw new RuntimeException("Error reading the database users file.");
+            throw new IOException("Error reading the database users file.");
         } 
 
     }
@@ -164,19 +165,20 @@ public abstract class DBUsersInterface {
      * 
      * Write a user on the file attached.
      * 
-     * This appends the user to the database file without rewriting all the file.
+     * This appends the user to the users database file without rewriting all the file.
      * 
      * Synchronized to avoid multiple threads to write on the file at the same time.
      * 
      * @param user The user to write.
      * 
-     * @throws RuntimeException If the file content is not loaded or the update user method is not found.
+     * @throws RuntimeException If the file content is not loaded.
+     * @throws NoSuchMethodException If the update user method is not found.
      * @throws NullPointerException If the user is null.
      * @throws IOException If there's an I/O error.
-     * @throws JsonSyntaxException If there's an error parsing the JSON database file content.
+     * @throws JsonSyntaxException If there's an error parsing the JSON user to write it in the database users file.
      * 
      */
-    public static synchronized void writeUserOnFile(User user) throws RuntimeException, NullPointerException, IOException, JsonSyntaxException {
+    public static synchronized void writeUserOnFile(User user) throws RuntimeException, NoSuchMethodException, NullPointerException, IOException, JsonSyntaxException {
 
         // Null check.
         if (user == null) {
@@ -185,14 +187,15 @@ public abstract class DBUsersInterface {
 
         // File not attached.
         if (fileContent == null) {
-            throw new RuntimeException("File content is needed to write on file. Load users before with loadUsers().");
+            throw new RuntimeException("Users database file content is needed to write on file. Call readFile() before.");
         }
 
         // Remove last line.
         try {
             FileHandler.removeLastLine(DBUsersInterface.file);
         } catch (IOException ex) {
-            throw new IOException("Error removing the last line from the database users file.");
+            // Forwarding exception's message.
+            throw new IOException(ex.getMessage());
         }
 
         // Write user on file.
@@ -231,7 +234,7 @@ public abstract class DBUsersInterface {
                 try {
                     method = DBUsersInterface.class.getMethod("updateUserOnFile", User.class, User.class).getName();
                 }catch (NoSuchMethodException ex) {
-                    throw new RuntimeException("Method updateUserOnFile() in the DBUsersInterface not found.");
+                    throw new NoSuchMethodException("Method updateUserOnFile() in the DBUsersInterface not found.");
                 }
                 for (StackTraceElement stackTraceElement : stackTrace) {
                     if (stackTraceElement.getMethodName().equals(method)) {
@@ -251,19 +254,18 @@ public abstract class DBUsersInterface {
             fileOut = new FileOutputStream(file, true);
 
         } catch (JsonSyntaxException | IndexOutOfBoundsException ex) {
-            throw new JsonSyntaxException("Error parsing the JSON users database file to write on it the new user.");
+            throw new JsonSyntaxException("Error parsing the JSON user to write it in the users database file.");
         } catch (IOException ex) {
-            throw new IOException("Error writing the new user on the database users file.");
+            throw new IOException("Error writing the new user in the users database file.");
         }
 
     }
     /**
      * 
-     * Update a user on the file attached.
+     * Update an user on the database users file attached.
      * 
      * This overwrites the old user line on the database file with spaces and appends the new user to the end of file.
-     * 
-     * The old user position in the file is found by the file line id.
+     * The old user position in the file is found by his file line id.
      * 
      * This is done to avoid rewriting all the file.
      * 
@@ -274,12 +276,13 @@ public abstract class DBUsersInterface {
      * @param oldUser The old user to update.
      * @param newUser The new user to update with.
      * 
-     * @throws RuntimeException If the file content is not loaded or the editing old user / adding new user methods fail.
+     * @throws RuntimeException If the file content is not loaded.
+     * @throws Exception If the editing of the old user or adding new user fail.
      * @throws NullPointerException If the old user or the new user are null.
      * @throws IllegalArgumentException If the old user file line id is null or the new user file line id is not null.
      * 
      */
-    public static synchronized void updateUserOnFile(User oldUser, User newUser) throws RuntimeException, NullPointerException, IllegalArgumentException {
+    public static synchronized void updateUserOnFile(User oldUser, User newUser) throws RuntimeException, Exception, NullPointerException, IllegalArgumentException {
 
         // Null check.
         if (oldUser == null) {
@@ -291,7 +294,7 @@ public abstract class DBUsersInterface {
 
         // File not attached.
         if (fileContent == null) {
-            throw new RuntimeException("File content is needed to write on file. Load users before with loadUsers().");
+            throw new RuntimeException("File content is needed to write on file. Call readFile() before.");
         }
 
         // Null file line id checks.
@@ -302,18 +305,21 @@ public abstract class DBUsersInterface {
             throw new IllegalArgumentException("New user file line id MUST be null.");
         }
 
-        // Removing the old user line from the file overwriting it with spaces.
+        // Removing the old user line from the file by overwriting it with spaces.
         try {
             FileHandler.editLine(DBUsersInterface.file, oldUser.getFileLineId());
-        }catch (RuntimeException ex) {
-            throw new RuntimeException("Error updating the old user on the database users file.");
+            DBUsersInterface.emptyFileLines++;
+        }catch (Exception ex) {
+            // Forwarding exception's message.
+            throw new Exception(ex.getMessage());
         }
 
         // Write the new user.
         try {
             Users.addUser(newUser);
-        }catch (InvalidUser | RuntimeException | IOException ex) {
-            throw new RuntimeException("Error updating the new user on the database users file.");
+        }catch (Exception ex) {
+            // Forwarding exception's message.
+            throw new Exception(ex.getMessage());
         }
 
     }
@@ -331,7 +337,7 @@ public abstract class DBUsersInterface {
     }
     /**
      * 
-     * Used to calculate the number of lines in the database file attached without reading the file again every time.
+     * Used to calculate the number of lines in the users database file attached without reading the file again every time.
      * 
      * This is used to calculate the new file line id to assign it to a new user before adding it to the database.
      * 
@@ -351,32 +357,7 @@ public abstract class DBUsersInterface {
 
     }
     
-    // SETTERS
-    /**
-     * 
-     * Increase the number of empty lines in the file by one.
-     * 
-     * Synchronized to avoid multiple threads to increase the empty file lines at the same time.
-     * 
-     * @throws RuntimeException If the file content is not loaded.
-     * 
-     */
-    public static synchronized void increaseEmptyFileLines() throws RuntimeException {
-
-        // Database file content not readed check.
-        if (DBUsersInterface.fileContent == null) {
-            throw new RuntimeException("Database file not read. Read it before with readFile().");
-        }
-
-        // Null check.
-        if (DBUsersInterface.emptyFileLines == null) {
-            DBUsersInterface.emptyFileLines = Long.valueOf(0);
-        }
-
-        DBUsersInterface.emptyFileLines++;
-
-    }
-
+    // MAIN SUPPORT METHOD
     /**
      * 
      * Load users from the file (previously readed and stored in the file content variable) to Users class (in RAM).
@@ -385,23 +366,24 @@ public abstract class DBUsersInterface {
      * 
      * Before using this method, the file must be readed with readFile().
      * 
-     * At all the users loaded is added its file line id. This is used to update the file on user update without rewriting all the file.
+     * At all the users loaded is added a unique file line id. This is used to update the file on user update without rewriting all the file.
      * 
      * @throws RuntimeException If the file is not readed or the users are already loaded.
-     * @throws IOException If there's an I/O error.
-     * @throws JsonSyntaxException If there's an error parsing the JSON file content.
+     * @throws JsonSyntaxException If there's an error parsing the JSON users database file content.
+     * @throws Exception If there's an error adding the users from the JSON database file to the Users class.
+     * @throws IOException If there's an I/O error initializing the empty users database file.
      * 
      */
-    public static synchronized void loadUsers() throws RuntimeException, IOException, JsonSyntaxException {
+    public static synchronized void loadUsers() throws RuntimeException, JsonSyntaxException, Exception, IOException {
 
         // Database file content not readed check.
         if (DBUsersInterface.fileContent == null) {
-            throw new RuntimeException("Database file not read. Read it before with readFile().");
+            throw new RuntimeException("Database users file not read. Read it before with readFile().");
         }
 
         // Users already loaded.
         if (Users.getUsersSize() > 0) {
-            throw new RuntimeException("Users already loaded.");
+            throw new RuntimeException("Users database already loaded.");
         }
 
         // Empty file, initialize it.
@@ -419,7 +401,7 @@ public abstract class DBUsersInterface {
 
                 return;
             } catch (IOException ex) {
-                throw new IOException("Error initializing empty database users file.");
+                throw new IOException("Error initializing empty users database users file.");
             }
         }
 
@@ -449,7 +431,7 @@ public abstract class DBUsersInterface {
         } catch (JsonSyntaxException ex) {
             throw new JsonSyntaxException("Error parsing the JSON database users file.");
         } catch (Exception ex) {
-            throw new RuntimeException("Error loading users from the JSON database users file.");
+            throw new Exception("Error loading users from the JSON database file.");
         }
 
     }

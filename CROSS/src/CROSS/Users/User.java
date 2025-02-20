@@ -3,6 +3,7 @@ package CROSS.Users;
 /**
  * 
  * This class represents an User.
+ * 
  * It implements the Comparable interface to allow comparing and sorting the users by username.
  * 
  * @version 1.0
@@ -13,50 +14,50 @@ public class User implements Comparable<User> {
     
     // User's data.
     private final String username;
-    private final String password; 
+    private final String password;
 
-    // Each user has a file line id, it is used to update the user in the database file without rewriting the whole file.
+    // Each user has a file line id, it's used to update the user in the database file without rewriting the whole file.
     // It indicates the line of the file where the user is stored.
+    // This database file line when an user is updated is overwritten (using the file line id) with blank spaces and then the updated (new) user is appended at the end of the file.
     private Long fileLineId = null;
 
     /**
      * 
-     * This constructor creates a User with a username and a password.
+     * This constructor creates an User with a given username and a given password.
      * 
-     * It sanitizes and checks if the username and the password are valid.
-     * The username is trimmed, lowercased and the whitespaces are removed.
+     * It checks if the username and the password are valid.
+     * Username and password cannot be too long, too short, empty or null.
+     * Username MUST contains ONLY lowercase letters and numbers.
      * 
      * @param username The username of the User as a String.
      * @param password The password of the User as a String.
      * 
      * @throws NullPointerException If the username or the password are null.
-     * @throws IllegalArgumentException If the username or the password are empty, too long or too short.
+     * @throws IllegalArgumentException If the username or the password are empty, too long or too short. If the username contains characters other than lowercase letters and numbers.
      * 
      */
     public User(String username, String password) throws NullPointerException, IllegalArgumentException {
 
         // Null checks.
         if (username == null) {
-            throw new NullPointerException("Username is user creation cannot be null.");
+            throw new NullPointerException("Username in user creation cannot be null.");
         }
         if (password == null) {
-            throw new NullPointerException("Password is user creation cannot be null.");
+            throw new NullPointerException("Password in user creation cannot be null.");
         }
-
-        // Sanitize the username.
-        username = username.trim().toLowerCase();
-        // Remove all the whitespaces from the username.
-        username = username.replaceAll(" ", "");
 
         // Check if the username and the password are valid.
         if (username.isBlank() || password.isBlank()) {
-            throw new IllegalArgumentException("Username or password are empty.");
+            throw new IllegalArgumentException("Username or password in user creation are empty.");
         }
         if (username.length() > 40 || password.length() > 40) {
-            throw new IllegalArgumentException("Username or password are too long.");
+            throw new IllegalArgumentException("Username or password in user creation are too long.");
         }
         if (username.length() <= 3 || password.length() <= 3) {
-            throw new IllegalArgumentException("Username or password are too short.");
+            throw new IllegalArgumentException("Username or password in user creation are too short.");
+        }
+        if (!username.matches("[a-z0-9]+")) {
+            throw new IllegalArgumentException("Username in user creation contains characters other than lowercase letters and numbers.");
         }
         
         this.username = username;
@@ -76,7 +77,7 @@ public class User implements Comparable<User> {
         return String.format("%s", this.username);
     }
     // DISCLAIMER:
-    // This method and the toString() method are used for debugging and since this is not a real in production application.
+    // This method and the toString() method are used for debugging and since this is not a real in-production application.
     // In a real application, the password should not be shown.
     // The authentication should be done without handling the text plain password.
     /**
@@ -94,10 +95,13 @@ public class User implements Comparable<User> {
      * This method returns the file line id of the User.
      * The file line id is used to update the User in the database file without rewriting the whole file.
      * 
-     * @return The file line id of the User as a Long.
+     * @return The file line id of the User as a Long or null if it's not set.
      * 
      */
     public Long getFileLineId() {
+        if (this.fileLineId == null) {
+            return null;
+        }
         return Long.valueOf(this.fileLineId);
     }
 

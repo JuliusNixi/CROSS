@@ -1,6 +1,6 @@
 // This file is voluntarily synchronized with Git and GitHub, and not included in ".gitignore" file.
 // This because, if in the future I will work again on this project on another machine, 
-// I will not have to remember how to configure these paths in VS Code IDE.
+// I will not have to remember how to configure these paths in VS Code IDE. 
 {
     "java.project.sourcePaths": [
         "CROSS/src"

@@ -14,10 +14,10 @@ public class Separator {
     private final static Integer DEFAULT_LENGTH = 42;
 
     // Will contain the final created separator.
-    private String separator;
+    private final String separator;
 
-    // A separator could be a sequence of characters, for that is a String.
-    private String characters;
+    // A separator could also be a sequence of characters, for that is a String.
+    private final String characters;
     
     // CONSTRUCTORS
     /**
@@ -35,24 +35,25 @@ public class Separator {
         
         // Null checks.
         if (characters == null) {
-            throw new NullPointerException("Characters used in Separator cannot be null.");
+            throw new NullPointerException("Characters used in the separator cannot be null.");
         }
         if (length == null) {
-            throw new NullPointerException("Length used in Separator cannot be null.");
+            throw new NullPointerException("Length used in the separator cannot be null.");
         }
 
         // Length check.
         if (length <= 0) {
-            throw new IllegalArgumentException("Length used in Separator must be greater than 0.");
+            throw new IllegalArgumentException("Length used in the separator must be greater than 0.");
         }
 
         // Create the separator.
-        separator = "";
+        String sep = "";
         for (int i = 0; i < length; i++) {
-            separator += characters;
+            sep += characters;
         }
 
         this.characters = characters;
+        this.separator = sep;
 
     }
     /**
@@ -61,8 +62,10 @@ public class Separator {
      * 
      * @param characters The sequence of characters to be repeated.
      * 
+     * @throws NullPointerException If characters is null.
+     * 
      */
-    public Separator(String characters) {
+    public Separator(String characters) throws NullPointerException {
 
         this(characters, DEFAULT_LENGTH);
 
@@ -70,9 +73,11 @@ public class Separator {
 
     // GETTERS
     /**
+     * 
      * Returns the default length of the separator.
      * 
-     * @return The default length of the separator.
+     * @return The default length of the separator as an integer.
+     * 
      */
     public static Integer getDefaultLength() {
 
@@ -80,9 +85,11 @@ public class Separator {
 
     }
     /**
+     * 
      * Returns the characters of the separator.
      * 
-     * @return The characters of the separator.
+     * @return The characters of the separator as a string.
+     * 
      */
     public String getCharacters() {
 
@@ -90,9 +97,11 @@ public class Separator {
 
     }
     /**
+     * 
      * Returns the separator as a string.
      * 
      * @return The separator as a string.
+     * 
      */
     public String getSeparator() {
 

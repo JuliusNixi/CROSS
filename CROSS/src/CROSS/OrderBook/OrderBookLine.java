@@ -10,241 +10,300 @@ import CROSS.Types.Price.PriceType;
 import CROSS.Types.Price.SpecificPrice;
 
 /**
+ * 
  * This class is used to represent a line in an order book.
+ * 
  * It's used both by limit orders book and stop orders book. 
- * The line is omogeneus, all orders must have the same type.
+ * The line is omogeneus, this means all orders must have the same type (limit / stop).
+ * 
+ * The line has a price value, the same for all orders in the line.
+ * 
  * @version 1.0
- * @param <O> Order type, must be a subclass of Order, but it's intended to be either LimitOrder or StopMarketOrder.
+ * @author Giulio Nisi
+ * 
+ * @param <GenericOrder> Order type, must be a subclass of Order, but it's intended to be either LimitOrder or StopMarketOrder.
+ * 
  * @see Order
- * @see SpecificPrice
+ * 
  * @see Quantity
+ * @see SpecificPrice
+ * 
  */
-public class OrderBookLine<O extends Order> {
+public class OrderBookLine<GenericOrder extends Order> {
  
     // This quantity is the sum of all orders in this line.
-    // It's useful to know the total quantity of orders in the line,
-    // without iterating over all orders each time.
+    // It's useful to know the total quantity of orders in the line, without iterating over all orders each time to calculate it.
     // Used in market orders execution.
-    private Quantity totalQuantity;
+    private Quantity totalQuantity = null;
 
     // LinkedList to keep the order in the same way they were added.
-    // To execute the orders (matching algorithm) we use FIFO, so i give priority
-    // to insert and remove element from the head and tail.
-    // Insert and execute orders from the head and tail is O(1). These operations should be the most frequent.
+    // To execute the orders (matching algorithm) we use FIFO, so I give priority to insert and remove element from the head and tail.
+    // Insert and execute orders from the head and tail is O(1).
+    // These operations should be the most frequent.
     // Cancel an order is O(n) because we need to search for the order, but it's not a frequent operation (I hope).
     // Generic type order to handle both limit and stop orders.
-    private LinkedList<O> orders;
+    private LinkedList<GenericOrder> orders = null;
 
     // The price of the line.
-    private SpecificPrice linePrice;
+    private final SpecificPrice linePrice;
 
-    // To avoid confusion, I store the type of the line (stop/limit) when created.
+    // To avoid confusion, I store the type of the line (stop / limit) when created.
     // All orders in the line must have the same type.
     // I will use this to check if the order (to be handled by the methods) type match with the line type.
-    // It's also used to check if OI == O type in the constructor.
-    private final O lineType = null;
+    private final GenericOrder lineType = null;
 
     /**
+     * 
+     * Execute some coherence checks on a given order before handling it.
+     * 
+     * Private method, since it's used only in the class.
+     * 
+     * Does not return anything, but throws an exception if the order has some problems.
+     * 
+     * @param order The order to be checked.
+     * 
+     * @throws IllegalArgumentException If the order has some problems.
+     * 
+     */
+    private void coherenceOrderChecks(GenericOrder order) throws IllegalArgumentException {
+
+        // Checking order type, if allowed.
+        if (order instanceof LimitOrder) {
+            // OK, it's a limit order.
+        }else if (order instanceof StopMarketOrder) {
+            // OK, it's a stop order.
+        } else {
+            throw new IllegalArgumentException("Order of an order book line type not supported, use LimitOrder or StopMarketOrder.");
+        }
+
+        // Checking price type / price line type match.
+        if (order.getPrice().getType() != lineType.getPrice().getType()) {
+            throw new IllegalArgumentException("Order of an order book line price type not match with line price type.");
+        }
+
+        // Checking price value / price line value match.
+        if (linePrice.getValue() != order.getPrice().getValue()) {
+            throw new IllegalArgumentException("Order of an order book line price value not match with line price value.");
+        }
+
+        // Checking market order / market line match.
+        if (!order.getPrice().getMarket().equals(linePrice.getMarket())) {
+            throw new IllegalArgumentException("Order of an order book line market not match with line market.");
+        }
+
+        // Checking order price type / price line type match.
+        if (this.lineType.getPrice().getType() != order.getPrice().getType()) {
+            throw new IllegalArgumentException("Order of an order book line price type not match with line price type.");
+        }
+
+        // Checking order class / line type class.
+        if (order.getClass() != this.lineType.getClass()) {
+            throw new IllegalArgumentException("Order of an order book line class doesn't match with line type class.");
+        }
+
+    }
+
+    /**
+     * 
      * Constructor for a new line in the order book.
      * 
-     * The line is omogeneus, all orders must have the same type (stop/limit).
-     * The initialOrder is added at the beginning of the list, to follow a FIFO policy. E.g.:
+     * The line is omogeneus, this means all orders must have the same type (stop / limit).
+     * The initial order is added at the beginning of the list, to follow a FIFO policy. E.g.:
      * NEW ORDER X -> ORDER X - 1 -> ORDER X - 2 -> ... -> ORDER X - N
      * 
-     * @param <OI> The type of the order to be added to the line.
      * @param linePrice The price of the line.
      * @param initialOrder The first order to be added to the line.
      * 
-     * @throws IllegalArgumentException If the order type doesn't match with the line type or if the order price doesn't match with the line price or if the price type doesn't match with the line price type or if the price market doesn't match with the line price market.
-     * @throws NullPointerException If the order or the line price are null.
+     * @throws NullPointerException If the initial order or the line price are null.
+     * 
      */
-    public <OI extends Order> OrderBookLine(SpecificPrice linePrice, OI initialOrder) throws IllegalArgumentException, NullPointerException {
+    public OrderBookLine(SpecificPrice linePrice, GenericOrder initialOrder) throws NullPointerException {
+        
+        // Null checks.
         if (linePrice == null) {
-            throw new NullPointerException("Line Price cannot be null.");
+            throw new NullPointerException("Line price of an order book line cannot be null.");
         }
         if (initialOrder == null) {
-            throw new NullPointerException("Initial order cannot be null.");
+            throw new NullPointerException("Initial order of an order book line cannot be null.");
         }
 
-        // Checking order type.
-        if (initialOrder instanceof LimitOrder) {
-            // OK, it's a limit order.
-        }else if (initialOrder instanceof StopMarketOrder) {
-            // OK, it's a stop order.
-        } else {
-            throw new IllegalArgumentException("Initial order type not supported, use LimitOrder or StopMarketOrder.");
-        }
+        // Coherece checks.
+        coherenceOrderChecks(initialOrder);
 
-        // Checking class match internal method generic type with class generic type.
-        if (initialOrder.getClass() != lineType.getClass()) {
-            throw new IllegalArgumentException("Initial order type doesn't match with class generic type.");
-        }
-
-        // Checking price match.
-        if (!initialOrder.getPrice().equals(initialOrder.getPrice())) {
-            throw new IllegalArgumentException("Initial order price not match with line price.");
-        }
-        if (initialOrder.getPrice().getType() != linePrice.getType()) {
-            throw new IllegalArgumentException("Initial order price type not match with line price type.");
-        }
-
-        // Checking market match.
-        if (!initialOrder.getPrice().getMarket().equals(linePrice.getMarket())) {
-            throw new IllegalArgumentException("Initial order price market not match with line price market.");
-        }
-
-        this.totalQuantity = new Quantity(initialOrder.getQuantity().getQuantity());
-        this.orders = new LinkedList<O>();
+        this.totalQuantity = new Quantity(initialOrder.getQuantity().getValue());
+        this.orders = new LinkedList<GenericOrder>();
         this.linePrice = linePrice;
 
     }
 
     // ORDERS MANAGEMENT
     /**
-     * Add an order to its corresponding line.
+     * 
+     * Add an order to its corresponding (this) line.
+     * 
      * Could be a stop or a limit order.
-     * The line is omogeneus, all orders must have the same type (stop/limit).
+     * The line is omogeneus, this means all orders must have the same type (stop / limit).
      * 
      * The order is added at the beginning of the list, to follow a FIFO policy. E.g.:
      * NEW ORDER X -> ORDER X - 1 -> ORDER X - 2 -> ... -> ORDER X - N
+     * 
      * A check if the order is already present in the list is omitted, because a O(n) operation would be needed.
      * 
-     * @param order The order to be added.
-     * @throws IllegalArgumentException If the order type doesn't match with the line type or if the order price doesn't match with the line price.
+     * Synchonized method to avoid concurrency problems.
+     * 
+     * @param order The order to be added to the line.
+     * 
      * @throws NullPointerException If the order is null.
+     * 
      */
-    public void addOrder(O order) throws IllegalArgumentException, NullPointerException {
+    public synchronized void addOrder(GenericOrder order) throws NullPointerException {
+
+        // Null check.
         if (order == null)
-            throw new NullPointerException("Order cannot be null.");
+            throw new NullPointerException("The order to add to an order book line cannot be null.");
 
-        // Price checks.
-        if (!order.getPrice().equals(this.linePrice))
-            throw new IllegalArgumentException("Order price not match with line price.");
-        if (order.getPrice().getType() != this.linePrice.getType())
-            throw new IllegalArgumentException("Order price type not match with line price type.");
+        // Coherence checks.
+        coherenceOrderChecks(order);
 
-        // Market check.
-        if (!order.getMarket().equals(this.linePrice.getMarket()))
-            throw new IllegalArgumentException("Order market not match with line market.");
+        // The order is added at the beginning of the list, to follow a FIFO policy.
+        // A check if the order is already present in the list is omitted, because a O(n) operation would be needed.
+        orders.addFirst(order);
 
-        if (order.getClass() == this.lineType.getClass()) {
-            // The order is added at the beginning of the list, to follow a FIFO policy.
-            // A check if the order is already present in the list is omitted, because a O(n) operation would be needed.
-            orders.addFirst(order);
+        // Updating total quantity on this line.
+        Quantity newQuantity = new Quantity(this.getTotalQuantity().getValue() + order.getQuantity().getValue());
+        this.totalQuantity = newQuantity;
 
-            // Updating total quantity on this line.
-            Quantity newQuantity = new Quantity(this.getTotalQuantity().getQuantity() + order.getQuantity().getQuantity());
-            this.totalQuantity = newQuantity;
-        } else {
-            throw new IllegalArgumentException("Order type doesn't match with line type.");
-        }
     }
     /**
-     * Remove/cancel an order to its corresponding line.
+     * 
+     * Remove / cancel an order to its corresponding line (this line).
+     * 
      * Could be a stop or a limit order.
-     * The line is omogeneus, all orders must have the same type (stop/limit).
+     * The line is omogeneus, this means all orders must have the same type (stop/limit).
      * 
      * The order is removed at the end of the list, to follow a FIFO policy.
      * 
      * The order is removed from the list, it's a O(n) operation.
      * 
+     * Synchonized method to avoid concurrency problems.
+     * 
      * @param order The order to be removed.
-     * @throws IllegalArgumentException If the order type doesn't match with the line type or if the order price doesn't match with the line price or if the price type doesn't match with the line price type or if the price market doesn't match with the line price market or if the order is not found in the line.
+     * 
      * @throws NullPointerException If the order is null.
+     * @throws IllegalArgumentException If the order is not found in the line.
+     * 
      */
-    public void cancelOrder(O order) throws IllegalArgumentException, NullPointerException {
+    public synchronized void cancelOrder(GenericOrder order) throws NullPointerException, IllegalArgumentException {
+
+        // Null check.
         if (order == null)
-            throw new NullPointerException("Order cannot be null.");
+            throw new NullPointerException("The order to remove in an order book line cannot be null.");
 
-        if (order.getClass() != this.lineType.getClass())
-            throw new IllegalArgumentException("Order type doesn't match with line type.");
-
-        // Price check.
-        if (!order.getPrice().equals(this.linePrice))
-            throw new IllegalArgumentException("Order price not match with line price.");
-        if (order.getPrice().getType() != this.linePrice.getType())
-            throw new IllegalArgumentException("Order price type not match with line price type.");
-
-        // Market check.
-        if (!order.getMarket().equals(this.linePrice.getMarket()))
-            throw new IllegalArgumentException("Order market not match with line market.");
+        // Coherence checks.
+        coherenceOrderChecks(order);
 
         // Search for the order in the line.
         // O(n) needed.
-        for (O lineOrder : orders) {
+        for (GenericOrder lineOrder : orders) {
+
             if (lineOrder.equals(order)) {
+
                 // Remove the order from the line.
                 orders.remove(lineOrder);
 
                 // Updating total quantity on this line.
-                Quantity newQuantity = new Quantity(this.getTotalQuantity().getQuantity() - order.getQuantity().getQuantity());
+                Quantity newQuantity = new Quantity(this.getTotalQuantity().getValue() - order.getQuantity().getValue());
                 this.totalQuantity = newQuantity;
                 
                 return;
+
             }
+
         }
-        throw new IllegalArgumentException("Order not found in the line.");
+
+        throw new IllegalArgumentException("The order to remove in an order book line not found.");
+
     }
     /**
-     * Extract the last order from the line.
+     * 
+     * Extract the last order from the line (this one).
+     * 
      * Could be a stop or a limit order.
-     * The line is omogeneus, all orders must have the same type (stop/limit).
+     * The line is omogeneus, this means all orders must have the same type (stop/limit).
      * 
-     * Remove it from the line if the removeIt parameter is true.
+     * Remove the order from the line if the remove it parameter is true.
      * 
-     * The order is removed from the list, it's a O(1) operation.
+     * The order is extracted (and eventually removed) from the list, it's a O(1) operation.
+     * 
      * This order is the first order added to the line to follow a FIFO policy, it's the one to be processed first.
      * E.g.: ORDER X -> ORDER X - 1 -> ORDER X - 2 -> ... -> ORDER X - N
-     * The removed order is X - N.
+     * The removed order is: X - N.
      * 
-     * @param removeIt If true, the order is removed from the line.
+     * Synchonized method to avoid concurrency problems.
+     * 
+     * @param removeIt If true, the order is removed from the line, otherwise it's only extracted and returned.
+     * 
      * @return The last order in the line, the first added, or null if the line is empty.
-     * @throws NullPointerException If the removeIt parameter is null.
+     * 
+     * @throws NullPointerException If the remove it parameter is null.
+     * 
      */
-    public O extractLastOrder(Boolean removeIt) throws NullPointerException {
+    public synchronized GenericOrder extractLastOrder(Boolean removeIt) throws NullPointerException {
 
+        // Null check.
         if (removeIt == null) {
-            throw new NullPointerException("Remove it cannot be null.");
+            throw new NullPointerException("Remove it parameter in the extraction of an order from an order book line cannot be null.");
         }
 
+        // Empty line check.
         if (orders.isEmpty()) {
             return null;
         }
 
-        O order = orders.getLast();
+        GenericOrder order = orders.getLast();
         if (removeIt) {
 
             // Remove the order from the line.
             orders.removeLast();
 
             // Updating total quantity on this line.
-            this.totalQuantity = new Quantity(this.getTotalQuantity().getQuantity() - order.getQuantity().getQuantity());
+            this.totalQuantity = new Quantity(this.getTotalQuantity().getValue() - order.getQuantity().getValue());
         
         }
 
         return order;
+
     }
     
+
+
+
+
     // ORDER EXECUTION
     /**
-     * Execute a limit order on this line with a market order.
-     * This method matches the ONLY THE LAST limit order with the market order.
-     * So this method is executed multiples times from the book until the market order is fully filled.
+     * 
+     * Execute a limit order ON THIS LINE with a market order.
+     * 
+     * This method matches ONLY THE LAST limit order with the market order.
+     * So this method MUST BE executed multiples times from the book (the caller) until the market order is fully filled.
      * 
      * @param order The market order to be executed.
-     * @param book The order book where the order is placed used to update a limit order if partially filled.
+     * @param book The order book where the market order is placed, used to update a limit order if partially filled.
      * 
-     * @return The SAME market order reference if on the current line there are more than one limit order or the only limit order present has more avaible quantity. null otherwise, so when the line is empty or the only limit order present is fully filled. Note that this returned value depends on the line state after the execution, not on the input order.
+     * @return The SAME market order REFERENCE if on the current line there are more than one limit order or the only limit order present has more avaible quantity. null otherwise, so when the line is empty or the only limit order present is fully filled. So note that this returned value depends on the line state after the execution, not on the input order.
      * 
      * @throws NullPointerException If the market order or the order book are null.
      * @throws IllegalArgumentException If there are some inconsistencies between the order and the line or the book (a lot of cases are possible).
+     * 
      */
     public MarketOrder executeMarketOrder(MarketOrder order, OrderBook book) throws NullPointerException, IllegalArgumentException, RuntimeException {
+        
+        // Null checks.
         if (order == null) {
-            throw new NullPointerException("Market order cannot be null.");
+            throw new NullPointerException("The market order to execute in an order book line cannot be null.");
         }
         if (book == null) {
-            throw new NullPointerException("Order book cannot be null.");
+            throw new NullPointerException("The book used to execute a market order cannot be null.");
         }
 
         // Order-Line checks.
@@ -255,7 +314,6 @@ public class OrderBookLine<O extends Order> {
         // Market check.
         if (!order.getMarket().equals(this.linePrice.getMarket()))
             throw new IllegalArgumentException("Market order market not match with line market.");
-
 
         // Matching best price in the market with order price check.
         // Not really needed, because the order is already checked in the book.
@@ -426,6 +484,9 @@ public class OrderBookLine<O extends Order> {
         return order;
     }
 
+
+
+
     // GETTERS
     /**
      * Getter for the total number of orders on this line.
@@ -449,11 +510,13 @@ public class OrderBookLine<O extends Order> {
         return new SpecificPrice(this.linePrice.getValue(), this.linePrice.getType(), this.linePrice.getMarket());
     }
 
+
+
+    // TOSTRING METHODS
     @Override
     public String toString() {
         return String.format("Price [%s] - Line Size [%s] - Total [%d]\n", this.getLinePrice().toString(), this.getTotalQuantity().toString(), this.getTotalQuantity().getQuantity() * this.getLinePrice().getValue());
     }
-    
     /**
      * A to string method with all the orders contained in the line list.
      * The order are displayed in the short format.
@@ -468,5 +531,7 @@ public class OrderBookLine<O extends Order> {
         }
         return lineStr;
     }
+
+
 
 }

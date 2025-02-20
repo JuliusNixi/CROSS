@@ -3,7 +3,7 @@ package CROSS.Utils;
 /**
  * 
  * Class to generate unique numbers.
- * Used to generate unique IDs for orders or users.
+ * Used to generate unique IDs for orders.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -41,6 +41,7 @@ public class UniqueNumber {
                 lastTime = Long.valueOf(currentTime);
                 lastNumber = Long.valueOf(0);
             }
+            
             this.number = lastTime + lastNumber;
 
         }
