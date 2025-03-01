@@ -5,4 +5,3 @@ So, e.g.:
 
 import CROSS.Utils.Separator;
 // Other code...
-

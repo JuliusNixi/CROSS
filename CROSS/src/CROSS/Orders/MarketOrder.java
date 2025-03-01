@@ -9,6 +9,7 @@ import CROSS.Users.User;
 /**
  * 
  * MarketOrder class represents a market order in the system.
+ * 
  * It extends the Order class.
  * 
  * @version 1.0
@@ -24,7 +25,8 @@ import CROSS.Users.User;
  * */
 public class MarketOrder extends Order {
 
-    // Used in the setUpdatedPrice method to get ask or bid price.
+    // Used in the setUpdatedPrice() below method to get best ask or best bid price.
+    // The type of the order, so if it's a buy or a sell order.
     private final PriceType type;
 
     /**
@@ -32,30 +34,29 @@ public class MarketOrder extends Order {
      * Constructor for the class.
      * 
      * ATTENTION: Here the logic is different from the LimitOrder.
-     * Is reversed because if it's a buy order it will HIT the sell orders on the book (red ones) and viceversa.
+     * Is reversed, because if it's a buy order it will HIT the sell orders on the book (red ones) and viceversa.
      * 
-     * @param market Market where the order is placed.
      * @param type Type of the order (ASK or BID).
      * @param quantity Quantity of the order.
      * @param user User that placed the order.
      * 
-     * @throws NullPointerException If the price type is null.
-     * @throws RuntimeException If the actual price of the market is invalid.
+     * @throws NullPointerException If any of the parameters are null.
+     * @throws RuntimeException If the market has a null actual price ask or bid and the order is an ask or bid respectively.
      * 
      */
     public MarketOrder(Market market, PriceType type, Quantity quantity, User user) throws NullPointerException, RuntimeException {
         
         // Null check.
         if (type == null) {
-            throw new NullPointerException("Price type of a market order cannot be null");
+            throw new NullPointerException("Price type of a market order cannot be null.");
         }
 
         this.type = type;
 
-        // Need a placeholder price to create the order by calling the super constructor.
+        // Need a placeholder price to call the super constructor.
         // It will be replaced by the actual price of the market below.
         SpecificPrice placeholderPrice = new SpecificPrice(1, type, market);
-        super(market, placeholderPrice, quantity, user);
+        super(placeholderPrice, quantity, user);
 
         // Set the price to the actual price of the market.
         this.setUpdatedPrice();
@@ -65,15 +66,18 @@ public class MarketOrder extends Order {
     // SETTERS
     /**
      * 
-     * Set the price of the order to the actual price of the market.
+     * Set the price of the order to the actual price of the market, ask or bid based on the type of the order.
      * Used to update the order's price to the actual price of the market.
      * 
-     * @throws RuntimeException If the actual price of the market is invalid.
+     * Synchronized to avoid concurrency threads issues.
+     * 
+     * @throws RuntimeException If the actual price (ask or bid) of the market is null.
      * 
      */
-    public void setUpdatedPrice() throws RuntimeException {
+    public synchronized void setUpdatedPrice() throws RuntimeException {
 
         // Set the price to the actual price of the market.
+        // So to the best ask or bid price based on the type of the order.
         SpecificPrice price;
         if (this.type == PriceType.ASK) {
             price = super.getMarket().getActualPriceAsk();
@@ -83,7 +87,7 @@ public class MarketOrder extends Order {
 
         // Check if the price is valid.
         if (price == null) {
-            throw new RuntimeException("Invalid actual price of the market to be used for a Market Order.");
+            throw new RuntimeException(String.format("Null actual (best) %s price of the market to be set on a market order.", this.type.name()));
         }
 
         // Exception handling not needed because the price is valid.

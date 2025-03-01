@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
  * 
  * Esempio di lettura non bloccante da terminale con la libreria JLine 3.
  * Utilizzata nel progetto CROSS, nella CLI del client per la gestione dell'input.
- * Risolve il problema di dover leggere l'input e contemporaneamente ricevere dati asincronamente da stampare.
+ * Risolve il problema di dover leggere l'input e contemporaneamente ricevere dati dal server asincronamente da stampare.
  * 
  */
 public class AsyncIOTestsMain {
@@ -50,7 +50,7 @@ public class AsyncIOTestsMain {
                     // Per riscrivere, se presente, il buffer, cioè i caratteri digitati dall'utente nel caso 2.
                     str += buffer.toString();
 
-                    // Effettuare la stampa in un'unica istruzione per evitare l'interleaving di stampe tra i thread.
+                    // Effettuare la stampa in un'unica istruzione per evitare l'interleaving di stampe tra i threads.
                     System.out.print(str);
 
                 }
@@ -120,6 +120,7 @@ public class AsyncIOTestsMain {
                 if (buffer.length() > 0 && buffer.toString().endsWith("\n")) {
                     // Fine riga, '\n' rilevato. Comando inserito dall'utente.
                     String line = buffer.toString();
+
                     // '\n' già presente nel buffer inserito dall'utente.
                     System.out.print("Riga letta: " + line);
 
@@ -139,10 +140,12 @@ public class AsyncIOTestsMain {
 
             }
 
-            System.out.println("Fine letture.");
+            System.out.println("Fine letture. Uscita...");
 
             // Ripristina gli attributi originali.
             terminal.setAttributes(originalAttributes);
+
+            System.exit(0);
 
         } catch (IOException ex) {
             System.err.println("Errore I/O durante il setting o l'uso del terminale: " + ex.getMessage());

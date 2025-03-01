@@ -17,7 +17,12 @@ public class Separator {
     private final String separator;
 
     // A separator could also be a sequence of characters, for that is a String.
+    // The characters used to create the separator.
     private final String characters;
+
+    // The length of the separator.
+    // How many times the sequence of characters is repeated.
+    private final Integer length;
     
     // CONSTRUCTORS
     /**
@@ -54,6 +59,7 @@ public class Separator {
 
         this.characters = characters;
         this.separator = sep;
+        this.length = length;
 
     }
     /**
@@ -76,7 +82,7 @@ public class Separator {
      * 
      * Returns the default length of the separator.
      * 
-     * @return The default length of the separator as an integer.
+     * @return The default length of the separator as an Integer.
      * 
      */
     public static Integer getDefaultLength() {
@@ -88,7 +94,7 @@ public class Separator {
      * 
      * Returns the characters of the separator.
      * 
-     * @return The characters of the separator as a string.
+     * @return The characters of the separator as a String.
      * 
      */
     public String getCharacters() {
@@ -100,13 +106,25 @@ public class Separator {
      * 
      * Returns the separator as a string.
      * 
-     * @return The separator as a string.
+     * @return The separator as a String.
      * 
      */
     public String getSeparator() {
 
         return String.format("%s", this.separator);
 
+    }
+    /**
+     * 
+     * Returns the length of the separator.
+     * 
+     * @return The length of the separator as an Integer.
+     * 
+     */
+    public Integer getLength() {
+
+        return Integer.valueOf(this.length);
+        
     }
 
     @Override
