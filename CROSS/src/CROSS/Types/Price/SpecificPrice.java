@@ -4,15 +4,15 @@ import CROSS.OrderBook.Market;
 
 /**
  * 
- * SpecificPrice is a class that extends GenericPrice and implements Comparable<SpecificPrice>.
+ * SpecificPrice is a class that extends GenericPrice and implements Comparable<>.
  * 
- * It is used to represent a price with a specific type (ask / bid) in a specific market.
+ * It is used to represent a price with a specific associated type (ask / bid) in a specific market.
  * A type is an enum that represents the type of the price in the PriceType enum format.
  * 
  * The implementation of the Comparable interface is used to compare two prices.
  * It's used to sort a list of prices and to use it in the OrderBook.
  * 
- * The price also has a market attribute that represents the market of the price.
+ * The price also has a market attribute that represents the market of the price, to avoid comparing prices from different markets. 
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -29,29 +29,29 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
     
     private final PriceType type;
 
-    // The market of the price.
+    // The market of the price, to avoid comparing prices from different markets.
     private final Market market;
 
     /**
      * 
      * Constructor of the class.
-     * It takes an integer value and an enum PriceType type.
      * 
-     * @param value The value of the price as an integer.
+     * @param value The value of the price as an Integer.
      * @param type The type of the price as an enum PriceType.
      * @param market The market of the price as a Market object.
      * 
      * @throws NullPointerException If the value or the type or the market are null.
+     * @throws IllegalArgumentException If the value is 0 or negative.
      * 
      */
-    public SpecificPrice(Integer value, PriceType type, Market market) throws NullPointerException {
+    public SpecificPrice(Integer value, PriceType type, Market market) throws NullPointerException, IllegalArgumentException {
 
         // Null checks.
         if (type == null) {
-            throw new NullPointerException("Type of a price cannot be null.");
+            throw new NullPointerException("Type of a specific price cannot be null.");
         }
         if (market == null)
-            throw new NullPointerException("Market of a price cannot be null.");
+            throw new NullPointerException("Market of a specific price cannot be null.");
 
         super(value);
 
@@ -85,7 +85,7 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
     // TO STRING METHODS
     @Override
     public String toString() {
-        return String.format("Type [%s] - Price [%s] - Market [%s]", this.getType().name(), super.toString(), market.toString());
+        return String.format("Type [%s] - Price Value [%s] - Market [%s]", this.getType().name(), super.toString(), market.toString());
     }
     /**
      * 
@@ -104,12 +104,12 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
      * A to string method for the price without the market.
      * Used to avoid infinite loops in the toString method of the Market class.
      * 
-     * @return A to string with the price but without the market.
+     * @return A string with the price but without the market.
      * 
      */
     public String toStringWithoutMarket() {
 
-        return String.format("Type [%s] - Price [%s]", this.getType().name(), super.toString());
+        return String.format("Type [%s] - Price Value [%s]", this.getType().name(), super.toString());
 
     }
 

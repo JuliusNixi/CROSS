@@ -5,6 +5,8 @@ package CROSS.Types;
 /**
  * 
  * Enum for the currency.
+ * Two currencies makes a pair.
+ * For example, BTC/USD.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -12,8 +14,9 @@ package CROSS.Types;
  */
 public enum Currency {
     // Some examples of currencies.
-    BTC, 
-    USD, 
-    ETH, 
+    BTC,
+    ETH,
+
+    USD,
     EUR
 }

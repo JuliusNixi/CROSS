@@ -3,7 +3,7 @@ package CROSS.Exceptions;
 /**
  * 
  * Exception for invalid user. 
- * It's throwed for example when adding a user that already exists in the database.
+ * It's throwed, for example, when adding an user that already exists in the users database.
  * 
  * @version 1.0
  * @author Giulio Nisi

@@ -4,7 +4,7 @@ package CROSS.Types.Price;
  * 
  * GenericPrice is a class that represents a generic price.
  * 
- * Generic price means without any type (ask or bid).
+ * Generic price means without any associated type (ask or bid).
  * It's used for example to rapresent the increment of the price in the Market class.
  * 
  * It's extended by SpecificPrice class that adds a price type (ask / bid).

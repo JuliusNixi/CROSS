@@ -9,7 +9,7 @@ import java.io.File;
  * 
  * This class provides some utility methods to handle files (the users database and the orders database).
  * 
- * It's an optimization to avoid rewriting all the files every time.
+ * It's basically an optimization to avoid rewriting all the files every time something needs to be appendend / updated.
  * 
  * Abstract because it's not intended to be instantiated, only for the static methods.
  * 
@@ -18,12 +18,15 @@ import java.io.File;
  * 
  * @see DBUsersInterface
  * 
+ * @see DBOrdersInterface
+ * 
  */
 public abstract class FileHandler {
     
-    // ALL THE FOLLOWING METHODS ARE DONE TO AVOID REWRITING ALL THE FILES (USERS DATABASE AND ORDERS DATABASE) EVERY TIME.
+    // ALL THE FOLLOWING METHODS ARE DONE TO AVOID REWRITING ALL THE FILES (USERS DATABASE AND ORDERS DATABASE) EVERY TIME SOMETHING NEEDS TO BE APPENDED / UPDATED.
     // IT COMPLICATES THE CODE BUT IT SHOULD IMPROVES PERFORMANCE IN CASE OF LARGE FILES PREVENTING INTENSIVE I/O OPERATIONS.
-    // THE EASIER ALTERNATIVE WOULD BE TO REWRITE ALL THE UPDATED JSONS ON THE DISK EVERY TIME.
+    // THE EASIER ALTERNATIVE WOULD BE TO REWRITE ALL THE UPDATED JSONS ON THE DISK EVERY TIME, BUT IT'S LESS PERFORMANT.
+    // THE BEST SOLUTION WOULD BE TO USE A DATABASE, BUT IT'S OUT OF THE SCOPE OF THIS PROJECT.
     /**
      * 
      * Remove the last line from a file.
@@ -50,6 +53,7 @@ public abstract class FileHandler {
 
             long length = raf.length();
 
+            // Reversed read.
             long pointer = length - 1;
             while (pointer >= 0) {
 
@@ -77,7 +81,7 @@ public abstract class FileHandler {
      * 
      * Edits a specific line in a file, overwriting it with spaces.
      * 
-     * The spaces must be the same length of the existing line content.
+     * The spaces must be the SAME LENGTH of the existing line content due to the file system limitations.
      * 
      * This method will be used to replace the line (containing an user to update) with spaces and then the updated user will be written at the end of the file.
      * 
@@ -175,7 +179,7 @@ public abstract class FileHandler {
      * 
      * Synchronized because it's intended to be used in a multi-threaded environment.
      * 
-     * @param file The file from which remove the last char.
+     * @param file The file from which remove the last character.
      * 
      * @return The previous character before the removed one. Used to check if an updated user is the last user in the file, in this case the ',' is not needed.
      * 

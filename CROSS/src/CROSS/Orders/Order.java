@@ -1,19 +1,20 @@
 package CROSS.Orders;
 
-import CROSS.OrderBook.Market;
 import CROSS.Types.Quantity;
+import CROSS.Types.Price.PriceType;
 import CROSS.Types.Price.SpecificPrice;
 import CROSS.Users.User;
 import CROSS.Utils.UniqueNumber;
+import CROSS.OrderBook.Market;
 
 /**
  * 
- * Abstract class for Order, an order without a type is not allowed.
+ * Abstract class for Order, an order without a type is not allowed and cannot be instantiated.
  * It's extended by StopMarketOrder, LimitOrder, MarketOrder.
  * 
- * It contains the price, the quantity, the market and the user of the order.
- * 
- * It also contains an id, which is a unique number.
+ * It contains the price and the quantity.
+ * It also contains the user who submitted the order.
+ * It also contains an id, which is a unique number that identifies the order.
  * 
  * It implements the Comparable interface to compare orders by id.
  * 
@@ -23,7 +24,6 @@ import CROSS.Utils.UniqueNumber;
  * @see SpecificPrice
  * @see Quantity
  * 
- * @see Market
  * @see User
  * 
  * @see MarketOrder
@@ -32,19 +32,25 @@ import CROSS.Utils.UniqueNumber;
  * 
  * @see UniqueNumber
  * 
+ * @see Market
+ * 
  */
 public abstract class Order implements Comparable<Order> {
 
+    // Each order has a price.
     private SpecificPrice price = null;
+
+    // Each order has a quantity.
     private Quantity quantity = null;
 
-    // Each order has an associated market.
-    private final Market market;
     // Each order has an associated user, its creator.
     private final User user;
 
-    // Integer because could be -1 in the API.
-    private Integer id = null;
+    // Integer and not Long because could be -1 in the API.
+    private Integer orderId = null;
+
+    // Timestamp of the order EXECUTION.
+    private Long timestamp = null;
 
     /**
      * 
@@ -52,21 +58,17 @@ public abstract class Order implements Comparable<Order> {
      * 
      * It also sets the id of the order to a unique number.
      * 
-     * @param market The market where the order is placed.
      * @param price The price of the order.
      * @param quantity The quantity of the order.
      * @param user The user who placed the order.
      * 
-     * @throws NullPointerException if market, price, quantity or user are null.
-     * @throws IllegalArgumentException If the price's market doesn't match with the given market.
+     * @throws NullPointerException If the price, quantity or user are null.
+     * @throws RuntimeException If the market has a null actual price ask or bid and the order is an ask or bid respectively.
      * 
      */
-    public Order(Market market, SpecificPrice price, Quantity quantity, User user) throws NullPointerException, IllegalArgumentException {
+    public Order(SpecificPrice price, Quantity quantity, User user) throws NullPointerException, RuntimeException {
        
         // Null checks.
-        if (market == null) {
-            throw new NullPointerException("Order's market cannot be null.");
-        }
         if (price == null) {
             throw new NullPointerException("Order's price cannot be null.");
         }
@@ -77,19 +79,23 @@ public abstract class Order implements Comparable<Order> {
             throw new NullPointerException("Order's user cannot be null.");
         }
 
-        // Market / Price Market check.
-        if (!price.getMarket().equals(market)) {
-            throw new IllegalArgumentException("The price's market doesn't match with the given market.");
-        }
-
         this.price = price;
         this.quantity = quantity;
-        this.market = market;
         this.user = user;
 
         Long id = new UniqueNumber().getNumber();
         // This conversion is not beautiful, but it's necessary, since the UniqueNumber class returns a Long.
-        this.id = id.intValue();
+        // I cannot use a Long for the id of the order, because the API could return -1.
+        this.orderId = id.intValue();
+
+        Market market = price.getMarket();
+        // Market with null actual prices check.
+        if (market.getActualPriceAsk() == null && this.price.getType() == PriceType.ASK) {
+            throw new RuntimeException("Cannot create an order in a market with a null actual price ask.");
+        }
+        if (market.getActualPriceBid() == null && this.price.getType() == PriceType.BID) {
+            throw new RuntimeException("Cannot create an order in a market with a null actual price bid.");
+        }
 
     }
 
@@ -102,7 +108,9 @@ public abstract class Order implements Comparable<Order> {
      * 
      */
     public SpecificPrice getPrice() {
-        return new SpecificPrice(this.price.getValue(), this.price.getType(), this.price.getMarket());
+
+        return new SpecificPrice(this.price.getValue(), this.price.getType(), Market.copyMarket(this.price.getMarket()));
+
     }
     /**
      * 
@@ -112,37 +120,61 @@ public abstract class Order implements Comparable<Order> {
      * 
      */
     public Quantity getQuantity() {
+
         return new Quantity(this.quantity.getValue());
+
     }
     /**
      * 
-     * Getter for a copy market.
+     * Getter for a COPY of the market.
      * 
-     * @return The market of the order as a Market object as a copy.
+     * @return The order's market as a Market object as a copy.
      * 
      */
     public Market getMarket() {
-        return Market.copyMarket(market);
+
+        return Market.copyMarket(this.price.getMarket());
+
     }
     /**
      * 
      * Getter for user.
      * 
-     * @return The user of the order as an User object.
+     * @return The user of the order, so its creator, as an User object.
      * 
      */
     public User getUser() {
-        return new User(this.user.getUsername(), this.user.getPassword());
+
+        User user = new User(this.user.getUsername(), this.user.getPassword());
+        if (this.user.getFileLineId() != null) {
+            user.setFileLineId(this.user.getFileLineId());
+        }
+        return user;
+
     }
     /**
      * 
      * Getter for the order's id.
      * 
-     * @return The id of the order as Integer.
+     * @return The id of the order as an Integer.
      * 
      */
     public Integer getId() {
-        return Integer.valueOf(this.id);
+
+        return Integer.valueOf(this.orderId);
+
+    }
+    /**
+     * 
+     * Getter for the order's timestamp.
+     * 
+     * @return The timestamp of the order as Long.
+     * 
+     */
+    public Long getTimestamp() {
+
+        return Long.valueOf(this.timestamp);
+
     }
 
     // SETTERS
@@ -150,9 +182,9 @@ public abstract class Order implements Comparable<Order> {
      * 
      * Sets the quantity of the order.
      * 
-     * Using this method during the market orders execution.
+     * Using this method during the market orders execution to update the quantity of the order.
      * 
-     * Synchronized because to avoid multi-threads problems.
+     * Synchronized to avoid multi-threads problems.
      * 
      * @param quantity The new quantity of the order.
      * 
@@ -175,24 +207,18 @@ public abstract class Order implements Comparable<Order> {
      * 
      * Used in the MarketOrder class to update the price of the order to the current market price.
      * 
-     * Synchronized because to avoid multi-threads problems.
+     * Synchronized to avoid multi-threads problems.
      * 
      * @param price The new price of the order.
      * 
      * @throws NullPointerException If the new price of the order is null.
-     * @throws IllegalArgumentException If the price's market doesn't match with the given market.
      * 
      * */
-    public synchronized void setPrice(SpecificPrice price) throws NullPointerException, IllegalArgumentException {
+    public synchronized void setPrice(SpecificPrice price) throws NullPointerException {
         
         // Null check.
         if (price == null) {
             throw new NullPointerException("Price to set on an order cannot be null.");
-        }
-
-        // Market / Price Market check.
-        if (!price.getMarket().equals(market)) {
-            throw new IllegalArgumentException("The price's market doesn't match with the given market.");
         }
 
         this.price = price;
@@ -202,53 +228,88 @@ public abstract class Order implements Comparable<Order> {
      * 
      * Sets the id of the order.
      * 
-     * NB: The id is normally set in the constructor automatically to an unique number.
+     * NB: The id is normally set in the constructor automatically to a new unique number.
      * This method is used in the OrderBook class to set the id of a market order to the corresponding stop order.
      * 
-     * Synchronized because to avoid multi-threads problems.
+     * Synchronized to avoid multi-threads problems.
      * 
-     * @param id The new id of the order.
+     * @param id The new id of the order as an Integer.
      * 
      * @throws NullPointerException If the order's id is null.
-     * @throws IllegalArgumentException If the order's id is negative.
      * 
      */
-    public synchronized void setId(Integer id) throws NullPointerException, IllegalArgumentException {
+    public synchronized void setId(Integer id) throws NullPointerException {
         
         // Null check.
         if (id == null) {
             throw new NullPointerException("ID to set on an order cannot be null.");
         }
 
-        // Negative check.
-        if (id < 0) {
-            throw new IllegalArgumentException("ID to set on an order cannot be negative.");
+        this.orderId = id;
+
+    }
+    /**
+     * 
+     * Sets the timestamp of the order.
+     * 
+     * NB: The timestamp is normally set on the order execution.
+     * 
+     * Synchronized to avoid multi-threads problems.
+     * 
+     * @param timestamp The new timestamp of the order as Long.
+     * 
+     * @throws NullPointerException If the order's timestamp is null.
+     * 
+     */
+    public synchronized void setTimestamp(Long timestamp) throws NullPointerException {
+        
+        // Null check.
+        if (timestamp == null) {
+            throw new NullPointerException("Timestamp to set on an order cannot be null.");
         }
 
-        this.id = id;
+        this.timestamp = timestamp;
 
     }
 
     // TOSTRING METHODS
     @Override
     public String toString() {
-        return String.format("Type [%s] - ID [%s] - User [%s] - Price [%s] - Quantity [%s] - Market [%s]", this.getClass().getSimpleName(), this.getId().toString(), this.getUser().toString(), this.getPrice().toString(), this.getQuantity().toString(), this.market.toString());
+
+        String timestamp = this.timestamp == null ? "null" : this.timestamp.toString();
+
+        return String.format("Order's Type [%s] - ID [%s] - User [%s] - Price [%s] - Quantity [%s] - Market [%s] - Timestamp [%s]", this.getClass().getSimpleName(), this.getId().toString(), this.getUser().toString(), this.getPrice().toString(), this.getQuantity().toString(), this.price.getMarket().toString(), timestamp);
+
     }
     /**
      * 
-     * Short version of the toString method.
+     * Short version of the toString() method.
      * Used for the OrderBookLine class.
      * 
-     * @return A string with the order's id and the order's quantity.
+     * @return A String with the order's id and the order's quantity only.
      * 
      */
     public String toStringShort() {
+
         return String.format("ID [%s] - Quantity [%s]", this.getId().toString(), this.getQuantity().toString());
+
     }
 
     @Override
-    public int compareTo(Order o) {
-        return this.getId().compareTo(o.getId());
+    public int compareTo(Order otherOrder) throws NullPointerException, IllegalArgumentException {
+
+        // Null check.
+        if (otherOrder == null) {
+            throw new NullPointerException("Order to compare to cannot be null.");
+        }
+
+        // Different markets check.
+        if (otherOrder.getMarket().compareTo(this.getMarket()) != 0) {
+            throw new IllegalArgumentException("Cannot compare orders from different markets.");
+        }
+
+        return this.getId().compareTo(otherOrder.getId());
+
     }
 
 }

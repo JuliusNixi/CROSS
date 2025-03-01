@@ -215,7 +215,7 @@ public abstract class ClientActionsUtils {
      * @throws IllegalArgumentException If the string price type is invalid.
      * 
      */
-    public static PriceType priceTypeFromString(String priceType) throws NullPointerException, IllegalArgumentException {
+    public static PriceType getPriceTypeFromString(String priceType) throws NullPointerException, IllegalArgumentException {
         
         // Null check.
         if (priceType == null){

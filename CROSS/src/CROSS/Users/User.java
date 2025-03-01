@@ -17,8 +17,8 @@ public class User implements Comparable<User> {
     private final String password;
 
     // Each user has a file line id, it's used to update the user in the database file without rewriting the whole file.
-    // It indicates the line of the file where the user is stored.
-    // This database file line when an user is updated is overwritten (using the file line id) with blank spaces and then the updated (new) user is appended at the end of the file.
+    // It indicates the line of the users database file where the user is stored.
+    // This users database file line when an user is updated is overwritten (using the file line id) with blank spaces and then the updated (new) user is appended at the end of the users database file.
     private Long fileLineId = null;
 
     /**
@@ -48,7 +48,7 @@ public class User implements Comparable<User> {
 
         // Check if the username and the password are valid.
         if (username.isBlank() || password.isBlank()) {
-            throw new IllegalArgumentException("Username or password in user creation are empty.");
+            throw new IllegalArgumentException("Username or password in user creation cannot be empty.");
         }
         if (username.length() > 40 || password.length() > 40) {
             throw new IllegalArgumentException("Username or password in user creation are too long.");
@@ -93,23 +93,27 @@ public class User implements Comparable<User> {
     /**
      * 
      * This method returns the file line id of the User.
-     * The file line id is used to update the User in the database file without rewriting the whole file.
+     * The file line id is used to update the User in the users database file without rewriting the whole file.
      * 
      * @return The file line id of the User as a Long or null if it's not set.
      * 
      */
     public Long getFileLineId() {
+
+        // Null check.
         if (this.fileLineId == null) {
             return null;
         }
+
         return Long.valueOf(this.fileLineId);
+
     }
 
     // SETTERS
     /**
      * 
      * This method sets the file line id of the User.
-     * The file line id is used to update the User in the database file without rewriting the whole file.
+     * The file line id is used to update the User in the users database file without rewriting the whole file.
      * 
      * Synchronized to avoid multiple threads to set the file line id at the same time.
      * 
