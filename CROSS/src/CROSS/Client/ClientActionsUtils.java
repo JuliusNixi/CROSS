@@ -540,16 +540,16 @@ public abstract class ClientActionsUtils {
                 break;
 
             case INSERT_LIMIT_ORDER:
-                ClientActionsUtils.priceTypeFromString(args.get(0));
+                ClientActionsUtils.getPriceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
                 ClientActionsUtils.getPriceFromString(args.get(2));
                 break;
             case INSERT_MARKET_ORDER:
-                ClientActionsUtils.priceTypeFromString(args.get(0));
+                ClientActionsUtils.getPriceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
                 break;
             case INSERT_STOP_ORDER:
-                ClientActionsUtils.priceTypeFromString(args.get(0));
+                ClientActionsUtils.getPriceTypeFromString(args.get(0));
                 ClientActionsUtils.getSizeFromString(args.get(1));
                 ClientActionsUtils.getPriceFromString(args.get(2));
                 break;

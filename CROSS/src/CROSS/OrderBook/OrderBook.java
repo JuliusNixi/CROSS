@@ -99,7 +99,7 @@ public class OrderBook extends Market {
      * @throws IllegalArgumentException If the initialOrder market not match with order book market. If the price value of the initialOrder not match with the line price value. If the price type of the initialOrder not match with the line price type. If the price market of the initialOrder not match with the line price market. If the line with the specified price already exists in the book. If the order type is not supported.
      * @throws NullPointerException If the initialOrder or the linePrice are null.
      */
-    private <O extends Order> void addLine(SpecificPrice linePrice, O initialOrder) throws IllegalArgumentException, NullPointerException {
+    private <GenericOrder extends Order> void addLine(SpecificPrice linePrice, GenericOrder initialOrder) throws IllegalArgumentException, NullPointerException {
         if (initialOrder == null) {
             throw new NullPointerException("Initial order cannot be null.");
         }
@@ -123,12 +123,14 @@ public class OrderBook extends Market {
         if (initialOrder instanceof LimitOrder) {
             if (this.limitBook.containsKey(initialOrder.getPrice()))
                 throw new IllegalArgumentException("Line with this price already exists in the limit book.");
-            OrderBookLine<LimitOrder> line = new OrderBookLine<LimitOrder>(linePrice, initialOrder);
+            LimitOrder order = (LimitOrder) initialOrder;
+            OrderBookLine<LimitOrder> line = new OrderBookLine<LimitOrder>(linePrice, order);
             this.limitBook.put(linePrice, line);
         } else if (initialOrder instanceof StopMarketOrder) {
             if (this.stopBook.containsKey(initialOrder.getPrice()))
                 throw new IllegalArgumentException("Line with this price already exists in the stop book.");
-            OrderBookLine<StopMarketOrder> line = new OrderBookLine<StopMarketOrder>(linePrice, initialOrder);
+            StopMarketOrder order = (StopMarketOrder) initialOrder;
+            OrderBookLine<StopMarketOrder> line = new OrderBookLine<StopMarketOrder>(linePrice, order);
             this.stopBook.put(linePrice, line);
         } else {
             throw new IllegalArgumentException("Initial order type not supported.");
@@ -452,7 +454,7 @@ public class OrderBook extends Market {
                 executed = this.executeOrder(order);
 
                 if (executed) {
-                    StopMarketOrder stop =  new StopMarketOrder(order.getMarket(), order.getPrice(), order.getQuantity(), order.getUser());
+                    StopMarketOrder stop =  new StopMarketOrder(order.getPrice(), order.getQuantity(), order.getUser());
                     stop.setId(order.getId());
                     if (executedOrders.containsKey(order.getUser())) {
                         executedOrders.get(order.getUser()).add(stop);
@@ -462,7 +464,7 @@ public class OrderBook extends Market {
                         executedOrders.put(order.getUser(), orders);
                     }
                     for (User u : executedOrders.keySet()) {
-                        u.notifyTrades(executedOrders.get(u));
+                        // u.notifyTrades(executedOrders.get(u));
                     }
                 }
             }
@@ -488,7 +490,7 @@ public class OrderBook extends Market {
 
                 executed = this.executeOrder(order);
                 if (executed) {
-                    StopMarketOrder stop =  new StopMarketOrder(order.getMarket(), order.getPrice(), order.getQuantity(), order.getUser());
+                    StopMarketOrder stop =  new StopMarketOrder(order.getPrice(), order.getQuantity(), order.getUser());
                     stop.setId(order.getId());
                     if (executedOrders.containsKey(order.getUser())) {
                         executedOrders.get(order.getUser()).add(stop);
@@ -498,9 +500,10 @@ public class OrderBook extends Market {
                         executedOrders.put(order.getUser(), orders);
                     }
                     for (User u : executedOrders.keySet()) {
-                        u.notifyTrades(executedOrders.get(u));
+                        // u.notifyTrades(executedOrders.get(u));
                     }
-                }            }
+                }            
+            }
 
             if (lineAsk == null && lineBid == null) 
                 break;
@@ -545,16 +548,16 @@ public class OrderBook extends Market {
                 if (line.getLinePrice().getType() == PriceType.ASK) {
                     continue;
                 }
-                totalQuantity =  new Quantity(totalQuantity.getQuantity() + line.getTotalQuantity().getQuantity());
+                totalQuantity =  new Quantity(totalQuantity.getValue() + line.getTotalQuantity().getValue());
             }else if (order.getPrice().getType() == PriceType.ASK) {
                 // We can exit before the last line, at the first bid line.
                 if (line.getLinePrice().getType() == PriceType.BID) {
                     break;
                 }
-                totalQuantity =  new Quantity(totalQuantity.getQuantity() + line.getTotalQuantity().getQuantity());
+                totalQuantity =  new Quantity(totalQuantity.getValue() + line.getTotalQuantity().getValue());
             }
 
-            if (totalQuantity.getQuantity() >= order.getQuantity().getQuantity()) {
+            if (totalQuantity.getValue() >= order.getQuantity().getValue()) {
                 satisfiable = true;
                 break;
             }
@@ -586,7 +589,7 @@ public class OrderBook extends Market {
                     this.updateActualPricesRemove(bestPrice);
                 } 
 
-                if (order.getQuantity().getQuantity() == 0) {
+                if (order.getQuantity().getValue() == 0) {
                     // The order is fully executed.
                     break;
                 }
