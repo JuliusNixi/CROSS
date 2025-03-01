@@ -423,7 +423,7 @@ public abstract class Tests {
             System.out.println("Test passed, blocked order creation without best market prices.");
         }
 
-        market.setActualPrices(new GenericPrice(askPrice.getValue()), new GenericPrice(bidPrice.getValue()));
+        market.setActualPrices(askPrice, bidPrice);
 
         // Invalid limit order price.
         SpecificPrice badAskPrice = new SpecificPrice(bidPrice.getValue() + 1, PriceType.ASK, market);

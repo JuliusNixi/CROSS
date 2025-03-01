@@ -378,23 +378,23 @@ public class OrderBookLine<GenericOrder extends Order> {
 
         Quantity updatedQuantity;
         Boolean toAppend = false;
-        if (currentMatchedOrder.getQuantity().getQuantity() > order.getQuantity().getQuantity()) {
+        if (currentMatchedOrder.getQuantity().getValue() > order.getQuantity().getValue()) {
             // The LIMIT order is partially filled, the MARKET order is fully filled.
             // Updating limit.
-            updatedQuantity = new Quantity(currentMatchedOrder.getQuantity().getQuantity() - order.getQuantity().getQuantity());
+            updatedQuantity = new Quantity(currentMatchedOrder.getQuantity().getValue() - order.getQuantity().getValue());
             currentMatchedOrder.setQuantity(updatedQuantity);
             // To append after the extraction of the current order.
             toAppend = true;
 
             // Updating market.
             order.setQuantity(new Quantity(0));
-        }else if (currentMatchedOrder.getQuantity().getQuantity() < order.getQuantity().getQuantity()) {
+        }else if (currentMatchedOrder.getQuantity().getValue() < order.getQuantity().getValue()) {
             // The LIMIT order is fully filled, the MARKET order is partially filled.
             // Updating limit.
             currentMatchedOrder.setQuantity(new Quantity(0));
 
             // Updating market.
-            updatedQuantity = new Quantity(order.getQuantity().getQuantity() - currentMatchedOrder.getQuantity().getQuantity());
+            updatedQuantity = new Quantity(order.getQuantity().getValue() - currentMatchedOrder.getQuantity().getValue());
             order.setQuantity(updatedQuantity);
         }else {
             // The LIMIT order is fully filled, the MARKET order is fully filled.
@@ -500,7 +500,7 @@ public class OrderBookLine<GenericOrder extends Order> {
      * @return The total quantity (sum of all quantity of each order) of orders on this line.
      */
     public Quantity getTotalQuantity() {
-        return new Quantity(this.totalQuantity.getQuantity());
+        return new Quantity(this.totalQuantity.getValue());
     }
     /**
      * Getter for the line's price.
@@ -515,7 +515,7 @@ public class OrderBookLine<GenericOrder extends Order> {
     // TOSTRING METHODS
     @Override
     public String toString() {
-        return String.format("Price [%s] - Line Size [%s] - Total [%d]\n", this.getLinePrice().toString(), this.getTotalQuantity().toString(), this.getTotalQuantity().getQuantity() * this.getLinePrice().getValue());
+        return String.format("Price [%s] - Line Size [%s] - Total [%d]\n", this.getLinePrice().toString(), this.getTotalQuantity().toString(), this.getTotalQuantity().getValue() * this.getLinePrice().getValue());
     }
     /**
      * A to string method with all the orders contained in the line list.
@@ -526,7 +526,7 @@ public class OrderBookLine<GenericOrder extends Order> {
     public String toStringWithOrders() {
         String lineStr = this.toString();
         lineStr += "\tOrders: -> ";
-        for (O order : orders) {
+        for (GenericOrder order : orders) {
             lineStr += "\t" + order.toStringShort() + "\n";
         }
         return lineStr;

@@ -9,8 +9,8 @@ import CROSS.Types.Price.SpecificPrice;
  * 
  * This class represents a market in the system. 
  * 
- * A market is defined by the primary and secondary currency, the actual ask and bid prices and the increment of the price between two consecutive prices.
- * The actual ask and bid prices are the prices at which the market is currently trading, so they are the best ask and the best bid prices.
+ * A market is defined by its primary and secondary currencies, the actuals ask and bid prices and the increment of the price between two consecutive prices.
+ * The actuals ask and bid prices are the prices at which the market is currently trading, so they are the best ask and the best bid prices.
  * 
  * The market is used to create orders to trade currencies using the order book of the market.
  * 
@@ -42,7 +42,7 @@ public class Market implements Comparable<Market> {
     private final Currency primary_currency;
     private final Currency secondary_currency;
 
-    // The actual (best) ask and bid prices of the market.
+    // The actuals (best) ask and bid prices of the market.
     // GENERIC PRICES AND NOT SPECIFIC ONES TO AVOID RECURSION PROBLEM IN TO STRING JSON ORDERS CONVERSION:
     // ORDER HAS ITS SPECIFICPRICE, THIS SPECIFICPRICE HAS ITS MARKET, BUT THIS MARKET HAS AS SPECIFICPRICES ITS BEST PRICES, AND THE SPECIFICPRICES BEST PRICES HAVE AS A MARKET THE PREVIOUS, ...
     // ORDER SPECIFICPRICE -> MARKET OF THE PRICE -> BEST PRICES OF THE MARKET -> MARKET OF THE PRICE -> ...
@@ -60,9 +60,9 @@ public class Market implements Comparable<Market> {
      * 
      * Constructor of the class.
      * 
-     * Creates a new market with the given primary and secondary currencies, the actual (best) ask and bid prices and the increment of the price between two consecutive prices.
+     * Creates a new market with the given primary and secondary currencies, the actual ask and bid prices and the increment of the price between two consecutive prices.
      * 
-     * The actual ask and bid prices are the prices at which the market is currently trading and COULD be null.
+     * The actual ask and bid prices are the prices at which the market is currently trading.
      * 
      * @param primary_currency The primary currency of the market.
      * @param secondary_currency The secondary currency of the market.
@@ -71,7 +71,7 @@ public class Market implements Comparable<Market> {
      * @param increment The increment of the price between two consecutive prices.
      * 
      * @throws IllegalArgumentException If the primary and secondary currencies are the same, if the actual ask price is higher than the actual bid price.
-     * @throws NullPointerException If the primary currency, secondary currency or increment are null.
+     * @throws NullPointerException If the primary currency, secondary currency, actual prices or increment are null.
      * 
      */
     public Market(Currency primary_currency, Currency secondary_currency, GenericPrice actualPriceAsk, GenericPrice actualPriceBid, GenericPrice increment) throws IllegalArgumentException, NullPointerException {
@@ -83,21 +83,21 @@ public class Market implements Comparable<Market> {
             throw new NullPointerException("The secondary currency of a market cannot be null.");
         if (increment == null)
             throw new NullPointerException("The price increment of a market cannot be null.");
+        if (actualPriceAsk == null || actualPriceBid == null)
+            throw new NullPointerException("The actual prices of a market cannot be null.");
 
         // The primary and secondary currencies of a market cannot be the same.
         if (primary_currency == secondary_currency)
             throw new IllegalArgumentException("The primary and secondary currencies of a market cannot be the same.");
 
         // The actual ask price must be lower than the actual bid price.
-        if (actualPriceAsk != null && actualPriceBid != null && actualPriceAsk.getValue() >= actualPriceBid.getValue())
-            throw new IllegalArgumentException("The actual price ask must be lower than the actual price bid.");
+        if (actualPriceAsk.getValue() > actualPriceBid.getValue())
+            throw new IllegalArgumentException("The actual price ask must be lower or equal than the actual price bid.");
 
         this.primary_currency = primary_currency;
         this.secondary_currency = secondary_currency;
 
         // This price is intended to be the actual price of the market.
-        // It could be null, because otherwise there's a recursive problem:
-        // Market need price to be created, but price need market to be created.
         this.actualPriceAsk = actualPriceAsk;
         this.actualPriceBid = actualPriceBid;
 
@@ -128,34 +128,26 @@ public class Market implements Comparable<Market> {
     }
     /**
      * 
-     * Returns the actual ask price of the market.
+     * Returns the actual (best) ask price of the market.
      * 
-     * @return The actual ask price of the market as a SpecificPrice object or null if not set.
+     * @return The actual ask price of the market as a SpecificPrice object.
      * 
      */
     public SpecificPrice getActualPriceAsk() {
-
-        // Null check.
-        if (this.actualPriceAsk == null)
-            return null;
 
         return new SpecificPrice(this.actualPriceAsk.getValue(), PriceType.ASK, Market.copyMarket(this));
 
     }
     /**
      * 
-     * Returns the actual bid price of the market.
+     * Returns the actual (best) bid price of the market.
      * 
-     * @return The actual bid price of the market as a SpecificPrice object or null if not set.
+     * @return The actual bid price of the market as a SpecificPrice object.
      * 
      */
     public SpecificPrice getActualPriceBid() {
 
-        // Null check.
-        if (this.actualPriceBid == null)
-            return null;
-            
-            return new SpecificPrice(this.actualPriceAsk.getValue(), PriceType.BID, Market.copyMarket(this));
+        return new SpecificPrice(this.actualPriceBid.getValue(), PriceType.BID, Market.copyMarket(this));
 
     }
     /**
@@ -192,77 +184,43 @@ public class Market implements Comparable<Market> {
     // SETTERS
     /**
      * 
-     * Sets the actual (best) ask and bid prices of the market.
+     * Sets the actuals (best) ask and bid prices of the market.
      * 
-     * Synchronized method to avoid multiple threads to set the actual prices at the same time.
+     * Synchronized method to avoid multiple threads to set the actuals prices at the same time.
      * 
      * @param actualPriceAsk The new actual (best) ask price of the market.
      * @param actualPriceBid The new actual (best) bid price of the market.
      * 
-     * @throws IllegalArgumentException If the given price is not an ask price, if the actual price bid is not null and the new actual price ask is higher than the actual price bid. If the given price is not a bid price, if the actual price ask is not null and the new actual price bid is lower than the actual price ask. If the price's market doesn't match with the market.
-     * @throws NullPointerException If the given prices are BOTH null.
+     * @throws NullPointerException If the given prices are, at least one, null.
+     * @throws IllegalArgumentException If the given price is not an ask price. If the given price is not a bid price.
      * 
      */
-    public synchronized void setActualPrices(GenericPrice actualPriceAsk, GenericPrice actualPriceBid) throws NullPointerException, IllegalArgumentException {
+    public synchronized void setActualPrices(SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid) throws NullPointerException, IllegalArgumentException {
         
         // Null check.
-        if (actualPriceAsk == null && actualPriceBid == null)
-            throw new NullPointerException("The actual prices of a market to set cannot be null both at the same time.");
-        
-        if (actualPriceAsk != null)
-            this.setActualPriceAsk(actualPriceAsk);
-        if (actualPriceBid != null)
-            this.setActualPriceBid(actualPriceBid);
+        if (actualPriceAsk == null || actualPriceBid == null)
+            throw new NullPointerException("The actual prices of a market to set cannot be null.");
 
-    }
-    /**
-     * 
-     * Sets the actual (best) ask price of the market.
-     * 
-     * Synchronized method to avoid multiple threads to set the actual ask price at the same time.
-     * 
-     * @param actualPriceAsk The new actual (best) ask price of the market.
-     * 
-     * @throws IllegalArgumentException If the given price is not an ask price, if the actual price bid is not null and the new actual price ask is higher than the actual price bid. If the price's market doesn't match with the market.
-     * @throws NullPointerException If the given new best ask price is null.
-     * 
-     */
-    public synchronized void setActualPriceAsk(GenericPrice actualPriceAsk) throws IllegalArgumentException, NullPointerException {
+        // The actual price ask must be an ask price.
+        if (actualPriceAsk.getType() != PriceType.ASK)
+            throw new IllegalArgumentException("The actual price ask to set must be an ask price.");
+        // The actual price bid must be a bid price.
+        if (actualPriceBid.getType() != PriceType.BID)
+            throw new IllegalArgumentException("The actual price bid to set must be a bid price.");
         
-        // Null check.
-        if (actualPriceAsk == null)
-            throw new NullPointerException("The actual ask price of a market to set cannot be null.");
-
         // The actual ask price must be lower than the actual bid price.
-        if (this.actualPriceBid != null && actualPriceAsk.getValue() >= this.actualPriceBid.getValue())
+        if (actualPriceAsk.getValue() > this.actualPriceBid.getValue())
             throw new IllegalArgumentException("The actual price ask to set must be lower than the actual price bid.");
 
-        this.actualPriceAsk = actualPriceAsk;
+        // Prices' market / this market check.
+        if (!actualPriceAsk.getMarket().equals(this) || !actualPriceBid.getMarket().equals(this))
+            throw new IllegalArgumentException("The market of the prices to set must match with the market.");
 
-    }
-    /**
-     * 
-     * Sets the actual (best) bid price of the market.
-     * 
-     * Synchronized method to avoid multiple threads to set the actual bid price at the same time.
-     * 
-     * @param actualPriceBid The new actual (best) bid price of the market.
-     * 
-     * @throws IllegalArgumentException If the given price is not a bid price, if the actual price ask is not null and the new actual price bid is lower than the actual price ask. If the price's market doesn't match with the market.
-     * @throws NullPointerException If the given new best bid price is null.
-     * 
-     */
-    public synchronized void setActualPriceBid(GenericPrice actualPriceBid) throws IllegalArgumentException, NullPointerException {
-        
-        // Null check.
-        if (actualPriceBid == null)
-            throw new NullPointerException("The actual bid price of a market to set cannot be null.");
+        GenericPrice genericActualPriceAsk = new GenericPrice(actualPriceAsk.getValue());
+        GenericPrice genericActualPriceBid = new GenericPrice(actualPriceBid.getValue());
 
-        // The actual bid price must be higher than the actual ask price.
-        if (this.actualPriceAsk != null && actualPriceBid.getValue() <= this.actualPriceAsk.getValue())
-            throw new IllegalArgumentException("The actual price bid to set must be higher than the actual price ask.");
-
-        this.actualPriceBid = actualPriceBid;
+        this.actualPriceAsk = genericActualPriceAsk;
+        this.actualPriceBid = genericActualPriceBid;
 
     }
     /**
@@ -319,7 +277,7 @@ public class Market implements Comparable<Market> {
      * 
      * @param market The market to copy.
      * 
-     * @return A new market object with the same primary and secondary currencies, the actual ask and bid prices and the increment of the price between two consecutive prices.
+     * @return A new market object with the same primary and secondary currencies, the actuals ask and bid prices and the increment of the price between two consecutive prices.
      * 
      * @throws NullPointerException If the given market to copy is null.
      * 
