@@ -464,6 +464,8 @@ public class OrderBook extends Market {
                         executedOrders.put(order.getUser(), orders);
                     }
                     for (User u : executedOrders.keySet()) {
+                        // CAMBIARE
+                        if (u != null) return;
                         // u.notifyTrades(executedOrders.get(u));
                     }
                 }
@@ -501,6 +503,8 @@ public class OrderBook extends Market {
                     }
                     for (User u : executedOrders.keySet()) {
                         // u.notifyTrades(executedOrders.get(u));
+                        // CAMBIARE
+                        if (u != null) return;
                     }
                 }            
             }
@@ -568,7 +572,8 @@ public class OrderBook extends Market {
             while (true) {
 
                 // Updating order's price with the actual price of the market since the order is a market order.
-                order.setUpdatedPrice();
+                Market market = order.getMarket();
+                order.setUpdatedPrice(market);
 
                 // Getting the best price.
                 SpecificPrice bestPrice = order.getPrice();
