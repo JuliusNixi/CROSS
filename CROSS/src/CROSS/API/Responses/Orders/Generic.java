@@ -49,7 +49,9 @@ public class Generic {
      * 
      */
     public Integer getOrderId() {
-        return Integer.valueOf(this.orderId);
+
+        return this.orderId;
+
     }
 
 }

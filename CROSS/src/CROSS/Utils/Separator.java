@@ -29,6 +29,8 @@ public class Separator {
      * 
      * Constructor with two parameters.
      * 
+     * Synchonized on characters to avoid changing the string while using it to create the separator.
+     * 
      * @param characters The sequence of characters to be repeated.
      * @param length The number of times the sequence of characters is repeated.
      * 
@@ -46,20 +48,25 @@ public class Separator {
             throw new NullPointerException("Length used in the separator cannot be null.");
         }
 
-        // Length check.
-        if (length <= 0) {
-            throw new IllegalArgumentException("Length used in the separator must be greater than 0.");
-        }
+        // Integer discourages synchronization.
+        synchronized (characters) {
 
-        // Create the separator.
-        String sep = "";
-        for (int i = 0; i < length; i++) {
-            sep += characters;
-        }
+            // Length check.
+            if (length <= 0) {
+                throw new IllegalArgumentException("Length used in the separator must be greater than 0.");
+            }
 
-        this.characters = characters;
-        this.separator = sep;
-        this.length = length;
+            // Create the separator.
+            String sep = "";
+            for (int i = 0; i < length; i++) {
+                sep += characters;
+            }
+
+            this.characters = characters;
+            this.separator = sep;
+            this.length = length;
+
+        }
 
     }
     /**
@@ -73,7 +80,7 @@ public class Separator {
      */
     public Separator(String characters) throws NullPointerException {
 
-        this(characters, DEFAULT_LENGTH);
+        this(characters, Separator.DEFAULT_LENGTH);
 
     }
 
@@ -87,7 +94,7 @@ public class Separator {
      */
     public static Integer getDefaultLength() {
 
-        return Integer.valueOf(DEFAULT_LENGTH);
+        return DEFAULT_LENGTH;
 
     }
     /**
@@ -99,7 +106,7 @@ public class Separator {
      */
     public String getCharacters() {
 
-        return String.format("%s", this.characters);
+        return this.characters;
 
     }
     /**
@@ -111,7 +118,7 @@ public class Separator {
      */
     public String getSeparator() {
 
-        return String.format("%s", this.separator);
+        return this.separator;
 
     }
     /**
@@ -123,13 +130,15 @@ public class Separator {
      */
     public Integer getLength() {
 
-        return Integer.valueOf(this.length);
+        return this.length;
         
     }
 
     @Override
     public String toString() {
+
         return this.getSeparator();
+        
     }
 
 }

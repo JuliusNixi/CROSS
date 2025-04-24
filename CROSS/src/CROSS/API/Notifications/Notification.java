@@ -22,15 +22,18 @@ import CROSS.Utils.Separator;
 public class Notification extends JSON {
     
     // The string field as described in the assignment.
-    private final static String notification = "closedTrades";
+    private final static String NOTIFICATION_FIELD = "closedTrades";
     // Simple array of trades to be notified to avoid problems with JSON serialization.
     private Trade[] trades;
 
     /**
+     * 
      * Constructor for the class.
+     * 
      */
     public Notification() {
 
+        // Initializing the trades array to an empty array.
         this.trades = new Trade[0];
 
     }
@@ -58,7 +61,7 @@ public class Notification extends JSON {
         }
 
         // Appending the new trade to the end of the new array.
-        newTrades[trades.length] = trade;
+        newTrades[newTrades.length - 1] = trade;
 
         // Setting the new array as the trades array.
         this.trades = newTrades;
@@ -73,7 +76,9 @@ public class Notification extends JSON {
      * 
      */
     public String getNotificationField() {
-        return notification;
+
+        return NOTIFICATION_FIELD;
+
     }
 
     @Override

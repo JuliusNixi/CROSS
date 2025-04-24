@@ -10,6 +10,8 @@ package CROSS.Exceptions;
  * 
  * @see Exception
  * 
+ * @see CROSS.Users.Users
+ * 
  */
 public class InvalidUser extends Exception {
 

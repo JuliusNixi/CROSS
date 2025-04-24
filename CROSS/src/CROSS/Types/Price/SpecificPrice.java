@@ -4,7 +4,7 @@ import CROSS.OrderBook.Market;
 
 /**
  * 
- * SpecificPrice is a class that extends GenericPrice and implements Comparable<>.
+ * SpecificPrice is a class that extends GenericPrice and implements Comparable.
  * 
  * It is used to represent a price with a specific associated type (ask / bid) in a specific market.
  * A type is an enum that represents the type of the price in the PriceType enum format.
@@ -27,6 +27,7 @@ import CROSS.OrderBook.Market;
  */
 public class SpecificPrice extends GenericPrice implements Comparable<SpecificPrice> {
     
+    // ASK / BID
     private final PriceType type;
 
     // The market of the price, to avoid comparing prices from different markets.
@@ -46,14 +47,14 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
      */
     public SpecificPrice(Integer value, PriceType type, Market market) throws NullPointerException, IllegalArgumentException {
 
+        super(value);
+
         // Null checks.
         if (type == null) {
             throw new NullPointerException("Type of a specific price cannot be null.");
         }
         if (market == null)
             throw new NullPointerException("Market of a specific price cannot be null.");
-
-        super(value);
 
         this.type = type;
         this.market = market;
@@ -69,23 +70,30 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
      * 
      */
     public PriceType getType() {
+
         return this.type;
+
     }
     /**
      * 
-     * Getter of the market attribute as a copy of the market.
+     * Getter of the market attribute.
      * 
      * @return The market of the price as a Market object.
      * 
      */
     public Market getMarket() {
-        return Market.copyMarket(this.market);
+
+        return this.market;
+
     }
 
     // TO STRING METHODS
     @Override
     public String toString() {
+
+        // The market is a copy, no synchronization needed.
         return String.format("Type [%s] - Price Value [%s] - Market [%s]", this.getType().name(), super.toString(), market.toString());
+
     }
     /**
      * 
@@ -96,6 +104,7 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
      */
     public String toStringShort() {
 
+        // The market is a copy, no synchronization needed.
         return String.format("%s %s", super.toString(), this.market.getPrimaryCurrency().name());
 
     }
@@ -114,17 +123,18 @@ public class SpecificPrice extends GenericPrice implements Comparable<SpecificPr
     }
 
     @Override
-    public int compareTo(SpecificPrice price) throws IllegalArgumentException, NullPointerException  {
+    public int compareTo(SpecificPrice otherPrice) throws IllegalArgumentException, NullPointerException  {
 
         // Null check.
-        if (price == null)
+        if (otherPrice == null)
             throw new NullPointerException("Cannot compare a specific price to a null one.");
 
         // Check if the prices are from the same market.
-        if (!price.getMarket().equals(this.market))
+        // No synchronization needed since the price has no setters and the market is a copy.
+        if (otherPrice.getMarket().compareTo(this.market) != 0)
             throw new IllegalArgumentException("Cannot compare specific prices from different markets to prevent introducing bugs.");
         
-        return Integer.compare(price.getValue(), this.getValue());
+        return Integer.compare(otherPrice.getValue(), this.getValue());
 
     }
     

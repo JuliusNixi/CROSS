@@ -30,7 +30,7 @@ public class Quantity {
             throw new NullPointerException("Quantity value cannot be null.");
         }
 
-        // Quantity cannot be negative but CAN be zero.
+        // Quantity cannot be negative but COULD be zero.
         // 0 is used during the execution of an order.
         if (quantity < 0) {
             throw new IllegalArgumentException("Quantity value cannot be negative.");
@@ -50,7 +50,7 @@ public class Quantity {
      */
     public Integer getValue() {
 
-        return Integer.valueOf(this.quantity);
+        return this.quantity;
 
     }
 

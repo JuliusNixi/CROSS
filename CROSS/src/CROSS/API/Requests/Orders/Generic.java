@@ -18,8 +18,8 @@ import CROSS.Types.Price.PriceType;
  * @author Giulio Nisi
  * 
  * @see CROSS.Orders.Order
- * @see CROSS.Types.Price.PriceType
- * @see CROSS.Types.Quantity
+ * @see PriceType
+ * @see Quantity
  * 
  * @see Limit
  * @see Market
@@ -44,7 +44,7 @@ public abstract class Generic {
         
         // Null check.
         if (order == null) {
-            throw new NullPointerException("The order in the request cannot be null.");
+            throw new NullPointerException("The order in the order request cannot be null.");
         }
 
         this.size = order.getQuantity().getValue();
@@ -57,21 +57,25 @@ public abstract class Generic {
      * 
      * Getter for the type of the order.
      * 
-     * @return The type of the order as PriceType.
+     * @return The type of the order as PriceType object.
      * 
      */
     public PriceType getType() {
+
         return PriceType.valueOf(this.type.toUpperCase());
+
     }
     /**
      * 
      * Getter for the size of the order.
      * 
-     * @return The size of the order as Quantity.
+     * @return The size of the order as Quantity object.
      * 
      */
     public Quantity getSize() {
+
         return new Quantity(this.size);
+
     }
 
 }

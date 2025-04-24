@@ -35,10 +35,10 @@ public class Request extends JSON {
      * 
      * Constructor of the class.
      * 
-     * @param action The action requested by the client as a ClientActions enum.
+     * @param action The action requested by the client as a ClientActions enum. Will be converted to a string.
      * @param values The values for the action as generic Object.
      * 
-     * @throws NullPointerException If the action ore the values are null.
+     * @throws NullPointerException If the action or values are null.
      * 
      */
     public Request(ClientActionsUtils.ClientActions action, Object values) throws NullPointerException {
@@ -49,7 +49,7 @@ public class Request extends JSON {
         if (values == null)
             throw new NullPointerException("Values in the request cannot be null.");
 
-        // Get the (NO TO LOWERCASE, BUT AS WRITTEN IN THE MAP) string command from the action.
+        // Get the (NO TO LOWERCASE, BUT AS WRITTEN IN THE MAP AND IN THE ASSIGNMENT'S TEXT) string command from the action.
         String command = ClientActionsUtils.getKeywordCommand(action);
 
         this.operation = command;
@@ -66,7 +66,9 @@ public class Request extends JSON {
      * 
      */
     public String getOperation() {
-        return String.format("%s", this.operation);
+
+        return this.operation;
+
     }
     /**
      * 
@@ -76,7 +78,9 @@ public class Request extends JSON {
      * 
      */
     public Object getValues() {
+
         return this.values;
+        
     }
 
 }

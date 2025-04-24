@@ -1,19 +1,15 @@
 package CROSS.API.Requests.Orders;
 
-import CROSS.Orders.Order;
-
 /**
  * 
  * Cancel is a class used to submit a cancel order API request.
  * 
  * It is used to represent the request that is about the order's data.
  * 
- * It contains the order's id.
+ * It contains the order's id to cancel.
  * 
  * @version 1.0
  * @author Giulio Nisi
- * 
- * @see Order
  * 
  */
 public class Cancel {
@@ -24,18 +20,18 @@ public class Cancel {
      * 
      * Constructor of the class.
      * 
-     * @param order The order to get the id from.
+     * @param orderId The order's ID to cancel.
      * 
-     * @throws NullPointerException If the order is null.
+     * @throws NullPointerException If the order's ID is null.
      * 
      */
-    public Cancel(Order order) throws NullPointerException {
+    public Cancel(Integer orderId) throws NullPointerException {
 
         // Null check.
-        if (order == null)
-            throw new NullPointerException("The order in the cancel request cannot be null.");
+        if (orderId == null)
+            throw new NullPointerException("The order's ID in the cancel request cannot be null.");
 
-        this.orderId = order.getId();
+        this.orderId = orderId;
 
     }
 
@@ -49,7 +45,8 @@ public class Cancel {
      */
     public Integer getOrderId() {
 
-        return Integer.valueOf(this.orderId);
+        return this.orderId;
+
     }
 
 }

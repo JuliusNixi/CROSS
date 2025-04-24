@@ -4,12 +4,14 @@ package CROSS.Types.Price;
  * 
  * GenericPrice is a class that represents a generic price.
  * 
- * Generic price means without any associated type (ask or bid).
+ * Generic price means without any associated additional information, outside of the price value.
  * It's used for example to rapresent the increment of the price in the Market class.
  * 
- * It's extended by SpecificPrice class that adds a price type (ask / bid).
+ * It's extended by SpecificPrice class that adds other informations.
  * 
  * The class has a validation check that ensures that the price is not negative or 0.
+ * 
+ * The price is requested to be an Integer from the assignment.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -47,6 +49,7 @@ public class GenericPrice {
 
     }
 
+    // GETTERS
     /**
      * 
      * Getter for the price value.
@@ -56,7 +59,7 @@ public class GenericPrice {
      */
     public Integer getValue() {
 
-        return Integer.valueOf(this.value);
+        return this.value;
 
     }
     

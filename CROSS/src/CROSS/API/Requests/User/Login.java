@@ -28,8 +28,10 @@ public class Login extends Generic {
      * 
      * @param user The user object.
      * 
+     * @throws NullPointerException If the user is null.
+     * 
      */
-    public Login(User user) {
+    public Login(User user) throws NullPointerException {
 
         // To set the username.
         super(user);
@@ -47,7 +49,9 @@ public class Login extends Generic {
      * 
      */
     public User getUser() {
+
         return new User(super.getUsername(), this.password);
+        
     }
     
 }

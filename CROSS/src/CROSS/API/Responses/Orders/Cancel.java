@@ -8,7 +8,7 @@ import CROSS.API.Responses.ResponseCode;
  * 
  * It is used to represent the responses that are about an order cancellation.
  * 
- * It's extend the User Generic response class sice it has the same structure.
+ * It's extend the User's Generic response class sice it has the same structure.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -25,8 +25,10 @@ public class Cancel extends CROSS.API.Responses.User.Generic {
      * @param responseCode The response code object used to extract the status code.
      * @param message The message to be sent to the client.
      * 
+     * @throws NullPointerException If the response code or the message are null.
+     * 
      */
-    public Cancel(ResponseCode responseCode, String message) {
+    public Cancel(ResponseCode responseCode, String message) throws NullPointerException {
 
         super(responseCode, message);
 

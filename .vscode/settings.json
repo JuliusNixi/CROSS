@@ -1,12 +1,13 @@
-// VS Code IDE Settings.
+// VS Code IDE settings.
 
-// This file is voluntarily synchronized with Git and GitHub, and not included in ".gitignore" file.
+// This file is voluntarily synchronized with Git and GitHub, and not included in the ".gitignore" file.
 // This because, if in the future I will work again on this project on another machine, I will probably use VS Code IDE again and I will not have to remember how to configure these paths. 
 {
     "java.project.sourcePaths": [
-        "CROSS/src"
+        "CROSS/src",
     ],
     "java.project.referencedLibraries": [
-        "CROSS/lib/*.jar"
+        "/Users/juliusnixi/Desktop/CROSS/CROSS/lib/jline-3.9.0.jar",
+        "/Users/juliusnixi/Desktop/CROSS/CROSS/lib/gson-2.11.0.jar"
     ]
 }

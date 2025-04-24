@@ -29,6 +29,7 @@ import CROSS.OrderBook.*;
  * It's used by the Orders class as support to load and save orders from and to a JSON orders database file.
  * 
  * Abstract class because I assume that I don't want to handle different orders databases at the same time.
+ * So I will use only static methods and variables.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -37,10 +38,12 @@ import CROSS.OrderBook.*;
  * 
  * @see Orders
  * 
+ * @see FileHandler
+ * 
  */
 public abstract class DBOrdersInterface {
 
-    // Database file path.
+    // Orders database file path.
     private static String filePath = null;
 
     // Orders database file to handle with streams.
@@ -64,7 +67,8 @@ public abstract class DBOrdersInterface {
      * 
      * Set the orders database file to handle.
      * 
-     * Synchronized to avoid multiple threads to set the file at the same time.
+     * Synchronized ON CLASS to avoid multiple threads to set the file at the same time.
+     * Synchronized ON FILE PATH to avoid multiple threads to edit the file path during the execution.
      * 
      * @param filePath The path to the orders database file as String.
      * 
@@ -74,46 +78,54 @@ public abstract class DBOrdersInterface {
      * @throws IOException If there's an I/O error creating the file when not found.
      * 
      */
-    public static synchronized void setFile(String filePath) throws IllegalArgumentException, NullPointerException, RuntimeException, IOException {
+    public static void setFile(String filePath) throws IllegalArgumentException, NullPointerException, RuntimeException, IOException {
 
-        // Null check.
-        if (filePath == null) {
-            throw new NullPointerException("Database orders file path to set cannot be null.");
-        }
+        synchronized (DBOrdersInterface.class) {
 
-        // Check if the file is a JSON file.
-        if (!filePath.endsWith(".json")) {
-            throw new IllegalArgumentException("Database orders file to set must be a JSON file.");
-        }
+            // Null check.
+            if (filePath == null) {
+                throw new NullPointerException("Database orders file path to set cannot be null.");
+            }
 
-        // Database file already attached.
-        if (DBOrdersInterface.filePath != null) {
-            throw new RuntimeException("Database orders file already attached.");
-        }
+            synchronized (filePath) {
 
-        try {
-            file = new File(filePath);
-            fileIn = new FileInputStream(file);
-            fileOut = new FileOutputStream(file, true);
+                // Check if the file is a JSON file.
+                if (!filePath.endsWith(".json")) {
+                    throw new IllegalArgumentException("Database orders file to set must be a JSON file.");
+                }
 
-            DBOrdersInterface.filePath = filePath;
+                // Database file already attached.
+                if (DBOrdersInterface.filePath != null) {
+                    throw new RuntimeException("Database orders file already attached.");
+                }
 
-            System.out.printf("DB Orders file %s attached.\n", filePath);
-        } catch (FileNotFoundException ex) {
+                try {
+                    file = new File(filePath);
+                    fileIn = new FileInputStream(file);
+                    fileOut = new FileOutputStream(file, true);
 
-            System.out.printf("DB Orders file %s not found. Creating it.\n", filePath);
+                    DBOrdersInterface.filePath = filePath;
 
-            // Create an empty file.
-            try {
-                file.createNewFile();
-                fileIn = new FileInputStream(file);
-                fileOut = new FileOutputStream(file, true);
+                    System.out.printf("DB Orders file %s attached.\n", filePath);
+                } catch (FileNotFoundException ex) {
 
-                DBOrdersInterface.filePath = filePath;
+                    System.out.printf("DB Orders file %s not found. Creating it.\n", filePath);
 
-                System.out.printf("DB Orders file %s created and attached.\n", filePath);
-            } catch (IOException ex2) {
-                throw new IOException("Error creating the database orders file.");
+                    // Create an empty file.
+                    try {
+                        file.createNewFile();
+                        fileIn = new FileInputStream(file);
+                        fileOut = new FileOutputStream(file, true);
+
+                        DBOrdersInterface.filePath = filePath;
+
+                        System.out.printf("DB Orders file %s created and attached.\n", filePath);
+                    } catch (IOException ex2) {
+                        throw new IOException("Error creating the database orders file.");
+                    }
+
+                }
+
             }
 
         }
@@ -125,46 +137,50 @@ public abstract class DBOrdersInterface {
      * 
      * This fills the file content variable with the file content as String.
      * 
-     * Synchronized to avoid multiple threads to read the file at the same time.
+     * Synchronized ON CLASS to avoid multiple threads to read the file at the same time.
      * 
      * @throws RuntimeException If the file is not attached or the file content is already readed.
      * @throws IOException If there's an I/O error reading the file.
      * 
      */
-    public static synchronized void readFile() throws IOException, RuntimeException {
+    public static void readFile() throws IOException, RuntimeException {
 
-        // File not attached.
-        if (file == null || fileIn == null || DBOrdersInterface.filePath == null) {
-            throw new RuntimeException("Database orders file not attached. Set file before with setFile().");
-        }
+        synchronized (DBOrdersInterface.class) {
 
-        // File content already readed.
-        if (DBOrdersInterface.fileContent != null) {
-            throw new RuntimeException("Database orders file already readed.");
-        }
-
-        // Read file.
-        // Buffered to improve performance.
-        BufferedInputStream fileBuffered = new BufferedInputStream(fileIn);
-        StringBuilder fileContentBuilder = new StringBuilder();
-        Integer buffSize = 1024;
-        byte[] buffer = new byte[buffSize];
-        try {
-
-            while (true) {
-                int bytesRead = fileBuffered.read(buffer, 0, buffSize);
-                if (bytesRead == -1) {
-                    break;
-                }
-                fileContentBuilder.append(new String(buffer, 0, bytesRead));
+            // File not attached.
+            if (file == null || fileIn == null || DBOrdersInterface.filePath == null) {
+                throw new RuntimeException("Database orders file not attached. Set file before with setFile().");
             }
 
-            DBOrdersInterface.fileContent = fileContentBuilder.toString();
+            // File content already readed.
+            if (DBOrdersInterface.fileContent != null) {
+                throw new RuntimeException("Database orders file already readed.");
+            }
 
-            System.out.printf("DB Orders file %s readed.\n", filePath);
-        } catch (IOException ex) {
-            throw new IOException("Error reading the database orders file.");
-        } 
+            // Read file.
+            // Buffered to improve performance.
+            BufferedInputStream fileBuffered = new BufferedInputStream(fileIn);
+            StringBuilder fileContentBuilder = new StringBuilder();
+            Integer buffSize = 1024;
+            byte[] buffer = new byte[buffSize];
+            try {
+
+                while (true) {
+                    int bytesRead = fileBuffered.read(buffer, 0, buffSize);
+                    if (bytesRead == -1) {
+                        break;
+                    }
+                    fileContentBuilder.append(new String(buffer, 0, bytesRead));
+                }
+
+                DBOrdersInterface.fileContent = fileContentBuilder.toString();
+
+                System.out.printf("DB Orders file %s readed.\n", filePath);
+            } catch (IOException ex) {
+                throw new IOException("Error reading the database orders file.");
+            } 
+
+        }
 
     }
 
@@ -175,7 +191,8 @@ public abstract class DBOrdersInterface {
      * 
      * This appends the order to the orders database file, at the end, without rewriting all the file.
      * 
-     * Synchronized to avoid multiple threads to write on the file at the same time.
+     * Synchronized ON CLASS to avoid multiple threads to write on the file at the same time.
+     * Syncronized ON ORDER to avoid multiple threads to modify the order's properties during the writing.
      * 
      * @param order The Order to write.
      * @param <GenericOrder> The type of the Order to write. Limit, Market, StopMarket.
@@ -186,107 +203,118 @@ public abstract class DBOrdersInterface {
      * @throws JsonSyntaxException If there's an error parsing the JSON order to write in the database orders file.
      * 
      */
-    public static synchronized <GenericOrder extends Order> void writeOrderOnFile(GenericOrder order) throws RuntimeException, NullPointerException, IOException, JsonSyntaxException {
+    public static <GenericOrder extends Order> void writeOrderOnFile(GenericOrder order) throws RuntimeException, NullPointerException, IOException, JsonSyntaxException {
 
-        // Null check.
-        if (order == null) {
-            throw new NullPointerException("Order to write on file cannot be null.");
-        }
+        synchronized (DBOrdersInterface.class) {
 
-        // File not attached.
-        if (DBOrdersInterface.fileContent == null) {
-            throw new RuntimeException("Orders database file content is needed to write an order on file. Call readFile() before.");
-        }
-
-        // Remove last 2 lines.
-        try {
-            FileHandler.removeLastLine(DBOrdersInterface.file);
-            FileHandler.removeLastLine(DBOrdersInterface.file);
-        } catch (IOException ex) {
-            // Forwarding exception's message.
-            throw new IOException(ex.getMessage());
-        }
-
-        // Write order on file.
-        // Buffered to improve performance.
-        try {
-            BufferedOutputStream fileOutBuffered = new BufferedOutputStream(fileOut);
-
-            String jsonOrder = new Gson().toJson(order);
-            JsonObject jsonObject = null;
-
-            // Removing the unnecessary / to modify fields from the JSON object.
-            jsonObject = JsonParser.parseString(jsonOrder).getAsJsonObject();
-
-            // Removing the "price" field.
-            jsonObject.remove("price");
-
-            // Removing the "quantity" field.
-            jsonObject.remove("quantity");
-
-            // Removing the "market" field.
-            jsonObject.remove("market");
-
-            // Removing the "user" field.
-            jsonObject.remove("user");
-
-            jsonOrder = jsonObject.toString();
-
-            // Adding the missing fields to the JSON object.
-            jsonObject = JsonParser.parseString(jsonOrder).getAsJsonObject();
-
-            // Setting "type" field of the JSON object.
-            String type = order.getPrice().getType().name().toLowerCase();
-            jsonObject.addProperty("type", type);
-            jsonOrder = jsonObject.toString();
-
-            // Setting the "orderType" field of the JSON object.
-            String orderType = order.getClass().getSimpleName().toLowerCase().replaceAll("order", "");
-            if (orderType.contains("stop")) {
-                orderType = orderType.replace("market", "");
-            }
-            jsonObject.addProperty("orderType", orderType);
-            jsonOrder = jsonObject.toString();
-
-            // Setting the "size" field of the JSON object.
-            Integer size = order.getQuantity().getValue();
-            jsonObject.addProperty("size", size);
-            jsonOrder = jsonObject.toString();
-
-            // Setting the "price" field of the JSON object.
-            Integer price = order.getPrice().getValue();
-            jsonObject.addProperty("price", price);
-            jsonOrder = jsonObject.toString();
-
-            jsonOrder = String.join("", jsonOrder.trim().split("\n"));
-            if (DBOrdersInterface.fileContent.equals(FILE_INIT)) {
-                /*
-                 * {\n
-                 *  "trades": [\n
-                 * 
-                 */
-                jsonOrder = jsonOrder + "\n" + "]" + "\n}";
-            } else {
-                /* 
-                 * [
-                 *  {order1}\n
-                 * 
-                 */
-                FileHandler.removeLastChar(DBOrdersInterface.file);
-                jsonOrder = "," + "\n" + jsonOrder + "\n]" + "\n}";
-
+            // Null check.
+            if (order == null) {
+                throw new NullPointerException("Order to write on file cannot be null.");
             }
 
-            // Append to the file.
-            fileOutBuffered.write(jsonOrder.getBytes());
-            fileOutBuffered.close();
+            synchronized (order) {
 
-            fileOut = new FileOutputStream(file, true);
+                // File not attached.
+                if (DBOrdersInterface.fileContent == null) {
+                    throw new RuntimeException("Orders database file content is needed to write an order on file. Call readFile() before.");
+                }
 
-        } catch (JsonSyntaxException | IndexOutOfBoundsException ex) {
-            throw new JsonSyntaxException("Error parsing the JSON order to write in the orders database file.");
-        } catch (IOException ex) {
-            throw new IOException("Error writing the new order in the orders database file.");
+                // Remove last 2 lines.
+                try {
+                    FileHandler.removeLastLine(DBOrdersInterface.file);
+                    FileHandler.removeLastLine(DBOrdersInterface.file);
+                } catch (IOException ex) {
+                    // Forwarding exception's message.
+                    throw new IOException(ex.getMessage());
+                }
+
+                // Write order on file.
+                // Buffered to improve performance.
+                try {
+                    BufferedOutputStream fileOutBuffered = new BufferedOutputStream(fileOut);
+
+                    String jsonOrder = new Gson().toJson(order);
+                    JsonObject jsonObject = null;
+
+                    // Removing the unnecessary / to modify fields from the JSON object.
+                    jsonObject = JsonParser.parseString(jsonOrder).getAsJsonObject();
+
+                    // Removing the "price" field.
+                    jsonObject.remove("price");
+
+                    // Removing the "quantity" field.
+                    jsonObject.remove("quantity");
+
+                    // Removing the "market" field.
+                    jsonObject.remove("market");
+
+                    // Removing the "user" field.
+                    jsonObject.remove("user");
+
+                    // Type if the order is a MarketOrder.
+                    jsonObject.remove("type");
+
+                    jsonOrder = jsonObject.toString();
+
+                    // Adding the missing fields to the JSON object.
+                    jsonObject = JsonParser.parseString(jsonOrder).getAsJsonObject();
+
+                    // Setting "type" field of the JSON object.
+                    String type = order.getPrice().getType().name().toLowerCase();
+                    jsonObject.addProperty("type", type);
+                    jsonOrder = jsonObject.toString();
+
+                    // Setting the "orderType" field of the JSON object.
+                    String orderType = order.getClass().getSimpleName().toLowerCase().replaceAll("order", "");
+                    if (orderType.contains("stop")) {
+                        orderType = orderType.replace("market", "");
+                    }
+                    jsonObject.addProperty("orderType", orderType);
+                    jsonOrder = jsonObject.toString();
+
+                    // Setting the "size" field of the JSON object.
+                    Integer size = order.getQuantity().getValue();
+                    jsonObject.addProperty("size", size);
+                    jsonOrder = jsonObject.toString();
+
+                    // Setting the "price" field of the JSON object.
+                    Integer price = order.getPrice().getValue();
+                    jsonObject.addProperty("price", price);
+                    jsonOrder = jsonObject.toString();
+
+                    jsonOrder = String.join("", jsonOrder.trim().split("\n"));
+                    if (DBOrdersInterface.fileContent.equals(FILE_INIT)) {
+                        /*
+                        * {\n
+                        *  "trades": [\n
+                        * 
+                        */
+                        jsonOrder = jsonOrder + "\n" + "]" + "\n}";
+                    } else {
+                        /* 
+                        * [
+                        *  {order1}\n
+                        * 
+                        */
+                        FileHandler.removeLastChar(DBOrdersInterface.file);
+                        jsonOrder = "," + "\n" + jsonOrder + "\n]" + "\n}";
+
+                    }
+
+                    // Append to the file.
+                    fileOutBuffered.write(jsonOrder.getBytes());
+                    fileOutBuffered.close();
+
+                    fileOut = new FileOutputStream(file, true);
+
+                } catch (JsonSyntaxException | IndexOutOfBoundsException ex) {
+                    throw new JsonSyntaxException("Error parsing the JSON order to write in the orders database file.");
+                } catch (IOException ex) {
+                    throw new IOException("Error writing the new order in the orders database file.");
+                }
+
+            }
+
         }
 
     }
@@ -300,18 +328,21 @@ public abstract class DBOrdersInterface {
      * 
      */
     public static String getFilePath() {
-        return String.format("%s", filePath);
+
+        return filePath;
+
     }
     /**
      * 
-     * Check if the orders has been already loaded from the orders database file.
+     * Check if the orders have been already loaded from the orders database file.
      * 
-     * @return True if the orders has been loaded from the orders database file, false otherwise.
+     * @return True if the orders have been loaded from the orders database file, false otherwise.
      * 
      */
     public static Boolean ordersLoaded() {
 
         return DBOrdersInterface.ordersLoaded;
+
         
     }
 
@@ -320,162 +351,186 @@ public abstract class DBOrdersInterface {
      * 
      * Load orders from the file (previously readed and stored in the file content variable) to Orders class (in RAM).
      * 
-     * Synchronized to avoid multiple threads to load orders at the same time.
+     * Synchronized ON CLASS to avoid multiple threads to load orders at the same time.
      * 
      * Before using this method, the file must be readed with readFile().
      * 
      * THIS METHOD IS MEANT TO BE USED ONLY AS SUPPORT FROM THE Orders CLASS.
      * CALL THIS METHOD FROM THE Orders CLASS.
      * 
+     * ALL ORDERS LOADED FROM FILE ARE ASSIGNED TO THE MAIN MARKET AND TO AN ANONYMOUS USER.
+     * 
+     * @param noPriceCoherenceChecks If true, the price coherence checks are not performed during the orders creation. Used to load orders from the demo file.
+     * @param noOrderPresenceCheck If true, the order already present in the database check is not performed. Used to load orders from the demo file.
+     * 
      * @throws RuntimeException If the file is not readed or the orders are already loaded or if the main market is not set.
      * @throws JsonSyntaxException If there's an error parsing the JSON orders database file content.
      * @throws Exception If there's an error loading the orders from the JSON orders database file to the Orders class.
      * @throws IOException If there's an I/O error initializing the empty orders database file.
+     * @throws NullPointerException If the noPriceCoherenceChecks or noOrderPresenceCheck flag are null.
      * 
      */
-    public static synchronized void loadOrders() throws RuntimeException, JsonSyntaxException, Exception, IOException {
+    public static void loadOrders(Boolean noPriceCoherenceChecks, Boolean noOrderPresenceCheck) throws RuntimeException, JsonSyntaxException, Exception, IOException, NullPointerException {
 
-        // Orders database file content not readed check.
-        if (DBOrdersInterface.fileContent == null) {
-            throw new RuntimeException("Database orders file not read. Read it before with readFile().");
-        }
+        synchronized (DBOrdersInterface.class) {
 
-        // Orders already loaded.
-        if (DBOrdersInterface.ordersLoaded() == true) {
-            throw new RuntimeException("Orders database already loaded.");
-        }
+            // Null check.
+            if (noPriceCoherenceChecks == null) {
+                throw new NullPointerException("No price coherence checks flag in the orders loading cannot be null.");
+            }
+            if (noOrderPresenceCheck == null) {
+                throw new NullPointerException("No order presence check flag in the orders loading cannot be null.");
+            }
 
-        // Empty file, initialize it.
-        if (DBOrdersInterface.fileContent.isEmpty()) {
-            try {
-                BufferedOutputStream fileOutBuffered = new BufferedOutputStream(fileOut);
-                fileOutBuffered.write(FILE_INIT.getBytes());
+            // Orders database file content not readed check.
+            if (DBOrdersInterface.fileContent == null) {
+                throw new RuntimeException("Database orders file not read. Read it before with readFile().");
+            }
 
-                fileOutBuffered.close();
-                fileOut = new FileOutputStream(file, true);
+            // Orders already loaded.
+            if (DBOrdersInterface.ordersLoaded() == true) {
+                throw new RuntimeException("Orders database already loaded.");
+            }
 
+            // Main market.
+            Market market = Market.getMainMarket();
+
+            // Empty file, initialize it.
+            if (DBOrdersInterface.fileContent.isEmpty()) {
+                try {
+                    BufferedOutputStream fileOutBuffered = new BufferedOutputStream(fileOut);
+                    fileOutBuffered.write(FILE_INIT.getBytes());
+
+                    fileOutBuffered.close();
+                    fileOut = new FileOutputStream(file, true);
+
+                    DBOrdersInterface.fileContent = FILE_INIT;
+
+                    DBOrdersInterface.ordersLoaded = true;
+
+                    System.out.printf("Empty DB Orders file %s. Initailized it.\n", filePath);
+
+                    return;
+                } catch (IOException ex) {
+                    throw new IOException("Error initializing empty orders database file.");
+                }
+            }
+
+            // IMPORTANT: The file could be already initialized before from the program, but no orders has been added yet.
+            if (DBOrdersInterface.fileContent.equals(FILE_INIT)) {
                 DBOrdersInterface.fileContent = FILE_INIT;
+
                 DBOrdersInterface.ordersLoaded = true;
 
-                System.out.printf("Empty DB Orders file %s. Initailized it.\n", filePath);
+                System.out.printf("Orders loaded from file %s.\n", filePath);
 
                 return;
-            } catch (IOException ex) {
-                throw new IOException("Error initializing empty orders database file.");
             }
-        }
 
-        // IMPORTANT: The file could be already initialized before from the program, but no orders has been added yet.
-        if (DBOrdersInterface.fileContent.equals(FILE_INIT)) {
-            DBOrdersInterface.fileContent = FILE_INIT;
+            // Not empty file.
+            try {
 
-            System.out.printf("Orders loaded from file %s.\n", filePath);
+                // Will contains the final order objects.
+                LinkedList<Order> orders = new LinkedList<Order>();
 
-            DBOrdersInterface.ordersLoaded = true;
+                // Parse the JSON file content to a JSON object.
+                JsonObject jsonObject = JsonParser.parseString(DBOrdersInterface.fileContent).getAsJsonObject();
+                JsonArray jsonArray = jsonObject.getAsJsonArray("trades");
 
-            return;
-        }
+                // Iterate over the JsonArray object.
+                for (JsonElement element : jsonArray) {
+                    // Convert each element to a JsonObject.
+                    jsonObject = element.getAsJsonObject();
 
-        // Not empty file.
-        try {
+                    // Convert each JSON string to the corresponding object.
+                    String timestampStr = jsonObject.get("timestamp").getAsString();
+                    Long timestamp = null;
+                    try {
+                        timestamp = Long.parseLong(timestampStr);
+                    } catch (NumberFormatException ex) {
+                        throw new NumberFormatException("Error parsing the timestamp from the JSON orders database file.");
+                    }
 
-            // Will contains the final order objects.
-            LinkedList<Order> orders = new LinkedList<Order>();
+                    String type = jsonObject.get("type").getAsString();
+                    PriceType priceType = ClientActionsUtils.getPriceTypeFromString(type);
 
-            // Parse the JSON file content to a JSON object.
-            JsonObject jsonObject = JsonParser.parseString(DBOrdersInterface.fileContent).getAsJsonObject();
-            JsonArray jsonArray = jsonObject.getAsJsonArray("trades");
+                    String price = jsonObject.get("price").getAsString();
+                    GenericPrice genericPrice = ClientActionsUtils.getPriceFromString(price);
+                    SpecificPrice specificPrice = new SpecificPrice(genericPrice.getValue(), priceType, market);
 
-            // Iterate over the JsonArray object.
-            for (JsonElement element : jsonArray) {
-                // Convert each element to a JsonObject.
-                jsonObject = element.getAsJsonObject();
+                    String size = jsonObject.get("size").getAsString();
+                    Quantity quantity = ClientActionsUtils.getSizeFromString(size);
 
-                // Convert each JSON string to the corresponding object.
-                String timestampStr = jsonObject.get("timestamp").getAsString();
-                Long timestamp = null;
-                try {
-                    timestamp = Long.parseLong(timestampStr);
-                } catch (NumberFormatException ex) {
-                    throw new JsonSyntaxException("Error parsing the timestamp from the JSON orders database file.");
-                }
+                    String orderId = jsonObject.get("orderId").getAsString();
+                    Integer id = ClientActionsUtils.getOrderIDFromString(orderId);
 
-                Market market = Market.getMainMarket();
+                    // In the database orders file, the user is not stored.
+                    // Using a placeholder user.
+                    User user = new User("anonymous", "anonymous");
 
-                String type = jsonObject.get("type").getAsString();
-                PriceType priceType = ClientActionsUtils.getPriceTypeFromString(type);
+                    Order o = null;
+                    String orderType = jsonObject.get("orderType").getAsString();
+                    switch (orderType) {
 
-                String price = jsonObject.get("price").getAsString();
-                GenericPrice genericPrice = ClientActionsUtils.getPriceFromString(price);
-                SpecificPrice specificPrice = new SpecificPrice(genericPrice.getValue(), priceType, market);
+                        case "limit":
+                            
+                            LimitOrder limitOrder = new LimitOrder(specificPrice, quantity, user, noPriceCoherenceChecks);
+                            limitOrder.setId(id);
+                            limitOrder.setTimestamp(timestamp);
+                            o = limitOrder;
+                            break;
 
-                String size = jsonObject.get("size").getAsString();
-                Quantity quantity = ClientActionsUtils.getSizeFromString(size);
+                        case "market":
 
-                String orderId = jsonObject.get("orderId").getAsString();
-                Integer id = ClientActionsUtils.getOrderIDFromString(orderId);
+                            MarketOrder marketOrder = new MarketOrder(market, priceType, quantity, user);
+                            marketOrder.setId(id);
+                            marketOrder.setTimestamp(timestamp);
+                            o = marketOrder;
+                            break;
 
-                // In the database orders file, the user is not stored.
-                // Using a placeholder user.
-                User user = new User("anonymous", "anonymous");
+                        case "stop":
 
-                Order o = null;
-                String orderType = jsonObject.get("orderType").getAsString();
-                switch (orderType) {
+                            StopMarketOrder stopMarketOrder = new StopMarketOrder(specificPrice, quantity, user, noPriceCoherenceChecks);
+                            stopMarketOrder.setId(id);
+                            stopMarketOrder.setTimestamp(timestamp);
+                            o = stopMarketOrder;
 
-                    case "limit":
-                        
-                        LimitOrder limitOrder = new LimitOrder(specificPrice, quantity, user);
-                        limitOrder.setId(id);
-                        limitOrder.setTimestamp(timestamp);
-                        o = limitOrder;
-                        break;
+                            break;
+                    
+                        default:
+                            
+                            // NumberFormatException is thrown to forward the error message.
+                            throw new NumberFormatException("Invalid order type in the JSON orders database file.");
 
-                    case "market":
+                    }
 
-                        MarketOrder marketOrder = new MarketOrder(market, priceType, quantity, user);
-                        marketOrder.setId(id);
-                        marketOrder.setTimestamp(timestamp);
-                        o = marketOrder;
-                        break;
-
-                    case "stop":
-
-                        StopMarketOrder stopMarketOrder = new StopMarketOrder(specificPrice, quantity, user);
-                        stopMarketOrder.setId(id);
-                        stopMarketOrder.setTimestamp(timestamp);
-                        o = stopMarketOrder;
-
-                        break;
-                
-                    default:
-                        break;
+                    orders.add(o);
 
                 }
 
-                orders.add(o);
+                // Add orders to Orders (RAM).
+                for (Order order : orders) {
+                    Orders.addOrder(order, noOrderPresenceCheck);
+                }
 
+                // File content is no longer needed.
+                // To save memory.
+                DBOrdersInterface.fileContent = FILE_READED;
+
+                DBOrdersInterface.ordersLoaded = true;
+
+                System.out.printf("Orders loaded from DB Orders file %s.\n", DBOrdersInterface.filePath);
+            } catch (NumberFormatException ex) {
+                // Forwarding exception's message.
+                throw new JsonSyntaxException(ex.getMessage());
+            } catch (IllegalArgumentException | NullPointerException | JsonSyntaxException ex) {
+                throw new JsonSyntaxException("Error parsing the JSON orders database file.");
+            } catch (Exception ex) {
+                // Forwarding exception's message.
+                ex.printStackTrace();   
+                throw new Exception(ex.getMessage());
             }
 
-            // Add orders to Orders (RAM).
-            for (Order order : orders) {
-                Orders.addOrder(order);
-            }
-
-            // File content is no longer needed.
-            // To save memory.
-            DBOrdersInterface.fileContent = FILE_READED;
-
-            DBOrdersInterface.ordersLoaded = true;
-
-            System.out.printf("Orders loaded from file %s.\n", filePath);
-        } catch (JsonSyntaxException ex) {
-            throw new JsonSyntaxException("Error parsing the JSON orders database file.");
-        } catch (IllegalArgumentException | NullPointerException ex) {
-            throw new JsonSyntaxException("Error parsing the JSON orders database file.");
-        } catch (Exception ex) {
-            // Forwarding exception's message.
-            throw new Exception(ex.getMessage());
         }
 
     }

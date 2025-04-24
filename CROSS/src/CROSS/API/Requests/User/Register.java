@@ -6,9 +6,9 @@ import CROSS.Users.User;
  * 
  * Register is a class that extends Generic and is used to request client's registration.
  * 
- * It is used to represent the request that is about the user's data.
+ * It is used to represent a request that is about the user's data.
  * 
- * It contains the user's password.
+ * It contains the user's password to be used to register.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -28,8 +28,10 @@ public class Register extends Generic {
      * 
      * @param user The user to register.
      * 
+     * @throws NullPointerException If the user is null.
+     * 
      */
-    public Register(User user) {
+    public Register(User user) throws NullPointerException {
 
         // Setting the username.
         super(user);
@@ -46,7 +48,9 @@ public class Register extends Generic {
      * 
      */
     public User getUser() {
+
         return new User(super.getUsername(), this.password);
+        
     }
 
 }

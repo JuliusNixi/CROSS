@@ -7,7 +7,7 @@ import CROSS.Types.Price.GenericPrice;
  * 
  * StopMarket is a class that extends Generic and is used to submit a stop market order API request.
  * 
- * It is used to represent the request that is about the order's data.
+ * It is used to represent a request that is about the order's data.
  * 
  * It contains the order's price.
  * 
@@ -31,8 +31,10 @@ public class StopMarket extends Generic {
      * 
      * @param order The stop market order to get the price from.
      * 
+     * @throws NullPointerException If the order is null.
+     * 
      */
-    public StopMarket(StopMarketOrder order) {
+    public StopMarket(StopMarketOrder order) throws NullPointerException {
 
         super(order);
 
@@ -44,11 +46,13 @@ public class StopMarket extends Generic {
      * 
      * Getter of the price.
      * 
-     * @return The price of the order as GenericPrice.
+     * @return The price of the order as GenericPrice object.
      * 
      */
     public GenericPrice getPrice() {
+
         return new GenericPrice(this.price);
+
     }
 
 }

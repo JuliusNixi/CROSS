@@ -1,0 +1,6 @@
+{
+    "trades": [
+        {"orderId": 82908, "type": "bid" , "orderType": "market", "size": 347, "price": 1553866709, "timestamp": 1730418574},
+{"orderId":1545697458,"timestamp":1744191688420,"type":"ask","orderType":"limit","size":24,"price":42}
+]
+}

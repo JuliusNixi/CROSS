@@ -8,7 +8,9 @@ import CROSS.API.Responses.ResponseCode;
  * 
  * It is used to represent the responses that are about the user's data.
  * 
- * It contains the status code and the message to be sent to the client.
+ * It contains the status code (number) and the message (string) to be sent to the client.
+ * 
+ * It uses the ResponseCode class to map the response code to the type of response and its content.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -27,7 +29,7 @@ public class Generic {
      * Constructor of the class.
      * 
      * @param responseCode The response code object used to extract the status code.
-     * @param message The message to be sent to the client.
+     * @param message The message string to be sent to the client.
      * 
      * @throws NullPointerException If the response code or the message are null.
      * 
@@ -39,7 +41,7 @@ public class Generic {
             throw new NullPointerException("The response code in the user's data response cannot be null.");
         }
         if (message == null) {
-            throw new NullPointerException("The message in the user's data response cannot be null.");
+            throw new NullPointerException("The message string in the user's data response cannot be null.");
         }
 
         this.response = responseCode.getCode();
@@ -56,7 +58,9 @@ public class Generic {
      * 
      */
     public String getMessage() {
-        return String.format("%s", this.message);
+
+        return this.message;
+
     }
     /**
      * 
@@ -66,7 +70,10 @@ public class Generic {
      * 
      */
     public Integer getResponseCode() {
-        return Integer.valueOf(this.response);
+
+        return this.response;
+
     }
 
 }
+

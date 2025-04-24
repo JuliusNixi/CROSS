@@ -1,6 +1,5 @@
 package CROSS.OrderBook;
 
-import java.util.LinkedList;
 import java.util.TreeMap;
 import CROSS.Orders.LimitOrder;
 import CROSS.Orders.MarketOrder;
@@ -11,7 +10,6 @@ import CROSS.Types.Quantity;
 import CROSS.Types.Price.GenericPrice;
 import CROSS.Types.Price.PriceType;
 import CROSS.Types.Price.SpecificPrice;
-import CROSS.Users.User;
 import CROSS.Utils.Separator;
 
 /**
@@ -20,9 +18,9 @@ import CROSS.Utils.Separator;
  * 
  * It extends the Market class.
  * 
- * It contains all the orders both limit and stop.
+ * It contains all the orders of a market, both limit and stop.
  * 
- * It's used to match and execute the orders.
+ * It's used to match and execute the orders of the corresponding market.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -33,47 +31,81 @@ import CROSS.Utils.Separator;
  * 
  * @see LimitOrder
  * @see StopMarketOrder
+ * @see MarketOrder
  * 
  * @see SpecificPrice
- * 
- * @see MarketOrder
- * @see Order
- * @see Currency
- * @see Quantity
- * @see GenericPrice
- * @see Separator
- * @see PriceType
  * 
  */
 public class OrderBook extends Market {
 
+    // An order book is basically a TreeMap with as key the price level and as value an OrderBookLine.
+
     // By using a TreeMap, the order book is always sorted by price.
-    private TreeMap<SpecificPrice, OrderBookLine<LimitOrder>> limitBook;
+    private TreeMap<SpecificPrice, OrderBookLine<LimitOrder>> limitBook = null;
 
     // Technically the order book contains only the limit orders.
     // The majority of the brokers not show the stop orders in the order book.
-    // The stop orders are hidden and are only executed when the price hits the stop price becoming a market order.
+    // The stop orders are hidden and are only executed when the current market price hits the stop price transforming it in market order.
     // So I will follow this philosophy.
 
-    // I will use the same data structure because I think that it fits well also for the stop orders.
+    // I will use the same data structure of the limit book because I think that it fits well also for the stop orders.
     // But, the OFFICIAL order book is the limit orders book, that contains only the limit orders.
     // So the stop orders book is "opaque".
-    private TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>> stopBook;
+    private TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>> stopBook = null;
 
+    // CONSTRUCTORS
     /**
      * 
      * Constructor of the class.
      * 
      * @param primary_currency The primary currency of the market.
      * @param secondary_currency The secondary currency of the market.
-     * @param actualPriceAsk The actual ask price.
-     * @param actualPriceBid The actual bid price.
-     * @param increment The price increment.
+     * @param increment The price increment of the market.
+     * 
+     * @throws NullPointerException If the primary currency, the secondary currency or the increment are null.
+     * @throws IllegalArgumentException If the primary and secondary currencies are the same.
      * 
      */
-    public OrderBook(Currency primary_currency, Currency secondary_currency, SpecificPrice actualPriceAsk, SpecificPrice actualPriceBid, GenericPrice increment) {
+    public OrderBook(Currency primary_currency, Currency secondary_currency, GenericPrice increment) throws NullPointerException, IllegalArgumentException {
         
-        super(primary_currency, secondary_currency, actualPriceAsk, actualPriceBid, increment);
+        // Increment is copied in the super constructor.
+        super(primary_currency, secondary_currency, increment);
+
+        limitBook = new TreeMap<SpecificPrice, OrderBookLine<LimitOrder>>();
+        stopBook = new TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>>();
+
+    }
+    /**
+     * 
+     * Alternative constructor of the class.
+     * Create an order book from a market object.
+     * 
+     * Synchronized on market to avoid changes in the market during the creation of the order book.
+     * 
+     * @param market The market object to use to create the order book.
+     * 
+     * @throws NullPointerException If the primary currency, the secondary currency or the increment are null.
+     * @throws IllegalArgumentException If the primary and secondary currencies are the same.
+     * 
+     */ 
+    public OrderBook(Market market) throws NullPointerException, IllegalArgumentException {
+        
+        super(market.getPrimaryCurrency(), market.getSecondaryCurrency(), market.getIncrement());
+
+        synchronized (market) {
+
+            SpecificPrice actualPriceAsk = null;
+            SpecificPrice actualPriceBid = null;
+            
+            actualPriceAsk = market.getActualPriceAsk();
+            actualPriceBid = market.getActualPriceBid();
+
+            if (actualPriceAsk != null)
+                super.setActualPrices(actualPriceAsk, actualPriceBid);
+            if (actualPriceBid != null)
+                super.setActualPrices(actualPriceAsk, actualPriceBid);
+
+        }
 
         limitBook = new TreeMap<SpecificPrice, OrderBookLine<LimitOrder>>();
         stopBook = new TreeMap<SpecificPrice, OrderBookLine<StopMarketOrder>>();
@@ -82,243 +114,254 @@ public class OrderBook extends Market {
 
     // LINES MANAGEMENT
     /**
+     * 
      * It's private because it's used only by the class.
      * 
      * Add a line to the order book.
-     * The line is added to the limit book or to the stop book.
+     * The line is added to the limit book or to the stop book based on the initial order.
+     * The initial (first) order is used to detect the correct book to use and so the line's type.
      * 
-     * The first order is used to detect the correct book to use.
-     * NB: The first order is NOT added to the line.
+     * This method is intended to create a NEW LINE, if the line with the specified price value already exists, an exception will be throwed.
      * 
-     * This method is intended to create a NEW LINE, if the line with the specified price already exists, an exception will be throwed.
+     * Synchronized to avoid concurrency problems, to protect the limit book and the stop book.
+     * Synchronized on the initial order to avoid modifications of it during the execution.
      * 
-     * @param <O> Order type, could be LimitOrder or StopMarketOrder.
+     * @param <GenericOrder> Order type, could be LimitOrder or StopMarketOrder.
      * @param linePrice The price of the line.
      * @param initialOrder The first order to add to the line.
      * 
-     * @throws IllegalArgumentException If the initialOrder market not match with order book market. If the price value of the initialOrder not match with the line price value. If the price type of the initialOrder not match with the line price type. If the price market of the initialOrder not match with the line price market. If the line with the specified price already exists in the book. If the order type is not supported.
-     * @throws NullPointerException If the initialOrder or the linePrice are null.
+     * @throws NullPointerException If the initial order or the price line are null.
+     * @throws IllegalArgumentException  If the initial order has some problems with the line attributes. If the line with the specified price already exists in the book. If the line price market not match with order book market.
+     * 
      */
-    private <GenericOrder extends Order> void addLine(SpecificPrice linePrice, GenericOrder initialOrder) throws IllegalArgumentException, NullPointerException {
+    private synchronized <GenericOrder extends Order> void addLine(SpecificPrice linePrice, GenericOrder initialOrder) throws NullPointerException {
+        
+        // Null checks.
         if (initialOrder == null) {
-            throw new NullPointerException("Initial order cannot be null.");
+            throw new NullPointerException("Initial order to be used to add an order book line cannot be null.");
         }
         if (linePrice == null) {
-            throw new NullPointerException("Line price cannot be null.");
+            throw new NullPointerException("Line price to be used to add an order book line cannot be null.");
+        }
+
+        // Market checks.
+        // Checked in this way since the order book extends the market class.
+        // Price has no setters, no synchronization needed.
+        if (linePrice.getMarket().getPrimaryCurrency() != this.getPrimaryCurrency() || linePrice.getMarket().getSecondaryCurrency() != this.getSecondaryCurrency()) {
+            throw new IllegalArgumentException("Line price market, to be used to add an order book line, not match with order book market.");
         }
         
-        // Market checks.
-        if (!initialOrder.getMarket().equals(this)) {
-            throw new IllegalArgumentException("Initial order market not match with order book market.");
-        }
+        // All coherence checks (linePrice and initialOrder) are done in the OrderBookLine constructor.
 
-        // Price checks.
-        if (!initialOrder.getPrice().equals(linePrice)) {
-            throw new IllegalArgumentException("Initial order price not match with line price.");
-        }
-        if (initialOrder.getPrice().getType() != linePrice.getType()) {
-            throw new IllegalArgumentException("Initial order price type not match with line price type.");
-        }
+        // No copy, since we need to update the quantity during an order execution.
 
-        if (initialOrder instanceof LimitOrder) {
-            if (this.limitBook.containsKey(initialOrder.getPrice()))
-                throw new IllegalArgumentException("Line with this price already exists in the limit book.");
-            LimitOrder order = (LimitOrder) initialOrder;
-            OrderBookLine<LimitOrder> line = new OrderBookLine<LimitOrder>(linePrice, order);
-            this.limitBook.put(linePrice, line);
-        } else if (initialOrder instanceof StopMarketOrder) {
-            if (this.stopBook.containsKey(initialOrder.getPrice()))
-                throw new IllegalArgumentException("Line with this price already exists in the stop book.");
-            StopMarketOrder order = (StopMarketOrder) initialOrder;
-            OrderBookLine<StopMarketOrder> line = new OrderBookLine<StopMarketOrder>(linePrice, order);
-            this.stopBook.put(linePrice, line);
-        } else {
-            throw new IllegalArgumentException("Initial order type not supported.");
+        synchronized (initialOrder) {
+
+            if (initialOrder instanceof LimitOrder) {
+
+                if (this.limitBook.containsKey(initialOrder.getPrice()))
+                    throw new IllegalArgumentException("An order book line with this price already exists in the limit book.");
+
+                LimitOrder order = (LimitOrder) initialOrder;
+
+                OrderBookLine<LimitOrder> line = new OrderBookLine<LimitOrder>(linePrice, order);
+
+                this.limitBook.put(linePrice, line);
+
+            } else if (initialOrder instanceof StopMarketOrder) {
+                
+                if (this.stopBook.containsKey(initialOrder.getPrice()))
+                    throw new IllegalArgumentException("An order book line with this price already exists in the stop book.");
+
+                StopMarketOrder order = (StopMarketOrder) initialOrder;
+
+                OrderBookLine<StopMarketOrder> line = new OrderBookLine<StopMarketOrder>(linePrice, order);
+
+                this.stopBook.put(linePrice, line);
+
+            } else {
+                throw new IllegalArgumentException("The initial order to be used to create a new order book line must be a LimitOrder or a StopMarketOrder.");
+            }
+
+            this.updateActualPricesAdd(linePrice);
+
         }
 
     }
     /**
+     * 
      * It's private because it's used only by the class.
      * 
-     * Remove a line from the order book.
-     * The line is removed from the limit book or from the stop book.
+     * Remove a line from the LIMIT order book.
      * 
-     * The last order is used to detect the correct book to use.
-     * NB: The last order is ALSO removed from the line.
+     * If the line with the specified price not exists, an exception will be throwed.
+     * An exception will be throwed also if the line contains more than zero orders, so if it's not empty.
      * 
-     * This method is intended to remove a line with only one order, if the line with the specified price not exists, an exception will be throwed.
-     * An exception will be throwed also if the line contains more than one order and if this the last order is not the one to remove.
+     * Synchronized to avoid concurrency problems, to protect the limit book.
      * 
-     * @param <O> Order type, could be LimitOrder or StopMarketOrder.
-     * @param linePrice The price of the line.
-     * @param lastOrder The last order to remove from the line.
+     * @param linePrice The price of the line to remove.
      * 
-     * @throws IllegalArgumentException If the lastOrder market not match with order book market. If the price value of the lastOrder not match with the line price value. If the price type of the lastOrder not match with the line price type. If the price market of the lastOrder not match with the line price market. If the line with the specified price not exists in the book. If the line with the specified price contains not with only this order in the book. If the given order not match with the last order in the line. If the order type is not supported.
-     * @throws NullPointerException If the lastOrder or the linePrice are null.
+     * @throws NullPointerException If the line price is null.
+     * @throws IllegalArgumentException If the line price market not match with order book market. If the line price to remove with this price not exists in the limit book. If the line price to remove with this price contains more than zero orders.
+     * 
      */
-    private <O extends Order> void removeLine(SpecificPrice linePrice, O lastOrder) throws IllegalArgumentException, NullPointerException {
+    private synchronized void removeLimitLine(SpecificPrice linePrice) throws IllegalArgumentException, NullPointerException {
     
+        // Null check.
         if (linePrice == null) {
-            throw new NullPointerException("Line price cannot be null.");
+            throw new NullPointerException("Line price to be used to remove an order book line cannot be null.");
         }
-        if (lastOrder == null) {
-            throw new NullPointerException("Order for type stop limit cannot be null.");
-        }
+
+        // Price has no setters, no synchronization needed.
 
         // Market checks.
-        if (!lastOrder.getMarket().equals(this)) {
-            throw new IllegalArgumentException("Order market not match with order book market.");
+        // Checked in this way since the order book extends the market class.
+        if (linePrice.getMarket().getPrimaryCurrency() != this.getPrimaryCurrency() || linePrice.getMarket().getSecondaryCurrency() != this.getSecondaryCurrency()) {
+            throw new IllegalArgumentException("Line price market, to be used to remove an order book line, not match with order book market.");
         }
 
-        // Price checks.
-        if (!lastOrder.getPrice().equals(linePrice)) {
-            throw new IllegalArgumentException("Order price not match with line price.");
-        }
-        if (lastOrder.getPrice().getType() != linePrice.getType()) {
-            throw new IllegalArgumentException("Order price type not match with line price type.");
-        }
-
-        if (lastOrder instanceof LimitOrder) {
-
-            // Checking if the line exists.
-            if (!this.limitBook.containsKey(lastOrder.getPrice()))
-                throw new IllegalArgumentException("Line with this price not exists in the limit book.");
+        // Checking if the line exists.
+        if (!this.limitBook.containsKey(linePrice))
+            throw new IllegalArgumentException("Line price to remove with this price not exists in the limit book.");
             
-            // Preventing the removal of a line with more than one order.
-            if (this.limitBook.get(lastOrder.getPrice()).getOrdersNumber() != 1)
-                throw new IllegalArgumentException("Line with this price not with only this order in the limit book.");
+        // Preventing the removal of a line with more than zero order.
+        if (this.limitBook.get(linePrice).getOrdersNumber() != 0)
+            throw new IllegalArgumentException("Line price to remove with this price contains more than zero orders.");
 
-            // Checking if the last order is the same as the one to remove.
-            LimitOrder order = this.limitBook.get(lastOrder.getPrice()).extractLastOrder(false);
-            if (!order.equals(lastOrder))
-                throw new IllegalArgumentException("Order not match with the last order in the line.");
+        // Removing the line.
+        this.limitBook.remove(linePrice);
 
-            // Removing the last order.
-            this.limitBook.get(lastOrder.getPrice()).extractLastOrder(true);
-
-            // Removing the line.
-            this.limitBook.remove(lastOrder.getPrice());
-
-        } else if (lastOrder instanceof StopMarketOrder) {
-
-            // Checking if the line exists.
-            if (!this.stopBook.containsKey(lastOrder.getPrice()))
-                throw new IllegalArgumentException("Line with this price not exists in the stop book.");
-
-            // Preventing the removal of a line with more than one order.
-            if (this.stopBook.get(lastOrder.getPrice()).getOrdersNumber() != 1)
-                throw new IllegalArgumentException("Line with this price not with only this order in the stop book.");
+        this.updateActualPricesRemove(linePrice);
             
-            // Checking if the last order is the same as the one to remove.
-            StopMarketOrder order = this.stopBook.get(lastOrder.getPrice()).extractLastOrder(false);
-            if (!order.equals(lastOrder))
-                throw new IllegalArgumentException("Order not match with the last order in the line.");
-
-            // Removing the last order.
-            this.stopBook.get(lastOrder.getPrice()).extractLastOrder(true);
-
-            // Removing the line.
-            this.stopBook.remove(lastOrder.getPrice());
-            
-        } else {
-            throw new IllegalArgumentException("Order type not supported.");
-        }
-
     }
     /**
-     * Public.
      * 
-     * Get a line from the order book.
-     * The line is get from the limit book or from the stop book.
+     * It's private because it's used only by the class.
      * 
-     * @param <O> Order type, could be LimitOrder or StopMarketOrder.
-     * @param price The price of the line to get.
+     * Remove a line from the STOP order book.
      * 
-     * @return The line with the specified price, a reference.
+     * If the line with the specified price not exists, an exception will be throwed.
+     * An exception will be throwed also if the line contains more than zero orders, so if it's not empty.
      * 
-     * @throws NullPointerException If the price is null.
-     * @throws IllegalArgumentException If the price market not match with order book market. If the order type is not supported.
+     * Synchronized to avoid concurrency problems, to protect the stop book.
+     * 
+     * @param linePrice The price of the line to remove.
+     * 
+     * @throws NullPointerException If the line price is null.
+     * @throws IllegalArgumentException If the line price market not match with order book market. If the line price to remove with this price not exists in the stop book. If the line price to remove with this price contains more than zero orders.
+     * 
      */
-    public <O extends Order> OrderBookLine<?> getLine(SpecificPrice price) throws NullPointerException, IllegalArgumentException {
-        if (price == null) {
-            throw new NullPointerException("Price cannot be null.");
+    private synchronized void removeStopLine(SpecificPrice linePrice) throws IllegalArgumentException, NullPointerException {
+    
+        // Null check.
+        if (linePrice == null) {
+            throw new NullPointerException("Line price to be used to remove an order book line cannot be null.");
         }
+
+        // Price has no setters, no synchronization needed.
 
         // Market checks.
-        if (!price.getMarket().equals(this)) {
-            throw new IllegalArgumentException("Price market not match with order book market.");
+        // Checked in this way since the order book extends the market class.
+        if (linePrice.getMarket().getPrimaryCurrency() != this.getPrimaryCurrency() || linePrice.getMarket().getSecondaryCurrency() != this.getSecondaryCurrency()) {
+            throw new IllegalArgumentException("Line price market, to be used to remove an order book line, not match with order book market.");
         }
 
-        O order = null;
-        if (order instanceof LimitOrder) {
-            return (OrderBookLine<LimitOrder>) this.limitBook.get(price);
-        } else if (order instanceof StopMarketOrder) {
-            return (OrderBookLine<StopMarketOrder>) this.stopBook.get(price);
-        } else {
-            throw new IllegalArgumentException("Order type not supported.");
-        }
+        // Checking if the line exists.
+        if (!this.stopBook.containsKey(linePrice))
+            throw new IllegalArgumentException("Line price to remove with this price not exists in the stop book.");
+            
+        // Preventing the removal of a line with more than zero order.
+        if (this.stopBook.get(linePrice).getOrdersNumber() != 0)
+            throw new IllegalArgumentException("Line price to remove with this price contains more than zero orders.");
 
+        // Removing the line.
+        this.stopBook.remove(linePrice);
+
+        this.updateActualPricesRemove(linePrice);
+            
     }
-
+    
     // Super info + limit book lines.
     @Override
-    public String toString() {
+    public synchronized String toString() {
+
         String superInfo = super.toString();
+        String bestAsk = super.getActualPriceAsk() != null ? super.getActualPriceAsk().getValue().toString() : "null";
+        String bestBid = super.getActualPriceBid() != null ? super.getActualPriceBid().getValue().toString() : "null";
+        // Short super info.
+        superInfo = String.format("Pair [%s/%s] - Best Ask: [%s] - Best Bid: [%s]", super.getPrimaryCurrency(), super.getSecondaryCurrency(), bestAsk, bestBid);
+
+        // Length is good since the super.toString() is a one line string.
         String separator = new Separator("-", superInfo.length()).toString();
 
         // Adding the basic market info.
-        String result = separator + superInfo + "\n" + separator;
+        String result = "\n" + separator + "\n" + superInfo + "\n" + separator;
 
         // I want to divide the best ask and the best bid.
-        // So I need to know the position of the best bid.
-        LinkedList<String> lines = new LinkedList<String>();
-        separator = new Separator("*").toString();
-        Integer beforeLineBidIndex = 0;
-        Integer counter = 0;
-        for (OrderBookLine<LimitOrder> line : limitBook.values()) {
-            String lineStr = line.toStringWithOrders();
-            if (line.getLinePrice().getValue() == super.getActualPriceAsk().getValue()) {
-                lineStr += separator;
+        // From top to bottom: ask, ask, best ask, best bid, bid, bid.
+        Boolean firstBid = true;
+        String lineStr = "";
+        for (SpecificPrice price : limitBook.keySet()) {
+
+            OrderBookLine<LimitOrder> line = limitBook.get(price);
+            // Removing additionals infos.
+            lineStr = line.toString().split("Type")[1].trim();
+
+            if (price.getType() == PriceType.ASK) {
+                result += "\n" + lineStr;
+            } else {
+                if (firstBid) {
+                    String separator2 = new Separator("*", lineStr.length()).toString();
+                    result += "\n" + separator2;
+                    firstBid = false;
+                }
+                result += "\n" + lineStr;
             }
-            if (line.getLinePrice().getValue() == super.getActualPriceBid().getValue()) {
-                beforeLineBidIndex = counter;
-            }
-            lines.add(lineStr);
-            counter++;
+
         }
 
-        // Inserting the separator at the previous found bid index.
-        lines.add(beforeLineBidIndex, separator);
-
-        // Joining the lines.
-        for (String line : lines) {
-            result += line;
-        }
+        result += "\n" + separator + "\n";
         return result;
+
     }
 
-    // ACTUAL PRICES MANAGEMENT
+    // ACTUAL PRICES MANAGEMENT & STOP ORDERS TRIGGER
     /**
+     * 
      * It's private because it's used only by the class.
      * 
-     * Update the actual prices of the market, both the best ask and the best bid.
+     * Update the actual prices of the market, both (i.e. one of the two) the best ask and the best bid.
+     * 
      * THIS MUST BE CALLED AT EACH LINE ADDED, AFTER.
-     * IT'S ITENDED TO WORKS ONLY BY WITH THE LIMIT BOOK.
      * 
-     * @param linePriceAdded The line price added.
+     * IT'S ITENDED TO WORKS ONLY WITH THE LIMIT BOOK.
      * 
-     * @throws NullPointerException If the linePriceAdded is null.
-     * @throws IllegalArgumentException If the linePriceAdded market not match with order book market.
+     * Synchronized to avoid concurrency problems.
+     * 
+     * @param linePriceAdded The line price added to the limit book.
+     * 
+     * @throws NullPointerException If the price line added is null.
+     * @throws IllegalArgumentException If the price line added market not match with order book market. If the price line added not exists in the limit book.
+     * 
      */
-    private void updateActualPricesAdd(SpecificPrice linePriceAdded) throws NullPointerException, IllegalArgumentException {
+    private synchronized void updateActualPricesAdd(SpecificPrice linePriceAdded) throws NullPointerException, IllegalArgumentException {
+
+        // Null check.
         if (linePriceAdded == null) {
-            throw new NullPointerException("Line price cannot be null.");
+            throw new NullPointerException("Line price added, to be used to update the actuals (best) market prices, cannot be null.");
         }
 
         // Market checks.
-        if (linePriceAdded.getMarket().equals(this)) {
-            throw new IllegalArgumentException("Line price market not match with order book market.");
+        // Checked in this way since the order book extends the market class.
+        if (linePriceAdded.getMarket().getPrimaryCurrency() != this.getPrimaryCurrency() || linePriceAdded.getMarket().getSecondaryCurrency() != this.getSecondaryCurrency()) {
+            throw new IllegalArgumentException("Line price added, to be used to update the actuals (best) market prices, market not match with order book market.");
         }
+
+        // Price has no setters, no synchronization needed.
+
+        // Checking if the line exists.
+        if (!this.limitBook.containsKey(linePriceAdded))
+            throw new IllegalArgumentException("Line price added, to be used to update the actuals (best) market prices, not exists in the limit book.");
 
         // Iterating in ascending order price lines. E.g.:
         // ask, ask, best ask, best bid, bid, bid
@@ -326,63 +369,87 @@ public class OrderBook extends Market {
         SpecificPrice bestAsk = super.getActualPriceAsk();
         SpecificPrice bestBid = super.getActualPriceBid();
         if (linePriceAdded.getType() == PriceType.ASK) {
+
             if (bestAsk == null) {
                 // First ask line.
+                // Both methods are synchronized, and of the same class.
                 super.setActualPrices(linePriceAdded, super.getActualPriceBid());
                 this.triggerStopOrders();
             } else {
-                if (linePriceAdded.getValue() > bestAsk.getValue()) {
+                if (linePriceAdded.getValue() < bestAsk.getValue()) {
+                    // Both methods are synchronized, and of the same class.
                     super.setActualPrices(linePriceAdded, super.getActualPriceBid());
                     this.triggerStopOrders();
+                } else {
+                    // The added price is not more convenient of the present one.
                 }
             }
+
         } else if (linePriceAdded.getType() == PriceType.BID) {
+
             if (bestBid == null) {
                 // First bid line.
                 super.setActualPrices(super.getActualPriceAsk(), linePriceAdded);
                 this.triggerStopOrders();
             } else {
-                if (linePriceAdded.getValue() < bestBid.getValue()) {
+                if (linePriceAdded.getValue() > bestBid.getValue()) {
                     super.setActualPrices(super.getActualPriceAsk(), linePriceAdded);
                     this.triggerStopOrders();
+                } else {
+                    // The added price is not more convenient of the present one.
                 }
             }
         }
 
     }
     /**
+     * 
      * It's private because it's used only by the class.
      * 
-     * Update the actual prices of the market, both the best ask and the best bid.
+     * Update the actual prices of the market, both (i.e. one of the two) the best ask and the best bid.
+     * 
      * THIS MUST BE CALLED AT EACH LINE REMOVED, AFTER.
      * 
-     * @param linePriceRemove The line price removed.
+     * IT'S ITENDED TO WORKS ONLY WITH THE LIMIT BOOK.
      * 
-     * @throws NullPointerException If the linePriceRemove is null.
-     * @throws IllegalArgumentException If the linePriceRemove market not match with order book market.
+     * Synchronized to avoid concurrency problems.
+     * 
+     * @param linePriceRemoved The line price removed from the limit book.
+     * 
+     * @throws NullPointerException If the price line removed is null.
+     * @throws IllegalArgumentException If the price line removed market not match with order book market.
+     * 
      */
-    private void updateActualPricesRemove(SpecificPrice linePriceRemove) throws NullPointerException, IllegalArgumentException {
-        if (linePriceRemove == null) {
-            throw new NullPointerException("Line price cannot be null.");
+    private synchronized void updateActualPricesRemove(SpecificPrice linePriceRemoved) throws NullPointerException, IllegalArgumentException {
+        
+        // Null check.
+        if (linePriceRemoved == null) {
+            throw new NullPointerException("Line price removed, to be used to update the actuals (best) market prices, cannot be null.");
         }
 
         // Market checks.
-        if (linePriceRemove.getMarket().equals(this)) {
-            throw new IllegalArgumentException("Line price market not match with order book market.");
+        // Checked in this way since the order book extends the market class.
+        if (linePriceRemoved.getMarket().getPrimaryCurrency() != this.getPrimaryCurrency() || linePriceRemoved.getMarket().getSecondaryCurrency() != this.getSecondaryCurrency()) {
+            throw new IllegalArgumentException("Line price removed, to be used to update the actuals (best) market prices, market not match with order book market.");
         }
+
+        // Price has no setters, no synchronization needed.
 
         // Iterating in ascending order. E.g.:
         // ask, ask, best ask, best bid, bid, bid
 
         SpecificPrice bestAsk = super.getActualPriceAsk();
         SpecificPrice bestBid = super.getActualPriceBid();
-        if (linePriceRemove.getType() == PriceType.ASK) {
-            if (bestAsk.getValue() == linePriceRemove.getValue()) {
+        if (linePriceRemoved.getType() == PriceType.ASK) {
+
+            if (bestAsk.getValue() == linePriceRemoved.getValue()) {
+
                 // The removed line is the best ask.
                 // I need to find the new best ask.
                 SpecificPrice newBestAsk = null;
                 SpecificPrice previousPrice = null;
                 for (SpecificPrice price : limitBook.keySet()) {
+
                     if (price.getType() == PriceType.ASK) {
                         previousPrice = price;
                     }else {
@@ -390,12 +457,18 @@ public class OrderBook extends Market {
                         newBestAsk = previousPrice;
                         break;
                     }
+
                 }
+                // Both methods are synchronized, and of the same class.
                 super.setActualPrices(newBestAsk, super.getActualPriceBid());
                 this.triggerStopOrders();
+
             }
-        } else if (linePriceRemove.getType() == PriceType.BID) {
-            if (bestBid.getValue() == linePriceRemove.getValue()) {
+
+        } else if (linePriceRemoved.getType() == PriceType.BID) {
+
+            if (bestBid.getValue() == linePriceRemoved.getValue()) {
+
                 // The removed line is the best bid.
                 // I need to find the new best bid.
                 SpecificPrice newBestBid = null;
@@ -406,284 +479,323 @@ public class OrderBook extends Market {
                         break;
                     }
                 }
+
+                // Both methods are synchronized, and of the same class.
                 super.setActualPrices(super.getActualPriceAsk(), newBestBid);
                 this.triggerStopOrders();
+
             }
+
         }
+
     }
     /**
+     * 
      * It's private because it's used only by the class.
      * 
-     * This method MUST be called after the actual prices are updated.
+     * THIS METHOD MUST BE CALLED AFTER THE ACTUAL PRICES ARE UPDATED. IT'S CALLED IN THE UPDATE ACTUAL PRICES METHODS ABOVE.
      * 
-     * It's execute all the stop orders (if no fail occurs) that are in the stop book on the new actual prices lines.
+     * It executes all the stop orders (if no fail occurs) that are in the stop book on the both (i.e. one of the two) NEW ACTUAL (BEST) PRICES lines.
+     * 
+     * Synchronized to avoid concurrency problems.
+     * 
      */
-    private void triggerStopOrders() {
-
-        SpecificPrice bestAsk = super.getActualPriceAsk();
-        SpecificPrice bestBid = super.getActualPriceBid();
-
-        OrderBookLine<StopMarketOrder> lineAsk = stopBook.get(bestAsk);
-        OrderBookLine<StopMarketOrder> lineBid = stopBook.get(bestBid);
-
-        TreeMap<User, LinkedList<Order>> executedOrders = new TreeMap<User, LinkedList<Order>>();
+    private synchronized void triggerStopOrders() {
 
         while (true) {
 
-            MarketOrder order = null;
-            Boolean executed = null;
+            SpecificPrice bestAsk = super.getActualPriceAsk();
+            SpecificPrice bestBid = super.getActualPriceBid();
+    
+            OrderBookLine<StopMarketOrder> lineAsk = null;
+            OrderBookLine<StopMarketOrder> lineBid = null;
+    
+            // Remember that best ask and best bid can be null.
+            if (bestAsk != null)
+                lineAsk = stopBook.get(bestAsk);
+            if (bestBid != null)
+                lineBid = stopBook.get(bestBid);
+
+            MarketOrder marketOrder = null;
+            Boolean executedMarketOrder = null;
             if (lineAsk != null) {
-                order = lineAsk.executeStopOrder();
+                marketOrder = lineAsk.executeStopOrderFromStopLine(this);
 
-                if (order == null) {
-                    // Last order on the line.
-                    StopMarketOrder stop = lineAsk.extractLastOrder(false);
-
-                    order = new MarketOrder(stop.getMarket(), stop.getPrice().getType(), stop.getQuantity(), stop.getUser());
-
-                    order.setId(stop.getId());
-
-                    this.removeLine(bestAsk, stop);
-
-                    lineAsk = null;
-                }else {
-                    // Removing the order from the line.
-                    lineAsk.extractLastOrder(true);
+                if (lineAsk.getOrdersNumber() == 0) {
+                    // The line is empty, must be removed.
+                    this.removeStopLine(lineAsk.getLinePrice());
+                    break;
                 }
 
-                executed = this.executeOrder(order);
+                // Executing the market order getted from the stop order.
+                executedMarketOrder = this.executeOrder(marketOrder);
 
-                if (executed) {
-                    StopMarketOrder stop =  new StopMarketOrder(order.getPrice(), order.getQuantity(), order.getUser());
-                    stop.setId(order.getId());
-                    if (executedOrders.containsKey(order.getUser())) {
-                        executedOrders.get(order.getUser()).add(stop);
-                    }else {
-                        LinkedList<Order> orders = new LinkedList<Order>();
-                        orders.add(stop);
-                        executedOrders.put(order.getUser(), orders);
-                    }
-                    for (User u : executedOrders.keySet()) {
-                        // CAMBIARE
-                        if (u != null) return;
-                        // u.notifyTrades(executedOrders.get(u));
-                    }
+                if (executedMarketOrder) {
+                    // TODO: Here, executed market order.
                 }
+            
             }
+
             if (lineBid != null) {
-                // Cannot be null.
-                order = lineBid.executeStopOrder();
 
-                if (order == null) {
-                    // Last order on the line.
-                    StopMarketOrder stop = lineBid.extractLastOrder(false);
+                marketOrder = lineBid.executeStopOrderFromStopLine(this);
 
-                    order = new MarketOrder(stop.getMarket(), stop.getPrice().getType(), stop.getQuantity(), stop.getUser());
-
-                    order.setId(stop.getId());
-
-                    this.removeLine(bestBid, stop);
-
-                    lineBid = null;
-                }else {
-                    // Removing the order from the line.
-                    lineBid.extractLastOrder(true);
+                if (lineBid.getOrdersNumber() == 0) {
+                    // The line is empty, must be removed.
+                    this.removeStopLine(lineBid.getLinePrice());
+                    break;
                 }
 
-                executed = this.executeOrder(order);
-                if (executed) {
-                    StopMarketOrder stop =  new StopMarketOrder(order.getPrice(), order.getQuantity(), order.getUser());
-                    stop.setId(order.getId());
-                    if (executedOrders.containsKey(order.getUser())) {
-                        executedOrders.get(order.getUser()).add(stop);
-                    }else {
-                        LinkedList<Order> orders = new LinkedList<Order>();
-                        orders.add(stop);
-                        executedOrders.put(order.getUser(), orders);
-                    }
-                    for (User u : executedOrders.keySet()) {
-                        // u.notifyTrades(executedOrders.get(u));
-                        // CAMBIARE
-                        if (u != null) return;
-                    }
-                }            
+                // Executing the market order getted from the stop order.
+                executedMarketOrder = this.executeOrder(marketOrder);
+
+                if (executedMarketOrder) {
+                    // TODO: Here, executed market order.
+                }          
+            
             }
 
-            if (lineAsk == null && lineBid == null) 
+            if (lineAsk == null && lineBid == null) {
+                // No stop orders to execute.
                 break;
+            }
 
         }
 
     }
 
     // ORDERS EXECUTION
-    // Overloading the method to handle the different types of orders.
+    // Overloading the method to handle the different types of orders in different ways.
     // The market order is the most complex to handle.
     /**
+     * 
      * Execute a market order.
      * The order is executed against the limit book.
      * 
      * If the order is satisfiable, the order is executed.
-     * An order is considered satisfiable if the total quantity of the order is less than or equal to the total quantity of the limit book (each line).
+     * An order is considered satisfiable if the total quantity of the order is less than or equal to the total quantity of the limit book (sum of quantity of each line).
      * So a market order can be executed at different prices for different quantities.
      * 
      * The order is updated with the actual price of the market.
      * 
+     * Synchronized to avoid concurrency problems, to protect the limit book.
+     * Synchronized also on the order to avoid modifications of it during the execution.
+     * 
      * @param order The market order to execute.
+     * 
      * @return True if the order is satisfiable and executed, false otherwise.
      * 
      * @throws NullPointerException If the order is null.
+     * @throws IllegalArgumentException If the order's market not match with order book market.
+     * 
      */
-    public Boolean executeOrder(MarketOrder order) throws NullPointerException {
+    public synchronized Boolean executeOrder(MarketOrder order) throws NullPointerException, IllegalArgumentException {
 
+        // Null check.
         if (order == null) {
-            throw new NullPointerException("MarketOrder cannot be null.");
+            throw new NullPointerException("A market order, to be executed in a order book, cannot be null.");
         }
 
-        // Checking satisfability...
-        Boolean satisfiable = false;
-        Quantity totalQuantity = new Quantity(0);
-        for (SpecificPrice price : limitBook.keySet()) {
+        synchronized (order) {
 
-            OrderBookLine<LimitOrder> line = limitBook.get(price);
-
-            // Calculating the total quantity.
-            if (order.getPrice().getType() == PriceType.BID) {
-                if (line.getLinePrice().getType() == PriceType.ASK) {
-                    continue;
-                }
-                totalQuantity =  new Quantity(totalQuantity.getValue() + line.getTotalQuantity().getValue());
-            }else if (order.getPrice().getType() == PriceType.ASK) {
-                // We can exit before the last line, at the first bid line.
-                if (line.getLinePrice().getType() == PriceType.BID) {
-                    break;
-                }
-                totalQuantity =  new Quantity(totalQuantity.getValue() + line.getTotalQuantity().getValue());
+            // Market checks.
+            if (order.getMarket().compareTo(this) != 0) {
+                throw new IllegalArgumentException("A market order's market, to be executed in a order book, not match with order book market.");
             }
 
-            if (totalQuantity.getValue() >= order.getQuantity().getValue()) {
-                satisfiable = true;
-                break;
-            }
-        }
+            // Checking satisfability.
+            Boolean satisfiable = false;
+            Quantity totalQuantity = new Quantity(0);
+            for (SpecificPrice price : limitBook.keySet()) {
 
-        if (satisfiable) {
-            // Execute the order.
-            while (true) {
+                OrderBookLine<LimitOrder> line = limitBook.get(price);
 
-                // Updating order's price with the actual price of the market since the order is a market order.
-                Market market = order.getMarket();
-                order.setUpdatedPrice(market);
+                // Calculating the total quantity.
+                if (order.getPrice().getType() == PriceType.BID) {
+                    // We can exit before the last line, at the first ask line found, thanks to the sorted order book.
+                    if (line.getLinePrice().getType() == PriceType.ASK) {
+                        break;
+                    }
+                    totalQuantity =  new Quantity(totalQuantity.getValue() + line.getTotalQuantity().getValue());
+                }else if (order.getPrice().getType() == PriceType.ASK) {
+                    if (line.getLinePrice().getType() == PriceType.BID) {
+                        continue;
+                    }
+                    totalQuantity =  new Quantity(totalQuantity.getValue() + line.getTotalQuantity().getValue());
+                }
 
-                // Getting the best price.
-                SpecificPrice bestPrice = order.getPrice();
-                OrderBookLine<LimitOrder> bestLine = limitBook.get(bestPrice);
-
-                // Executing the order.
-                // I know I am playing only with pointers, not with objects copies.
-                MarketOrder copyOfOrder = order;
-                order = bestLine.executeMarketOrder(order, this);
-
-                if (order == null) {
-                    order = copyOfOrder;
-
-                    // Last order on the line.
-                    this.removeLine(bestPrice, bestLine.extractLastOrder(false));
-
-                    // Updating the actual prices.
-                    this.updateActualPricesRemove(bestPrice);
-                } 
-
-                if (order.getQuantity().getValue() == 0) {
-                    // The order is fully executed.
+                // Satisability check.
+                if (totalQuantity.getValue() >= order.getQuantity().getValue()) {
+                    satisfiable = true;
                     break;
                 }
 
-                // The order is not fully executed.
-                continue;
-
             }
-        }else{
-            // The order is not satisfiable.
-            return false;
-        }
 
-        return true;
+            if (satisfiable) {
+                // Execute the order.
+                while (true) {
+
+                    // Getting the best price.
+                    // In the getter of the market order, the price is setted to the actual price of the market.
+                    // No need to update it manually.
+                    SpecificPrice bestPrice = order.getPrice();
+                    OrderBookLine<LimitOrder> bestLine = limitBook.get(bestPrice);
+
+                    // Executing the order.
+                    Integer executed = -1;
+                    executed = bestLine.executeMarketOrderOnLimitLine(order);
+
+                    if (bestLine.getOrdersNumber() == 0) {
+                        // The line is empty, must be removed.
+                        this.removeLimitLine(bestLine.getLinePrice());
+                    }
+
+                    // Market order fullfilled.
+                    if (executed == 0 || executed == 2) {
+                        // TODO: Here, executed market order, pay attention to not process 2 times, here and in the triggerStopOrders method.
+                        break;
+                    }
+
+                }
+            }else{
+                // The order is not satisfiable.
+                return false;
+            }
+
+            return true;
+
+        }
 
     }
     /**
+     * 
      * Execute a limit order.
      * The order is added to the limit book.
      * 
-     * A check if the order is already present in the list is omitted, because a O(n) operation would be needed.
+     * A check if the order is already present in the list is omitted, because a O(n) operation would be needed, and the O(1) operation speed given by the list would be lost.
+     * 
+     * Synchronized to avoid concurrency problems, to protect the limit book.
+     * Synchronized also on the order to avoid modifications of it during the execution.
      * 
      * @param order The limit order to execute.
+     * 
      * @throws NullPointerException If the order is null.
      * @throws IllegalArgumentException If the order market not match with order book market.
-     * @return True if the order is executed, false otherwise.
+     * 
      */
-    public Boolean executeOrder(LimitOrder order) throws NullPointerException, IllegalArgumentException {
+    public synchronized void executeOrder(LimitOrder order) throws NullPointerException, IllegalArgumentException {
 
+        // Null check.
         if (order == null) {
-            throw new NullPointerException("LimitOrder cannot be null.");
+            throw new NullPointerException("A limit order, to be executed in a order book, cannot be null.");
         }
 
-        // Market checks.
-        if (!order.getMarket().equals(this)) {
-            throw new IllegalArgumentException("Order market not match with order book market.");
+        // No copy, since we need to update the quantity during an order execution.
+
+        SpecificPrice price = null;
+        synchronized (order) {
+
+            // Market checks.
+            if (order.getMarket().compareTo(this) != 0) {
+                throw new IllegalArgumentException("A limit order's market, to be executed in a order book, not match with order book market.");
+            }
+
+            price = order.getPrice();
+
+            // Safe because synchronized.
+            OrderBookLine<LimitOrder> limitLine = limitBook.get(price);
+
+            // New price line creation.
+            if (limitLine == null) {
+                this.addLine(price, order);
+                limitLine = limitBook.get(price);
+                // Order added in the constructor of the new line.
+                return;
+                // Best prices updated in the addLine method.
+            }
+
+            // A check if the order is already present in the list is omitted, because a O(n) operation would be needed, and the O(1) operation speed given by the list would be lost.
+            // Adding the order to the line.
+            limitLine.addOrder(order);
+
         }
-
-        SpecificPrice price = order.getPrice();
-        OrderBookLine<LimitOrder> limitLine = limitBook.get(price);
-
-        // New price line creation.
-        if (limitLine == null) {
-            this.addLine(price, order);
-            // Updating the actual prices.
-            this.updateActualPricesAdd(price);
-        }
-        
-        // A check if the order is already present in the list is omitted, because a O(n) operation would be needed.
-        // Adding the order to the line.
-        limitLine.addOrder(order);
-
-        return true;
 
     } 
     /**
+     * 
      * Execute a stop order.
      * The order is added to the stop book.
      * 
+     * A check if the order is already present in the list is omitted, because a O(n) operation would be needed, and the O(1) operation speed given by the list would be lost.
+     * 
+     * Synchronized to avoid concurrency problems, to protect the stop book.
+     * Synchonized also on the order to avoid modifications of it during the execution.
+     * 
      * @param order The stop order to execute.
+     * 
      * @throws NullPointerException If the order is null.
      * @throws IllegalArgumentException If the order market not match with order book market.
-     * @return True if the order is executed, false otherwise.
+     * 
      */
-    public Boolean executeOrder(StopMarketOrder order) throws NullPointerException, IllegalArgumentException {
+    public synchronized void executeOrder(StopMarketOrder order) throws NullPointerException, IllegalArgumentException {
 
+        // Null check.
         if (order == null) {
-            throw new NullPointerException("StopMarketOrder cannot be null.");
+            throw new NullPointerException("A stop order, to be executed in a order book, cannot be null.");
         }
 
-        // Market checks.
-        if (!order.getMarket().equals(this)) {
-            throw new IllegalArgumentException("Order market not match with order book market.");
+        // No copy, since we need to update the quantity during an order execution.
+
+        synchronized (order) {
+
+            // Market checks.
+            if (order.getMarket().compareTo(this) != 0) {
+                throw new IllegalArgumentException("A stop order's market, to be executed in a order book, not match with order book market.");
+            }
+
+            SpecificPrice price = order.getPrice();
+            OrderBookLine<StopMarketOrder> stopLine = stopBook.get(price);
+
+            // New price line creation.
+            if (stopLine == null) {
+                this.addLine(price, order);
+                // Best prices updated in the addLine method.
+                // Order added in the constructor of the new line.
+                return;
+            }
+
+            // A check if the order is already present in the list is omitted, because a O(n) operation would be needed, and the O(1) operation speed given by the list would be lost.
+            // Adding the order to the line.
+            stopLine.addOrder(order);
+
+
         }
-
-        SpecificPrice price = order.getPrice();
-        OrderBookLine<StopMarketOrder> stopLine = stopBook.get(price);
-
-        // New price line creation.
-        if (stopLine == null) {
-            this.addLine(price, order);
-        }
-
-        // A check if the order is already present in the list is omitted, because a O(n) operation would be needed.
-        // Adding the order to the line.
-        stopLine.addOrder(order);
-
-        return true;
 
     }
+
+    // GETTERS
+    /**
+     * 
+     * Get the market object associated with the order book.
+     * Could be needed in future implementations that need a market object but not an order book.
+     * 
+     * Synchronized to copy the actual prices in a safe way.
+     * 
+     * @return The market object associated with the order book as a new object.
+     * 
+     */
+    public synchronized Market getMarket() {
+
+        Market newMarket = new Market(super.getPrimaryCurrency(), super.getSecondaryCurrency(), super.getIncrement());
+        if (super.getActualPriceAsk() != null)
+            newMarket.setActualPrices(super.getActualPriceAsk(), super.getActualPriceBid());
+        if (super.getActualPriceBid() != null)
+            newMarket.setActualPrices(super.getActualPriceAsk(), super.getActualPriceBid());
+
+        return newMarket;
+
+    }
+
 
 }

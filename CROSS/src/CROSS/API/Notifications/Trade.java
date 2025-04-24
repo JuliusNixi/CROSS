@@ -9,7 +9,7 @@ import CROSS.Types.Price.GenericPrice;
  * This class is used in the notification system to represent a trade.
  * 
  * It extends the Generic order class.
- * It's used the Generic order class because it's the one with the most information about an order and has the more generic constructor.
+ * It's used the Generic order class because it's the one with the most information (size and type) about an order and has the more generic constructor.
  * 
  * This class adds a price, an order id, order type, and timestamp.
  * 
@@ -34,16 +34,16 @@ public class Trade extends CROSS.API.Requests.Orders.Generic {
      * 
      * Constructor for the class.
      * 
-     * @param <GenericOrder> The type of the order that was traded. Not used the generic Order class object since I need to know the type of the order, so keep its class.
+     * @param <GenericOrder> A generic order. Not used the generic Order class object since I need to know the type of the order, so keep its class and used a generic type.
      * @param order The order that was traded.
      * 
+     * @throws NullPointerException If the order is null.
      * @throws RuntimeException If there is an error while setting the timestamp.
      * 
      */
-    public <GenericOrder extends CROSS.Orders.Order> Trade(GenericOrder order) throws RuntimeException {
+    public <GenericOrder extends CROSS.Orders.Order> Trade(GenericOrder order) throws NullPointerException, RuntimeException {
 
-        Order baseOrder = order;
-        super(baseOrder);
+        super((Order) order);
 
         // Setting the price of the trade.
         this.price = order.getPrice().getValue();
@@ -70,11 +70,13 @@ public class Trade extends CROSS.API.Requests.Orders.Generic {
      * 
      * Gets the price of the trade.
      * 
-     * @return The price of the trade as GenericPrice.
+     * @return The price of the trade as GenericPrice object.
      * 
      */
     public GenericPrice getPrice() {
+
         return new GenericPrice(this.price);
+
     }
     /**
      * 
@@ -84,7 +86,9 @@ public class Trade extends CROSS.API.Requests.Orders.Generic {
      * 
      */
     public Integer getOrderId() {
-        return Integer.valueOf(this.orderId);
+
+        return this.orderId;
+
     }
     /**
      * 
@@ -94,7 +98,9 @@ public class Trade extends CROSS.API.Requests.Orders.Generic {
      * 
      */
     public String getOrderType() {
-        return String.format("%s", this.orderType);
+
+        return this.orderType;
+
     }
     /**
      * 
@@ -104,9 +110,16 @@ public class Trade extends CROSS.API.Requests.Orders.Generic {
      * 
      */
     public Long getTimestamp() {
-        return Long.valueOf(this.timestamp);
+
+        return this.timestamp;
+
     }
 
-    // TODO: Implement the toString method used in the notification system.
+    @Override
+    public String toString() {
+
+        return "Trade [Price [" + price + "] - Order ID [" + orderId + "] - Order Type [" + orderType + "] - Timestamp [" + timestamp + "]]";
+
+    }
 
 }

@@ -68,13 +68,15 @@ public class UniqueNumber {
      */
     public Long getNumber() {
 
-        return Long.valueOf(this.number);
+        return this.number;
 
     }
 
     @Override
     public String toString() {
+
         return this.number.toString();
+        
     }
 
 }

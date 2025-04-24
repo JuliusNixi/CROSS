@@ -13,6 +13,7 @@ import java.util.Properties;
 import java.net.Socket;
 import CROSS.API.Requests.Request;
 import CROSS.Exceptions.InvalidConfig;
+import CROSS.Users.User;
 
 /**
  * 
@@ -56,6 +57,9 @@ public class Client {
 
     // Used to send requests to the server.
     private OutputStream outputStream = null;
+
+    // Used to create orders client-side before converting in JSON.
+    private User connectedUser = null;
 
     /**
      * 
@@ -218,7 +222,7 @@ public class Client {
 
         // Already not connected check.
         if (this.socket == null) {
-            throw new RuntimeException("Client already not connected.");
+            throw new RuntimeException("Client already not connected. Nothing to disconnect.");
         }
 
         String messageError = null;
@@ -232,12 +236,11 @@ public class Client {
                 this.sendJSONToServer(json);
             }catch (IOException ex) {
                 // Trying to continue to close the output stream and the socket anyway.
-                System.err.println("Error sending EXIT request to the server while disconnecting.");
+                System.err.println("Error sending EXIT request to the server while disconnecting. Closing anyway.");
             }
 
             // Close the output stream.
             this.outputStream.close();
-            this.outputStream = null;
 
         } catch (IOException ex) {
             messageError = "Error closing the output stream while disconnecting the client from the server.";
@@ -246,7 +249,6 @@ public class Client {
         try {
             // Close the socket.
             this.socket.close();
-            this.socket = null;
         }catch (IOException ex) {
             if (messageError != null) {
                 messageError += " Error closing the socket while disconnecting the client from the server.";
@@ -255,8 +257,10 @@ public class Client {
             }
         }
 
-        if (messageError != null)
+        if (messageError != null){
+            System.err.println(messageError);
             throw new IOException(messageError);
+        }
         
         System.out.println("Client disconnected succesfully!");
 
@@ -266,11 +270,13 @@ public class Client {
      * Check if the client is connected to the server.
      * Used in the CLI.
      * 
-     * @return Boolean true if the client is connected, false otherwise.
+     * @return Boolean, true if the client is connected, false otherwise.
      * 
      */
     public Boolean isClientConnected() {
+
         return this.socket != null;
+
     }
 
     // CLI
@@ -279,7 +285,7 @@ public class Client {
      * Command Line Interface to interact with the server.
      * Static, I cannot have multiple instances of the CLI.
      * 
-     * Syncronized ON THE CLASS to avoid multiple CLI starts.
+     * Synchronized ON THE CLASS to avoid multiple CLI starts.
      * 
      * @param client The client to start the CLI for.
      * 
@@ -289,12 +295,12 @@ public class Client {
      */
     public static void CLI(Client client) throws RuntimeException, NullPointerException {
         
-        // Syncronized ON THE CLASS to avoid multiple CLI starts.
+        // Synchronized ON THE CLASS to avoid multiple CLI starts.
         synchronized (Client.class) {
 
             // Check for null client.
             if (client == null) {
-                throw new NullPointerException("Client in CLI cannot be null.");
+                throw new NullPointerException("Client to be used in the CLI cannot be null.");
             }
 
             // Check for null socket.
@@ -304,7 +310,7 @@ public class Client {
 
             // Check already started CLI.
             if (Client.clientCLI != null) {
-                throw new RuntimeException("CLI already started.");
+                throw new RuntimeException("Client's CLI already started.");
             }
 
             // Get and start the CLI thread.
@@ -321,9 +327,11 @@ public class Client {
     /**
      * 
      * Start a dedicated thread to handle the responses from the server.
-     * Cuold be used indipendently from the CLI.
+     * Cuold be used indipendently from the CLI, so to print them, but not to interact with the server.
      * 
-     * Syncronized to avoid multiple starts by different threads.
+     * Synchronized to avoid multiple starts by different threads.
+     * 
+     * Cannot have more threads started at the same time for the same client object.
      * 
      * @throws RuntimeException If the client's socket is null or the responses thread is already started.
      * 
@@ -337,7 +345,7 @@ public class Client {
 
         // Check already started responses thread.
         if (this.responsesThread != null) {
-            throw new RuntimeException("Responses thread already started.");
+            throw new RuntimeException("Client's responses thread already started.");
         }
 
         // Get and start a thread.
@@ -357,7 +365,9 @@ public class Client {
      * 
      */
     public String getPathToConfigPropertiesFile() {
-        return String.format("%s", this.pathToConfigPropertiesFile);
+
+        return this.pathToConfigPropertiesFile;
+
     }
     /**
      * 
@@ -367,17 +377,21 @@ public class Client {
      * 
      */
     public Integer getServerPort() {
-        return Integer.valueOf(this.serverPort);
+
+        return this.serverPort;
+
     }
     /**
      * 
-     * Get the socket. Private, used only in the class (CLI).
+     * Get the socket. Private, used only in this class (CLI method).
      * 
      * @return Socket rapresenting the client's socket.
      * 
      */
     private Socket getSocket() {
+
         return this.socket;
+
     }
     /**
      * 
@@ -394,20 +408,35 @@ public class Client {
 
         // Connection check.
         if (this.socket == null) {
-            throw new RuntimeException("Client's socket cannot be null to read from the server. Call connectClient() before.");
+            throw new RuntimeException("Client's socket cannot be null to get the input stream from the server. Call connectClient() before.");
         }
 
         try {
             return this.socket.getInputStream();
         } catch (IOException ex) {
-            throw new IOException("Error getting the input stream from the server socket.");
+            throw new IOException("Error getting the client's input stream from the server socket.");
         }
+
+    }
+     /**
+     * 
+     * Get the connected user.
+     * 
+     * @return An User object rapresenting the current connected user.
+     * 
+     */   
+    public User getConnectedUser() {
+
+        return this.connectedUser;
 
     }
 
     @Override
     public String toString() {
-        return String.format("Client Info's [Server IP [%s] - Server port [%s] - Config file path [%s]]", this.serverAddress, this.getServerPort(), this.getPathToConfigPropertiesFile());
+
+        String connected = this.socket != null ? "connected" : "not connected";
+        return String.format("Client Info's [Server IP [%s] - Server port [%s] - Config file path [%s] - Status [%s]]", this.serverAddress, this.getServerPort(), this.getPathToConfigPropertiesFile(), connected);
+
     }
 
     /**
@@ -415,7 +444,7 @@ public class Client {
      * Send a JSON string to the server.
      * The JSON is sent through the socket and rapresent a request to the server.
      * 
-     * Syncronized to avoid multiple requests at the same time on the same socket.
+     * Synchronized to avoid multiple requests at the same time on the same socket.
      * E.g: The main thread and the CLI thread could try to send a request at the same time.
      * 
      * @param json The JSON to send to the server.
@@ -443,8 +472,8 @@ public class Client {
             outputStreamBuff.write(json.getBytes());
             outputStreamBuff.flush();
         } catch (IOException ex) {
-            System.err.println("Error sending JSON request to the server.");
-            // I decided to not close the output stream and the socket here.
+            System.err.println("Error sending your JSON request to the server. Ignoring it.");
+            // I decided to not close the output stream and the socket here for only one bad request.
         }
 
     }

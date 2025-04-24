@@ -13,6 +13,8 @@ import com.google.gson.Gson;
  * 
  * It contains a method that converts the Java object to a JSON string to be sent through the network like an API with sockets from / to client and server.
  * 
+ * Abstract because it is not intended to be instantiated.
+ * 
  * @version 1.0
  * @author Giulio Nisi
  * 
@@ -30,6 +32,7 @@ public abstract class JSON {
         
         Gson gson = new Gson();
 
+        // Get as one line string, '\n' terminated.
         return gson.toJson(this).replace("\n", "").replace("\r", "").replace("\t", "").trim() + "\n";
         
     }

@@ -1,10 +1,6 @@
 package CROSS.API.Requests.PriceHistory;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
+import CROSS.Client.ClientActionsUtils;
 
 /**
  * 
@@ -14,6 +10,8 @@ import java.time.temporal.ChronoField;
  * 
  * @version 1.0
  * @author Giulio Nisi
+ * 
+ * @see ClientActionsUtils
  * 
  */
 public class PriceHistory {
@@ -38,24 +36,11 @@ public class PriceHistory {
             throw new NullPointerException("Month in price history request cannot be null.");
         }
 
-        month = month.trim().toLowerCase();
-
-        // Length check.
-        if (month.length() != 6) {
-            throw new IllegalArgumentException("Month in price history request must be in the format MMYYYY.");
-        }
-
-        // Parsing the month string.
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-            .appendPattern("MMyyyy")
-            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-            .toFormatter();
+        month = month.trim();
 
         try {
-            // Parse the string to a LocalDate, assuming the first day of the month.
-            LocalDate date = LocalDate.parse(month, formatter);
-            date.get(ChronoField.MONTH_OF_YEAR);
-        } catch (DateTimeParseException | ArithmeticException ex) {
+            ClientActionsUtils.parseMonthFromString(month);
+        }catch (Exception ex) {
             throw new IllegalArgumentException("Month in price history request must be in the format MMYYYY.");
         }
 
@@ -73,7 +58,7 @@ public class PriceHistory {
      */
     public String getMonth() {
 
-        return String.format("%s", this.month);
+        return this.month;
 
     }
 

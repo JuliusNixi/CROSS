@@ -13,10 +13,10 @@ package CROSS.Types;
  * 
  */
 public enum Currency {
-    // Some examples of currencies.
+    // Some examples of CRYPTO currencies.
     BTC,
     ETH,
 
-    USD,
+    USD, // Some examples of FIAT currencies.
     EUR
 }

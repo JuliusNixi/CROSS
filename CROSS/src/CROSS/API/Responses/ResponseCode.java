@@ -8,7 +8,7 @@ package CROSS.API.Responses;
  * 
  * For some type responses from the server, there's a status ("response" code as Integer) and its response content ("message" as string).
  * Responses with different types could have the same response code, but for different content reasons.
- * For that I used different enums and this dedicated class with methods.
+ * For that I used different enums and this dedicated class with methods to do some mapping.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -43,13 +43,16 @@ public class ResponseCode {
     // All as described in the assignment.
     public static enum ResponseContent {
         // Register
+        // OK used also in update credentials and login and logout and cancel order.
         OK,
         INVALID_PASSWORD,
         USERNAME_NOT_AVAILABLE,
+        // OTHER_ERROR used also in update credentials and login.
         OTHER_ERROR,
 
         // UpdateCredentials
         INVALID_NEW_PASSWORD,
+        // INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST used also in login.
         INVALID_USERNAME_PASSWORD_MATCH_OR_USERNAME_NOT_EXIST,
         NEW_PASSWORD_EQUAL_OLD,
         USER_CURRENTLY_LOGGED_IN,
@@ -182,10 +185,10 @@ public class ResponseCode {
         
         // Null check.
         if (type == null) {
-            throw new NullPointerException("Type of the response in the code generation cannot be null.");
+            throw new NullPointerException("Type of the response in the response code generation cannot be null.");
         }
         if (responseContent == null) {
-            throw new NullPointerException("Response content in the code generation cannot be null.");
+            throw new NullPointerException("Response content in the response code (content) generation cannot be null.");
         }
 
         this.type = type;
@@ -203,7 +206,7 @@ public class ResponseCode {
      */
     public ResponseType getType() {
 
-        return ResponseType.valueOf(type.name());
+        return ResponseType.valueOf(this.type.name());
 
     }
     /**

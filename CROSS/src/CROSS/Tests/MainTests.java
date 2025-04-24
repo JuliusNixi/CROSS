@@ -2,7 +2,7 @@ package CROSS.Tests;
 
 /**
  * 
- * This class is the main one used to execute a few basic tests.
+ * This class is the main one used to execute a few basics tests.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -17,7 +17,7 @@ public class MainTests {
      * Main method to execute some tests.
      * 
      */
-    public static void main() {
+    public static void main(String[] args) {
 
         try {
 
@@ -33,7 +33,7 @@ public class MainTests {
         } catch (InterruptedException ex){
             
             // This should never happens, needed for the Thread.sleep() in the tests. 
-            System.err.println("Interrupted exception in the main method, while executing tests.");
+            System.err.println("Interrupted exception in the main tests method, while executing tests.");
             ex.printStackTrace();
 
             System.exit(-1);

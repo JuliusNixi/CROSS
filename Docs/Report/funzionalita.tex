@@ -1,0 +1,9 @@
+\chapter{Funzionalit\'a aggiuntive}
+
+\begin{itemize}
+    \item Supporto parziale al multimercato. Tutte le classi nel codice sono state strutturate per la futura possibilit\'a di creare pi\'u mercati oltre a BTC/USD, con valute di propria scelta crypto e fiat (es: ETH/EUR) ed il relativo order book. Parziale, perch\'e per evitare di allontanarsi troppo dalle specifiche richieste le APIs, server, client e database supportano attualmente solo il mercato principale che \'e BTC/USD.
+    \item Avanzata coordinazione e gestione dello STDIN e STDOUT della CLI del client. L'input dell'utente \'e gestito e coordinato con l'output (le risposte ricevute dal server), quest'ultimo viene asincronamente stampato senza interrompere la digitazione dell'utente. Implementato mediante la libreria per la creazione di CLI avanzate in Java, denominata JLine.
+    \item Tantissimi Unit Test che utilizzano fuzzing casuale.
+    \item APIs costituite da classi aggiuntive (che fungono da interfacce) per permettere facilmente di scegliere quali informazioni (degli oggetti Java principali) esporre ed in che formato (comunque usando la libreria Gson come da specifiche).
+    \item Codice commentato secondo lo standard Javadoc.
+\end{itemize}

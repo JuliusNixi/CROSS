@@ -1,8 +1,13 @@
 package CROSS.Users;
 
+import java.util.LinkedList;
+import CROSS.Client.Client;
+
 /**
  * 
  * This class represents an User.
+ * 
+ * An user has a username and a password.
  * 
  * It implements the Comparable interface to allow comparing and sorting the users by username.
  * 
@@ -16,10 +21,15 @@ public class User implements Comparable<User> {
     private final String username;
     private final String password;
 
-    // Each user has a file line id, it's used to update the user in the database file without rewriting the whole file.
+    // Each user has a file line id, it's used to update the user in the users database file without rewriting the whole file.
     // It indicates the line of the users database file where the user is stored.
-    // This users database file line when an user is updated is overwritten (using the file line id) with blank spaces and then the updated (new) user is appended at the end of the users database file.
-    private Long fileLineId = null;
+    // This users database file line, when an user is updated, is overwritten (using the file line id) with blank spaces and then the updated (new) user is appended at the end of the users database file.
+    // Transient to avoid serialization of the clients list by GSON in / to JSON.
+    private transient Long fileLineId = null;
+
+    // A user can have multiple clients connected with it.
+    // Transient to avoid serialization of the clients list by GSON in / to JSON.
+    private transient LinkedList<Client> connectedClients = new LinkedList<Client>();
 
     /**
      * 
@@ -74,7 +84,9 @@ public class User implements Comparable<User> {
      * 
      */
     public String getUsername() {
-        return String.format("%s", this.username);
+
+        return this.username;
+
     }
     // DISCLAIMER:
     // This method and the toString() method are used for debugging and since this is not a real in-production application.
@@ -88,24 +100,22 @@ public class User implements Comparable<User> {
      * 
      */
     public String getPassword() {
-        return String.format("%s", this.password);
+
+        return this.password;
+
     }
     /**
      * 
      * This method returns the file line id of the User.
      * The file line id is used to update the User in the users database file without rewriting the whole file.
+     * Could be null if it's not set.
      * 
      * @return The file line id of the User as a Long or null if it's not set.
      * 
      */
     public Long getFileLineId() {
 
-        // Null check.
-        if (this.fileLineId == null) {
-            return null;
-        }
-
-        return Long.valueOf(this.fileLineId);
+        return this.fileLineId;
 
     }
 
@@ -119,43 +129,99 @@ public class User implements Comparable<User> {
      * 
      * @param fileLineId The file line id of the User as a Long.
      * 
-     * @throws NullPointerException If the file line id is null.
-     * 
      */
-    public synchronized void setFileLineId(Long fileLineId) throws NullPointerException {
-        
-        // Null check.
-        if (fileLineId == null) {
-            throw new NullPointerException("File line id to set on an user cannot be null.");
-        }
+    public synchronized void setFileLineId(Long fileLineId) {
+
+        // File line id COULD BE NULL, used to remove the file line id in the addUser() during an exception handling.
 
         this.fileLineId = fileLineId;
 
     }
 
     @Override
-    public int compareTo(User otherUser) throws NullPointerException, IllegalArgumentException {
+    public synchronized int compareTo(User otherUser) throws NullPointerException, IllegalArgumentException {
 
         // Null check.
         if (otherUser == null) {
             throw new NullPointerException("User to compare to cannot be null.");
         }
 
-        // Check if the file line id is the same.
-        if (this.getFileLineId() != null && otherUser.getFileLineId() != null && this.getFileLineId().equals(otherUser.getFileLineId()) && !this.getUsername().equals(otherUser.getUsername())) {
-            throw new IllegalArgumentException("Comparing users with the same file line id is not allowed to prevent introducing bugs.");
-        }
+        synchronized (otherUser) {
 
-        return this.username.compareTo(otherUser.getUsername());
+            // Check if the file line id is the same.
+            if (this.getFileLineId() != null && otherUser.getFileLineId() != null && this.getFileLineId().compareTo(otherUser.getFileLineId()) == 0 && this.getUsername().compareToIgnoreCase(otherUser.getUsername()) != 0) {
+                throw new IllegalArgumentException("Comparing users with the same file line id but different username is not allowed to prevent introducing bugs.");
+            }
+
+            return this.username.compareTo(otherUser.getUsername());
+
+        }
 
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
 
         String fileLineIdStr = this.getFileLineId() == null ? "null" : this.getFileLineId().toString();
 
         return String.format("Username [%s] - Password [%s] - FileLineID [%s]", this.getUsername(), this.getPassword(), fileLineIdStr);
+
+    }
+
+    /**
+     * 
+     * Add a client to the list of the clients connected with this user.
+     * 
+     * Synchronized to avoid multiple threads to add a client at the same time.
+     * Synchronized on the client to avoid multiple threads to modify the client during the addition.
+     * 
+     * @param client The client to add to the list of the clients connected with this user.
+     * 
+     * @throws NullPointerException If the client is null.
+     * 
+     */
+    public synchronized void addClient(Client client) throws NullPointerException {
+
+        // Null check.
+        if (client == null) {
+            throw new NullPointerException("Client connected to add to the list in the user cannot be null.");
+        }
+
+        synchronized (client) {
+
+            this.connectedClients.add(client);
+
+        }
+
+    }
+    /**
+     * 
+     * Remove a client from the list of the clients connected with this user.
+     * 
+     * Synchronized to avoid multiple threads to remove a client at the same time.
+     * Synchronized on the client to avoid multiple threads to modify the client during the removal.
+     * 
+     * @param client The client to remove from the list of the clients connected with this user.
+     * 
+     * @throws NullPointerException If the client is null.
+     * @throws IllegalArgumentException If the client is not in the list.
+     * 
+     */
+    public synchronized void removeClient(Client client) throws NullPointerException, IllegalArgumentException {
+
+        // Null check.
+        if (client == null) {
+            throw new NullPointerException("Client connected to remove from the list in the user cannot be null.");
+        }
+
+        synchronized (client) {
+
+            Boolean result = this.connectedClients.remove(client);
+            if (!result) {
+                throw new IllegalArgumentException("Client connected to remove from the list in the user is not in the list.");
+            }
+
+        }
 
     }
 

@@ -4,7 +4,7 @@ import CROSS.Users.User;
 
 /**
  * 
- * Generic is an abstract class used as base to be extended by the client's requests about his user's data.
+ * Generic is an abstract class used as base to be extended by the client's specific requests about the user's data.
  * 
  * It is used to represent the requests that are about the user's data.
  * 
@@ -32,7 +32,7 @@ public abstract class Generic {
      * 
      * Constructor of the class.
      * 
-     * @param user The user as Object.
+     * @param user The user as User object.
      * 
      * @throws NullPointerException If the user is null.
      * 
@@ -41,7 +41,7 @@ public abstract class Generic {
 
         // Null check.
         if (user == null) {
-            throw new NullPointerException("User to be used in the generic request cannot be null.");
+            throw new NullPointerException("User to be used in the generic user's data request cannot be null.");
         }
 
         this.username = user.getUsername();
@@ -57,7 +57,9 @@ public abstract class Generic {
      * 
      */
     public String getUsername() {
-        return String.format("%s", this.username);
+        
+        return username;
+
     }
 
 }

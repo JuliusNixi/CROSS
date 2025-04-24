@@ -11,9 +11,13 @@ import org.jline.utils.NonBlockingReader;
 
 /**
  * 
- * This class is responsible for handling the client CLI.
+ * This class is responsible for handling the client's CLI.
+ * 
  * It's a dedicated thread started with the CLI() method from the Client class.
+ * 
  * It has an associated client that will be used.
+ * 
+ * It will read the user's input from the CLI and process the commands by sending them to the server as JSON requests.
  * 
  * @version 1.0
  * @author Giulio Nisi
@@ -27,7 +31,7 @@ public class ClientCLIThread extends Thread {
     // The client object that will be used with the CLI.
     private final Client client;
 
-    // The prompt string to show to the user.
+    // The prompt string to show to the user in the terminal.
     private final static String PROMPT_STRING = "Client CLI -> ";
 
     /**
@@ -43,111 +47,24 @@ public class ClientCLIThread extends Thread {
         
         // Null check.
         if (client == null)
-            throw new NullPointerException("The client object in the CLI cannot be null.");
+            throw new NullPointerException("The client object in the CLI thread cannot be null.");
 
         this.client = client;
 
     }
     
-    /**
-     * 
-     * This method is responsible for processing the command string received from the user.
-     * Private method, called only by the run() method to make a cleaner code.
-     * 
-     * @param command The command string to process.
-     * 
-     * @return An Integer. -1: A critical error occurred, exit. 0: A NON critical error occurred, continue. 1: Request completed successfully, continue. 2: Exit request received, exit.
-     * 
-     */
-    private Integer processCommand(String command) {
-
-        // Null check.
-        if (command == null) {
-            System.err.println("Null command to process received.");
-            return -1;
-        }
-        
-        // Trim the command and convert it to lowercase.
-        // No lowercase conversion for the command, the args are case sensitive.
-        command = command.trim();
-
-        // Check if the command is valid.
-        ClientActionsUtils.ClientActions action = null;
-        try {
-            action = ClientActionsUtils.actionFromString(command);
-        } catch (IllegalArgumentException | NullPointerException ex) {
-            // This is not a critical error, just an invalid command.
-            System.out.println("Invalid string command.");
-            return 0;
-        }
-        
-        // Parse the arguments.
-        LinkedList<String> args = null;
-        try {
-            args = ClientActionsUtils.parseCommandFromString(command);
-            ClientActionsUtils.parseArgs(args, action);
-        } catch (IllegalArgumentException | NullPointerException ex) {
-            // This is not a critical error, just a invalid command.
-            System.out.println("Invalid arguments.");
-            return 0;
-        }
-        
-        // TODO: Getting the JSON string to send to the server. NEED TO WRITE THE METHOD TO GET THE JSON STRING TO SEND IN THE CLIENTACTIONUTILS CLASS.
-        // TODO: Correct the code since here.
-        String jsonToSend = null;
-        try {
-            jsonToSend = ClientActionsUtils.getJSONRequest(action, args);
-        }catch (Exception ex) {
-            // TODO: Handle exception.
-        }
-        if (jsonToSend == null) {
-            // This is not a critical error, just a invalid command.
-            System.out.println("Error processing your request, please check it and try again.");
-            return 0;
-        }
-        // TODO: Correct the code since here.
-
-        System.out.println("DEBUG: Request to send to the server: " + jsonToSend);
-        
-        // Send the JSON request to the server.
-        try {
-            this.client.sendJSONToServer(jsonToSend);
-            System.out.println("Request succesfully sent to the server.");
-        } catch (Exception ex) {
-            // This is a critical error.
-            System.err.println("Error sending the request to the server. Your request will be ignored. Trying to disconnecting you...");
-
-            // Disconnect the client in the run() method.
-            return -1;
-            
-        }
-        
-        // Normal exit request.
-        // Request to the server to exit gracefully already sent before above.
-        if (action == ClientActionsUtils.ClientActions.EXIT) {
-            System.out.println("Exit request sent to the server. Exiting...");
-
-            // Disconnect the client in the run() method.
-            return 2;
-            
-        }
-
-        return 1;
-
-    }
-
     // Main CLI loop.
     @Override
     public void run() {
 
         Integer exitStatus = 0;
 
-        // Will store the user input command.
+        // Will store the user's input command.
         StringBuffer buffer = new StringBuffer();
 
         // Try-with-resources to close the terminal at the end.
         try (Terminal terminal = TerminalBuilder.builder()
-                .system(true)         // Use system's stdin/stdout.
+                .system(true)         // Use system's stdin / stdout.
                 .build()) {
 
             // Store the original terminal attributes to restore them at the end.
@@ -281,5 +198,107 @@ public class ClientCLIThread extends Thread {
 
     }
 
+    /**
+     * 
+     * This method is responsible for processing the command string received from the user.
+     * Private method, called only by the run() method to make a cleaner code.
+     * 
+     * Never throws an exception, just return an Integer to indicate the status of the command to the caller.
+     * 
+     * @param command The (user's) command string to process.
+     * 
+     * @return An Integer. -1: A critical error occurred, exit. 0: A NON critical error occurred (invalid command), continue. 1: Request completed successfully, continue. 2: Normal exit request received, exit.
+     * 
+     */
+    private Integer processCommand(String command) {
+
+        // Null check.
+        if (command == null) {
+            System.err.println("Null command to process received.");
+            return -1;
+        }
+        
+        // Trim the command.
+        // No lowercase conversion for the command, the args (password) are case sensitive.
+        command = command.trim();
+
+        // Check if the command is valid.
+        ClientActionsUtils.ClientActions action = null;
+        try {
+            action = ClientActionsUtils.actionFromString(command);
+        } catch (IllegalArgumentException ex) {
+            // This is not a critical error, just an invalid command.
+            // Forward the error message to the user.
+            System.out.println(ex.getMessage());
+            return 0;
+        } catch (RuntimeException ex) {
+            // This is a critical error.
+            return -1;
+        }
+        
+        // Parse the arguments.
+        LinkedList<String> args = null;
+        LinkedList<Object> parsedArgs = null;
+        try {
+            args = ClientActionsUtils.parseCommandFromString(command);
+            parsedArgs = ClientActionsUtils.parseArgs(args, action);
+        } catch (IllegalArgumentException ex) {
+            // This is not a critical error, just a invalid command.
+            // Forward the error message to the user.
+            System.out.println(ex.getMessage());
+            return 0;
+        }
+        // Runtime exception is already handled above, cannot occur here.
+
+
+
+
+
+        
+        
+        // TODO: Getting the JSON string to send to the server. NEED TO WRITE THE METHOD TO GET THE JSON STRING TO SEND IN THE CLIENTACTIONUTILS CLASS.
+        // TODO: Correct the code since here.
+        String jsonToSend = null;
+        try {
+            jsonToSend = ClientActionsUtils.getJSONRequest(action, parsedArgs, client.getConnectedUser());
+        }catch (Exception ex) {
+            // TODO: Handle exception.
+        }
+        if (jsonToSend == null) {
+            // This is not a critical error, just a invalid command.
+            System.out.println("Error processing your request, please check it and try again.");
+            return 0;
+        }
+        // TODO: Correct the code since here.
+
+        System.out.println("DEBUG: Request to send to the server: " + jsonToSend);
+        
+        // Send the JSON request to the server.
+        try {
+            this.client.sendJSONToServer(jsonToSend);
+            System.out.println("Request succesfully sent to the server.");
+        } catch (Exception ex) {
+            // This is a critical error.
+            System.err.println("Error sending the request to the server. Your request will be ignored. Trying to disconnecting you...");
+
+            // Disconnect the client in the run() method.
+            return -1;
+            
+        }
+        
+        // Normal exit request.
+        // Request to the server to exit gracefully already sent before above.
+        if (action == ClientActionsUtils.ClientActions.EXIT) {
+
+            System.out.println("Exit request sent to the server. Exiting...");
+
+            // Disconnect the client in the run() method.
+            return 2;
+            
+        }
+
+        return 1;
+
+    }
 
 }
