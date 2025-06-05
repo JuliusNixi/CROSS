@@ -333,7 +333,7 @@ public abstract class Orders {
             }
 
             ZoneId gmtZone = ZoneId.of("GMT");
-            Map<LocalDate, List<MarketOrder>> groupedByDay = marketOrders.stream().collect(Collectors.groupingBy(order -> Instant.ofEpochMilli(order.getTimestamp()).atZone(gmtZone).toLocalDate()));
+            Map<LocalDate, List<MarketOrder>> groupedByDay = marketOrders.stream().collect(Collectors.groupingBy(order -> Instant.ofEpochSecond(order.getTimestamp()).atZone(gmtZone).toLocalDate()));
 
             // filter by month and year
             int monthint = Integer.parseInt(month.substring(0, 2));
