@@ -126,8 +126,11 @@ def unzippingjava(mosname: str) -> None:
     try:
         if Path(zip_path).exists() and Path(zip_path).is_file() and path.getsize(zip_path) / 1024 < 100:
             raise FileNotFoundError(f"The Java version .zip file '{zip_path}' are not valid. Maybe are the default ones (placeholder) downloaded by git or GitHub without the git lfs support?")
-        unzip_file(zip_path)
-        print(f"OK: Unzipped {zip_path} to './Unzipped'.")
+        if Path(zip_path.replace(".zip", "")).exists() and Path(zip_path.replace(".zip", "")).is_dir():
+            print(f"OK: The Java version directory '{zip_path.replace('.zip', '')}' already exists. No need to unzip the file.")
+        else:
+            unzip_file(zip_path)
+            print(f"OK: Unzipped {zip_path} to './Unzipped'.")
     except FileNotFoundError as e:
         print(f"Error: An error occurred while unzipping the Java version file: {e}", file=stderr)
         while True:
