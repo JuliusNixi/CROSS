@@ -12,7 +12,6 @@ import cross.api.requests.user.LogoutRequest;
 import cross.api.requests.user.RegisterLoginRequest;
 import cross.api.requests.user.UpdateCredentialsRequest;
 import cross.exceptions.InvalidUser;
-import cross.orderbook.OrderBook;
 import cross.orders.LimitOrder;
 import cross.orders.MarketOrder;
 import cross.orders.Order;
@@ -153,7 +152,7 @@ public class Request extends JSONAPIMessage {
         String username;
         String password;
         // Use OrderBook is ok since this method should be called only server side.
-        OrderBook orderBook = OrderBook.getOrderBookByCurrencies(Currency.getDefaultPrimaryCurrency(), Currency.getDefaultSecondaryCurrency());
+        // OrderBook orderBook = OrderBook.getOrderBookByCurrencies(Currency.getDefaultPrimaryCurrency(), Currency.getDefaultSecondaryCurrency());
         switch (action) {
             case LOGIN, REGISTER -> {
                 User user = null; 

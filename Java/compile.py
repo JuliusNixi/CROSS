@@ -132,7 +132,7 @@ def unzippingjava(mosname: str) -> None:
         print(f"Error: An error occurred while unzipping the Java version file: {e}", file=stderr)
         while True:
             answer = input("Do you want to download the Java versions .zip files? (Y/n): ")
-            if answer.lower() == "y" or answer.lower() == "":
+            if answer.lower() == "" or answer.lower()[0] == "y":
                 try:
                     download_java_versions()
                 except Exception as e:
@@ -227,7 +227,7 @@ def compilejavafiles(java_files: List[str], CROSS_dir: Path, javac_bin: str, mos
     # The '-d' argument is used to specify the output directory of the compiled Java files.
     command = f"./{javac_bin} -cp '{CROSS_dir}/lib/*' -d '../bin' {java_files_str}"
 
-    if "windows" in mosname:
+    if "windows" in mosname.lower():
         # On Windows, we need to use double quotes instead of single quotes.
         command = command.replace("'", "\"")
         command = command[2:]  # Remove the leading './' to make it compatible with Windows.
@@ -235,7 +235,7 @@ def compilejavafiles(java_files: List[str], CROSS_dir: Path, javac_bin: str, mos
 
     try:
         process = exec(command, shell=True, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = process.communicate()
+        stdout, stderr2 = process.communicate()
         if process.returncode != 0:
             error_message = stderr.decode().strip()
             print(f"Error: An error occured while compiling the Java files: {error_message}", file=stderr)
@@ -249,7 +249,7 @@ def execute(java_bin: str, mosname: str) -> None:
 
     serverorclient = input("Do you want to execute the server or the client? (s/c): ")
 
-    if serverorclient.lower()[0] == "s":
+    if len(serverorclient) > 0 and serverorclient.lower()[0] == "s":
         print("INFO: Executing the server...")
         cmd = f"cd .. && {'Java/' + java_bin} -cp \"./bin:./CROSS/lib/*\" MainServer"
         if "windows" in mosname.lower():
@@ -261,7 +261,7 @@ def execute(java_bin: str, mosname: str) -> None:
         except KeyboardInterrupt:
             print("INFO: Server execution interrupted by user.")
             process.terminate()
-    elif serverorclient.lower()[0] == "c":
+    elif len(serverorclient) > 0 and serverorclient.lower()[0] == "c":
         print("INFO: Executing the client...")
         cmd = f"cd .. && {"Java/" + java_bin} -cp \"./bin:./CROSS/lib/*\" MainClient"
         print(f"INFO: Executing command: {cmd}")
@@ -342,7 +342,7 @@ if __name__ == "__main__":
 
     compilejavafiles(java_files, str(CROSS_dir), javac_bin, mosname)
 
-    execute(java_bin)
+    execute(java_bin, mosname)
 
     cleanup()
 
