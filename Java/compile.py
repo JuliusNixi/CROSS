@@ -1,6 +1,6 @@
 # All the imports should be pre-installed with recent Python3.
 from platform import system as osname
-from platform import platform as arch
+from platform import machine as arch
 from pathlib import Path
 from sys import exit, stderr
 from zipfile import ZipFile
@@ -8,7 +8,7 @@ from typing import List, Tuple
 from subprocess import Popen as exec
 from subprocess import PIPE
 from shutil import rmtree, copyfile
-from os import system as ossystem
+from os import system as ossystem, path
 import urllib.request
 
 ########## Support functions ##########
@@ -45,6 +45,7 @@ def download_java_versions() -> None:
         basicurl + "Linux_x64.zip" + endurl,
         basicurl + "MacOS_ARM64.zip" + endurl,
         basicurl + "MacOS_x64.zip" + endurl,
+        basicurl + "Windows_x64.zip" + endurl,
     ]
 
     for url in urls:
@@ -90,9 +91,13 @@ def oschecks() -> str:
     else:
         print("Error: Unsupported operating system.", file=stderr)
         exit(1)
+    # arm64 on my Mac M1.
+    # ARM64 on my Windows ARM64 virtual machine.
+    # x86_64 on my Linux server.
+    # amd64 on my Windows desktop.
     if 'arm64' in arch().lower():
         mosname += " ARM64"
-    elif 'x64' in arch().lower():
+    elif 'amd64' in arch().lower() or 'x86_64' in arch().lower():
         mosname += " x64"
     else:
         print("Error: Unsupported architecture.", file=stderr)
@@ -119,6 +124,8 @@ def unzippingjava(mosname: str) -> None:
     basic_java_path = "./Versions"
     zip_path = basic_java_path + "/" + mosname.split()[0] + "_" + mosname.split()[1] + ".zip"
     try:
+        if Path(zip_path).exists() and Path(zip_path).is_file() and path.getsize(zip_path) / 1024 < 100:
+            raise FileNotFoundError(f"The Java version .zip file '{zip_path}' are not valid. Maybe are the default ones (placeholder) downloaded by git or GitHub without the git lfs support?")
         unzip_file(zip_path)
         print(f"OK: Unzipped {zip_path} to './Unzipped'.")
     except FileNotFoundError as e:
@@ -164,7 +171,7 @@ def findjavafilestocompile() -> Tuple[Path, List[str]]:
 
 # Find the 'javac' executable starting from the given path.
 # Return the path of the 'javac' executable as a string.
-def findjavac(start_path: str) -> str:
+def findjavac(start_path: str, mosname: str) -> str:
 
     start_path = Path(start_path)
     java_bin_path = ""
@@ -179,6 +186,11 @@ def findjavac(start_path: str) -> str:
         exit(1)
    
     javac_bin = java_bin_path / "javac"
+
+    if "windows" in mosname.lower():
+        # On Windows, the 'javac' executable is named 'javac.exe'.
+        javac_bin = javac_bin.with_suffix(".exe")
+
     if javac_bin.exists():
         return str(javac_bin)
     else:
@@ -206,14 +218,20 @@ def makeexecutable(file_path: str) -> None:
 # Compile the given Java files as java_files argument, in a strings list format.
 # The CROSS_dir argument is the path of the CROSS (the one containing the 'src' directory inside) project directory.
 # The javac_bin argument is the path of the 'javac' executable used to compile the Java files.
-def compilejavafiles(java_files: List[str], CROSS_dir: Path, javac_bin: str) -> None:
+def compilejavafiles(java_files: List[str], CROSS_dir: Path, javac_bin: str, mosname: str) -> None:
 
     # This is something like: "'file1.java' 'file2.java' 'file3.java'".
     java_files_str = " ".join(list(map(lambda e: "'" + e + "'", java_files)))
 
     # The '-cp' argument is used to specify the classpath of the Java files, so the libraries.
     # The '-d' argument is used to specify the output directory of the compiled Java files.
-    command = f"./{javac_bin} -cp '{CROSS_dir}/lib/*' -d '{CROSS_dir}/../bin' {java_files_str}"
+    command = f"./{javac_bin} -cp '{CROSS_dir}/lib/*' -d '../bin' {java_files_str}"
+
+    if "windows" in mosname:
+        # On Windows, we need to use double quotes instead of single quotes.
+        command = command.replace("'", "\"")
+        command = command[2:]  # Remove the leading './' to make it compatible with Windows.
+        command = command.replace("/", "\\")
 
     try:
         process = exec(command, shell=True, stdout=PIPE, stderr=PIPE)
@@ -227,13 +245,15 @@ def compilejavafiles(java_files: List[str], CROSS_dir: Path, javac_bin: str) -> 
         print(f"Error: The compilation failed with error: {e}", file=stderr)
         exit(1)
 
-def execute(java_bin: str) -> None:
+def execute(java_bin: str, mosname: str) -> None:
 
     serverorclient = input("Do you want to execute the server or the client? (s/c): ")
 
     if serverorclient.lower()[0] == "s":
         print("INFO: Executing the server...")
-        cmd = f"cd .. && {"Java/" + java_bin} -cp \"./bin:./CROSS/lib/*\" MainServer"
+        cmd = f"cd .. && {'Java/' + java_bin} -cp \"./bin:./CROSS/lib/*\" MainServer"
+        if "windows" in mosname.lower():
+            cmd = cmd.replace("/", "\\").replace(":", ";")
         print(f"INFO: Executing command: {cmd}")
         process = exec(cmd, shell=True)
         try:
@@ -275,7 +295,7 @@ if __name__ == "__main__":
 
     CROSS_dir, java_files = findjavafilestocompile()
 
-    javac_bin = findjavac(".")
+    javac_bin = findjavac(".", mosname)
 
     java_bin = str(javac_bin).replace("javac", "java")
     if not Path(java_bin).exists():
@@ -320,7 +340,7 @@ if __name__ == "__main__":
     print("OK: All checks passed.")
     print("INFO: Compiling Java files...")
 
-    compilejavafiles(java_files, str(CROSS_dir), javac_bin)
+    compilejavafiles(java_files, str(CROSS_dir), javac_bin, mosname)
 
     execute(java_bin)
 
