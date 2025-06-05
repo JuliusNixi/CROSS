@@ -1,0 +1,17 @@
+{
+"trades": [
+{"orderId": 82908, "type": "bid" , "orderType": "market", "size": 347, "price": 1553866709, "timestamp": 1730418574},
+{"orderId": 81562, "type": "ask" , "orderType": "stop", "size": 527, "price": 1530213201, "timestamp": 1730333491},
+{"orderId": 81578, "type": "ask" , "orderType": "limit", "size": 299, "price": 1530213201, "timestamp": 1730334883},
+{"orderId": 45, "type": "bid" , "orderType": "limit", "size": 2, "price": 120, "timestamp": 1736190000000},
+{"orderId": 1, "type": "bid" , "orderType": "market", "size": 2, "price": 100, "timestamp": 1735974000000},
+{"orderId": 44, "type": "ask" , "orderType": "market", "size": 2, "price": 75, "timestamp": 1736092800000},
+{"orderId": 3, "type": "bid" , "orderType": "market", "size": 2, "price": 90, "timestamp": 1735981200000},
+{"orderId": 42, "type": "bid" , "orderType": "market", "size": 2, "price": 115, "timestamp": 1704096000000},
+{"orderId": 2, "type": "bid" , "orderType": "market", "size": 2, "price": 110, "timestamp": 1736006400000},
+{"orderId": 43, "type": "bid" , "orderType": "market", "size": 2, "price": 80, "timestamp": 1738407600000},
+{"orderId": 4, "type": "bid" , "orderType": "market", "size": 2, "price": 105, "timestamp": 1736028000000},
+{"orderId": 44, "type": "bid" , "orderType": "stop", "size": 2, "price": 70, "timestamp": 1736010000000},
+{"orderId": 5, "type": "bid" , "orderType": "market", "size": 2, "price": 45, "timestamp": 1736499600000}
+]
+}

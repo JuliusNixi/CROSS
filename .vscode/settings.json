@@ -1,0 +1,23 @@
+// VS Code IDE settings.
+
+// This file is voluntarily synchronized with Git and GitHub, and not included in the ".gitignore" file.
+// This because, if in the future I will work again on this project on another machine, I will probably use VS Code IDE again and I will not have to remember how to configure these paths.
+// On the VS Code IDE the Extension Pack for Java has been used from the marketplace.
+{
+    "java.project.sourcePaths": [
+        "CROSS/src",
+    ],
+    "java.project.referencedLibraries": [
+        "CROSS/lib/jline-3.9.0.jar",
+        "CROSS/lib/gson-2.11.0.jar"
+    ],
+    "java.project.outputPath": "CROSS/bin",
+    "java.jdt.ls.java.home": "/Users/juliusnixi/Desktop/CROSS2/Java/Versions/MacOS_ARM64/jdk-21.0.6.jdk/Contents/Home",
+    "java.configuration.runtimes": [
+      {
+        "name": "JavaSE-21",
+        "path": "/Users/juliusnixi/Desktop/CROSS2/Java/Versions/MacOS_ARM64/jdk-21.0.6.jdk/Contents/Home",
+        "default": true
+      }
+    ],
+}

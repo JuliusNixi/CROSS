@@ -1,0 +1,8 @@
+# MacOS file system files.
+.DS_Store
+
+# LaTeX Texifier temporary files, used for the report.
+.tex*
+
+# Exclude the Java macOS current using development version folder.
+Java/Versions/MacOS_ARM64/
