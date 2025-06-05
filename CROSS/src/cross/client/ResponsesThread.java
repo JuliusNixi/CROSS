@@ -71,7 +71,7 @@ class ResponsesThread extends Thread {
         try (Scanner scanner = new Scanner(bin)) {
             
             String JSONresponse;
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted() && scanner.hasNextLine()) {
                 
                 try {
                     // JSON responses from the server are all '\n' terminated.
@@ -134,6 +134,9 @@ class ResponsesThread extends Thread {
 
             }
         
+            System.out.println("\nServer closed the connection.");
+            System.exit(0);
+
         }
 
     }

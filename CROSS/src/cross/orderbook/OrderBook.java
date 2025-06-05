@@ -888,20 +888,23 @@ public class OrderBook implements Comparable<OrderBook> {
             }
         }
 
-        // The main (and eventually others) thread must synchronize with the StopOrdersExecutorThread AND WAITS FOR IT, to avoid concurrency problems with ORDER EXECUTION (ARRIVAL PRIORITY) of the book orders.
+        // The ClientThread threads must synchronize with the StopOrdersExecutorThread AND WAITS FOR IT, to avoid concurrency problems with ORDER EXECUTION (ARRIVAL PRIORITY) of the book orders.
         // Initially I forgot to wait here, I notified the StopOrdersExecutorThread, but I did not wait for it, since I tought it was not needed, and it would have been nice to execute more orders together.
         // This is a bit sneaky problem, because does not cause operating problems and does not happen often.
         // In fact, initally, I didn't execute a lot of market orders, and the execution of orders in a different priority didn't happen, so the problem was not evident.
         // But later, when I executed a lot of market orders, the problem has emerged.
-        // I could have a lot of stop orders to execute by the StopOrdersExecutorThread, and when executing market orders from the main thread, these latter were being executed earlier, moving ahead of the stop orders and this although not serious, is not fair!
-        // This check is needed because the StopOrdersExecutorThread also use this method to execute the stop orders, so we must distinguish between the calls from the main (and eventually others) thread and the calls from the StopOrdersExecutorThread.
+        // I could have a lot of stop orders to execute by the StopOrdersExecutorThread, and when executing market orders from the ClientThread thread, these latter were being executed earlier, moving ahead of the stop orders and this although not serious, is not fair!
+        // This check is needed because the StopOrdersExecutorThread also use this method to execute the stop orders, so we must distinguish between the calls from the ClientThread threads and the calls from the StopOrdersExecutorThread.
         if (!Thread.currentThread().getName().equalsIgnoreCase(StopOrdersExecutorThread.class.getSimpleName())) {
 
             synchronized (this.stopNowMarketOrdersToExecute) {
                 while (!this.stopNowMarketOrdersToExecute.isEmpty()) {
-                    this.stopNowMarketOrdersToExecute.notify();
+                    // this wakes up the StopOrdersExecutorThread, to execute the stop orders.
+                    // but also could wakes up others ClientThread threads, that are waiting for the StopOrdersExecutorThread to finish.
+                    // these ClientThread threads will wait in the while below.
+                    this.stopNowMarketOrdersToExecute.notifyAll();
                     try {
-                        this.stopNowMarketOrdersToExecute.wait();
+                        while (!this.stopNowMarketOrdersToExecute.isEmpty()) this.stopNowMarketOrdersToExecute.wait();
                     } catch (InterruptedException ex) {
                     }
                 }

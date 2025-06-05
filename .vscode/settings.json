@@ -12,11 +12,11 @@
         "CROSS/lib/gson-2.11.0.jar"
     ],
     "java.project.outputPath": "CROSS/bin",
-    "java.jdt.ls.java.home": "/Users/juliusnixi/Desktop/CROSS2/Java/Versions/MacOS_ARM64/jdk-21.0.6.jdk/Contents/Home",
+    "java.jdt.ls.java.home": "/Users/juliusnixi/Desktop/CROSS/Java/Versions/MacOS_ARM64/jdk-21.0.6.jdk/Contents/Home",
     "java.configuration.runtimes": [
       {
         "name": "JavaSE-21",
-        "path": "/Users/juliusnixi/Desktop/CROSS2/Java/Versions/MacOS_ARM64/jdk-21.0.6.jdk/Contents/Home",
+        "path": "/Users/juliusnixi/Desktop/CROSS/Java/Versions/MacOS_ARM64/jdk-21.0.6.jdk/Contents/Home",
         "default": true
       }
     ],
