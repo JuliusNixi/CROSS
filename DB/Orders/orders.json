@@ -12,16 +12,6 @@
 {"orderId": 43, "type": "bid" , "orderType": "market", "size": 2, "price": 80, "timestamp": 1738407600},
 {"orderId": 4, "type": "bid" , "orderType": "market", "size": 2, "price": 105, "timestamp": 1736028000},
 {"orderId": 44, "type": "bid" , "orderType": "stop", "size": 2, "price": 70, "timestamp": 1736010000},
-{"orderId": 5, "type": "bid" , "orderType": "market", "size": 2, "price": 45, "timestamp": 1736499600},
-{"timestamp":1749224288373,"size":1,"orderType":"limit","type":"ask","price":100,"orderId":241083401122208},
-{"timestamp":1749224288373,"size":1,"orderType":"market","type":"bid","price":100,"orderId":241124622993583},
-{"timestamp":1749224288395,"size":1,"orderType":"limit","type":"ask","price":102,"orderId":241109917822250},
-{"timestamp":1749224288395,"size":1,"orderType":"stop","type":"bid","price":102,"orderId":241086167066250},
-{"timestamp":1749224416215,"size":1,"orderType":"limit","type":"ask","price":100,"orderId":241227787797416},
-{"timestamp":1749224416215,"size":1,"orderType":"market","type":"bid","price":100,"orderId":241252463994250},
-{"timestamp":1749224416234,"size":1,"orderType":"limit","type":"ask","price":102,"orderId":241241157984541},
-{"timestamp":1749224416234,"size":1,"orderType":"stop","type":"bid","price":102,"orderId":241233533446208},
-{"timestamp":1749224974429,"size":1,"orderType":"limit","type":"ask","price":102,"orderId":241241157984541},
-{"timestamp":1749224974429,"size":1,"orderType":"market","type":"bid","price":102,"orderId":241810666620625}
+{"orderId": 5, "type": "bid" , "orderType": "market", "size": 2, "price": 45, "timestamp": 1736499600}
 ]
 }
