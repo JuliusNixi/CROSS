@@ -135,7 +135,10 @@ public final class OrderBookLine<GenericOrder extends Order> {
 
         synchronized (firstOrder) {
 
-            this.linePrice = firstOrder.getPrice(); 
+            if (firstOrder instanceof MarketOrder == false)
+                this.linePrice = firstOrder.getPrice(); 
+            else
+                this.linePrice = ((MarketOrder) firstOrder).getExecutionPrice();
 
             // Coherece checks, after saving the line price attribute.
             this.coherenceOrderChecks(firstOrder);

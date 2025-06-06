@@ -182,7 +182,6 @@ class ClientThread implements Runnable {
 
             System.out.println("DEBUG: " + data);
 
-            // TODO: FINISH: Decode the JSON. Handle the request as server. Encode the response. Send the response to the client. Remove this exit command.
             Request req = null;
             ClientActions action = null;
             Response response = null;

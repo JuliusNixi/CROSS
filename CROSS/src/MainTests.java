@@ -802,25 +802,28 @@ public class MainTests {
         // Execute all the tests.
         System.out.println("Executing all tests...");
 
+        Thread.currentThread().setName("MainTests");
+
         Separator separator = new Separator("-");
         System.out.println(separator);
 
-        // TestUtils();
-        // System.out.println(separator);
+        TestUtils();
+        System.out.println(separator);
 
-        // TestUser();
-        // System.out.println(separator);
+        TestUser();
+        System.out.println(separator);
 
         // THIS MODIFIES (OVERWRITES) THE USERS.JSON FILE, SO PAY ATTENTION!
-        // copyFile("./DB/Users/defaultUsers.json", "./DB/Users/users.json");
-        // TestUsers("./DB/Users/users.json");
-        // System.out.println(separator);
+        copyFile("./DB/Users/defaultUsers.json", "./DB/Users/users.json");
+        TestUsers("./DB/Users/users.json");
+        System.out.println(separator);
 
-        // // Use the above order book to get the best prices.
-        // TestOrderBookLine();
-        // System.out.println(separator);
+        // Use the above order book to get the best prices.
+        TestOrderBookLine();
+        System.out.println(separator);
 
         // THIS MODIFIES (OVERWRITES) THE ORDERS.JSON FILE, SO PAY ATTENTION!
+        // DO NOT USE THIS TEST WITH THE BELOW ONE TOGETHERS.
         // copyFile("./DB/Orders/storicoOrdini.json", "./DB/Orders/orders.json");
         // TestOrdersDemoFile("./DB/Orders/orders.json");
         // System.out.println(separator);

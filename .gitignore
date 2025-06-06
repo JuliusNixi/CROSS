@@ -7,6 +7,6 @@
 # Exclude the Java macOS current using development version folder.
 Java/Versions/MacOS_ARM64/
 
-# Exclude the bin folders
+# Exclude the bin folders.
 CROSS/bin/
 bin/
