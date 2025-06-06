@@ -1,0 +1,38 @@
+\chapter{Sorgente, librerie, compilazione, esecuzione, utilizzo, tests, script automatico}
+
+\section{Sorgente}
+I files sorgenti sono contenuti in "CROSS/src/".
+Qui vi sono 3 files main:
+\begin{itemize}
+	\item MainClient: Per avviare il client.
+	\item MainServer: Per avviare il server.
+	\item MainTests: Per eseguire alcuni tests.
+\end{itemize}
+Inoltre, vi \'e la cartella "cross", che rappresenta il package con all'interno tutte le varie classi sviluppate, suddivise in sottocartelle per area tematica.
+
+\section{Librerie}
+Le librerie sfruttate sono contenute in "CROSS/lb/" e sono:
+\begin{itemize}
+	\item JLine: Per poter leggere l'input dell'utente e stampare risposte e notifiche dal server in maniera asincrona, mantenendo congruenza grafica utilizzata nella CLI del client.
+	\item GSon: Libreria di Google per il parsing e la creazione di JSON da oggetti Java, da utilizzare nelle comunicazioni API tra client e server.
+\end{itemize}
+
+\section{Compilazione ed esecuzione manuale}
+Il progetto \'e stato sviluppato con JAVA 21 LTS. Una volta procuratosi tale versione ed aperto un terminale nella root del progetto si pu\'o compilare con "javac -cp 'CROSS/lib/*' -d './bin' filejava1.java filejava2.java ..." riportando tutti i files Java del package cross ed i main. Su Windows sostituire gli ' che delimitano i paths con " ed i / con \textbackslash{}.
+Allo stesso modo per eseguire, ad esempio il server, usare "java -cp './bin:./CROSS/lib/*' MainServer". Su Windows sostituire gli ' che delimitano i paths con " ed i / con \textbackslash{} e il : con ;.
+
+\section{Compilazione ed esecuzione tramite script}
+Si pu\'o avvalersi anche (sperando che funzioni, ma l'ho testato sia su Mac che Windows) di uno script automatico per compilazione ed esecuzione. Questo si occupa di scaricare anche la versione di Java 21 LTS corrispondente al sistema operativo ed architettura in uso. Per sfruttarlo recarsi con un terminale nella cartella "./Java" ed eseguire python (o python3) compile.py. La sua creazione \'e motivata dal fatto che volessi un sistema che mi reperisse la versione di Java corretta in base al PC che stavo utilizzando e facesse funzionare tutto out of the box. 
+
+\section{Esecuzione tramite jars precompilati}
+Aprire un terminale nella cartella root del progetto. Eseguire, ad esempio per il server, "java -jar CROSS/dist/server.jar".
+
+\section{Utilizzo}
+Per l'utilizzo del client la sintassi dei comandi \'e esattamente quella richiesta dall'assignment. \textcolor{lightred}{Non utilizzare il file "storicoOrdini.json" come database degli ordini e contemporaneamente eseguire ordini, i quali sarebbero scritti l\'i. Il file "storicoOrdini.json" pu\'o esser usato solo per richieste GetPriceHistory, in sola lettura, eseguendo degli ordini invece si andrebbe a scriverlo. Per eseguire ordini utilizzare il file "orders.json" che dovrebbe inizialmente essere copia del file "defaultOrders.json", verranno scritti in "orders.json".} Questo perch\'e, come accennato nelle scelte implementative, il progetto utilizza la classe FileHandler per, durante l'append di un nuovo ordine eseguito sul file database, andare a scriverlo al termine, senza per\'o riscrivere tutto il JSON sul file. Questo \'e possibile solo con il formato JSON di "defaultOrders.json", per come sono disposte le virgole e le parentesi, che storicoOrdini.json ha in modo diverso. \textcolor{lightred}{Il server ed il client devono essere eseguiti dalla root del progetto perch\'e possano trovare i files di configurazione da cui leggere i parametri.}
+
+\section{Tests}
+Ci sono due tipi di tests. I primi sono in "CROSS/src/MainTests.java" e sono per eseguire  alcuni tests sulle classi e funzionalit\'a pi\'u complesse, senza l'impiego di server e client. I secondi sono contenuti nel file "README\_TESTS.txt" nella root del progetto. Questi sono una lista di tests manuali con comandi da copia-incollare nel client, dopo aver avviato il server.
+
+
+
+

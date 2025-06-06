@@ -1,0 +1,20 @@
+\chapter{Strutture dati}
+
+Il server utilizza:
+\begin{itemize}
+\item LinkedList\textless{}Socket\textgreater{}: Per lista TCP socket degli utenti loggati. Nella classe User.
+\item LinkedList\textless{}InetSocketAddress\textgreater{}: Per lista dati (ip e porta) a cui notificare ordini eseguiti con UDP. Nella classe User.
+\item TreeSet\textless{}User\textgreater{}: Per memorizzare tutti gli utenti del database, con comparazione su username stringa. Nella classe Users.
+\item TreeMap\textless{}String, InetSocketAddress\textgreater{}: Per associare una stringa rappresentante un socket TCP (formato ip:porta) (non si poteva creare una TreeMap con chiavi direttamente dei Socket, perch\'e questi non implementano comparatori) ai dati UDP a cui inviare notifiche. Per inviare notifiche solo ad utenti loggati. Nella classe Server.
+\item TreeSet\textless{}Order\textgreater{}: Per memorizzare gli ordini, comparazione fatta su ID. Nella classe Orders.
+\item LinkedList\textless{}Order\textgreater{}: Per memorizzare gli ordini duplicati. Infatti avevo assunto che non ci potessero essere ordini con ID duplicati, ma leggendo il file storico, mi sono accorto dopo, che vi erano, quindi ho aggiunto questa seconda struttura dati. Nella classe Orders.
+\item TreeMap\textless{}SpecificPrice, LimitBookLine\textless{}LimitOrder\textgreater{}\textgreater{}: Associa ad un prezzo una linea di tipo limit. L'insieme di queste creano il limit order book. Nella classe OrderBook. Scelta per avere accesso ad un prezzo in \( O(log(n)) \) sfruttando l'ordinamento dei prezzi. In ogni linea c'\'e la lista degli ordini di quel livello, citata sotto.
+\item TreeMap\textless{}SpecificPrice, LimitBookLine\textless{}StopOrder\textgreater{}\textgreater{}: Come sopra ma per lo stop order book.
+\item LinkedList\textless{}OrderBook\textgreater{}: Mantiene la lista degli OrderBook esistenti, per eventuale (non richiesto e parziale) supporto a pi\'u mercati. Nella classe OrderBook.
+\item LinkedList\textless{}GenericOrder\textgreater{}: Mantiene la lista degli ordini su una specifica linea di un order book. Nella classe OrderBookLine. GenericOrder \'e un tipo generico che permette l'utilizzo sia per limit che per stop order book. Scelta per aggiungere ed estrarre ordini (creazione ed esecuzione) in \( O(1) \). Questo NON vale per la cancellazione di ordini, che deve scorrere in \(O(n)\) tutta la lista, ma ho assunto fosse un'operazione minoritaria rispetto all'inserimento ed esecuzione degli ordini.
+\end{itemize}
+Il client utilizza:
+\begin{itemize}
+	\item LinkedList\textless{}\textgreater{}: Temporanee per l'elaborazione e il parsing dei comandi, di stringhe ed oggetti. Nelle classi ClientCLIThread e CLientCLICommandParser.
+\end{itemize}
+

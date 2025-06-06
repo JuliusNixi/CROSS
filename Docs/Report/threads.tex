@@ -1,0 +1,16 @@
+\chapter{Threads}
+
+Il server utilizza:
+\begin{itemize}
+	\item MainThread: Creato dall'esecuzione di MainServer.java. Svolge viarie funzioni, tra cui, avvia il server con i suoi socket, carica gli utenti dal file database, carica gli ordini dall'altro file database, avvia gli altri thread. Dopo il bootstrapping si arresta.
+    \item AcceptThread: Accetta connessioni TCP socket dai client e crea un ClientThread per ciascuno di essi, sottomettendolo ad un cached thread pool executor.
+    \item ClientThread: Gestisce il suo corrispondente client. Elabora e risponde alle sue richieste.
+    \item NotificationRegisterThread: Aspetta, riceve e memorizza indirizzi e porte da parte dei client. Questi dati saranno poi utilizzati (non da questo thread) per notificare i client con aggiornamenti sui loro ordini eseguiti mediante messaggi UDP.
+    \item StopOrdersExecutorThread: Esegue gli ordini stop, gi\'a convertiti in market precedentemente quando triggered dal ClientThread ed aggiunti ad una lista, da cui vengono prelevati dallo StopOrdersExecutorThread con sincronizzazione e coordinazione.
+\end{itemize}
+Il client utilizza:
+\begin{itemize}
+	\item ClientCLIThread: Aspetta e riceve l'input dell'utente da command line. Lo trasforma in richiesta API JSON e lo invia al server.
+	\item ResponsesThread: Riceve e stampa le risposte alla richieste, ricevute dal server, da socket TCP.
+	\item NotificationsThread: Riceve e stampa le notifiche sugli ordini eseguiti, ricevute dal server, da socket UDP.
+\end{itemize}

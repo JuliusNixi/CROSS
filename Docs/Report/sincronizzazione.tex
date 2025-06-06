@@ -1,0 +1,9 @@
+\chapter{Sincronizzazione e coordinazione}
+
+Sono state utilizzate le seguenti primitive di sincronizzazione:
+\begin{itemize}
+	\item Monitor / Lock implicite su oggetto su intero metodo: La maggioranza delle sincronizzazioni usano questo approccio. Sono state impiegate strutture dati non thread-safe, ma il loro accesso \'e sempre stato mediato da metodi sincronizzati quando necessario.
+	\item Monitor / Lock implicite su oggetto su snippets di codice: Qualche volta, ad esempio nella sincronizzazione per l'uso del buffer contenente lo STDIN dell'utente, la sincronizzazione \'e inserita solo in parti di codice con blocchi ad-hoc sull'oggetto buffer.
+	\item Class level lock: Per alcuni metodi statici, con funzionamento analogo alle precedenti, ma bloccanti a livello di intera classe e non del singolo oggetto / istanza.
+	\item Wait e NotifyAll: ClientThread (n threads) ed il StopExecutorThread (1 thread) si sincronizzano con la lock implicita sulla lista degli ordini stop, ma si coordinano grazie a wait() e notifyAll() sempre sul medesimo oggetto. Le condizioni sono state testate in while per evitare spurius wake up.
+\end{itemize}
