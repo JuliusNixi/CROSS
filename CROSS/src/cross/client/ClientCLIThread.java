@@ -60,6 +60,8 @@ class ClientCLIThread extends Thread {
     // The prompt string to show to the user in the terminal.
     private final static String PROMPT_STRING = "Client CLI -> ";
 
+    protected StringBuilder buffer;
+
     /**
      *
      * Constructor of the class.
@@ -86,7 +88,7 @@ class ClientCLIThread extends Thread {
         Integer exitStatus = 0;
 
         // Will store the user's input command.
-        StringBuilder buffer = new StringBuilder();
+        buffer = new StringBuilder();
 
         // Try-with-resources to close the terminal at the end.
         try (Terminal terminal = TerminalBuilder.builder()
@@ -140,97 +142,105 @@ class ClientCLIThread extends Thread {
                     continue;
                 }
                 else if (ch == BACKSPACE || ch == CTRL_H) {
-                    if (buffer.length() > 0) {
-                        buffer.setLength(buffer.length() - 1);
-                        System.out.print("\b \b");
+                    synchronized (buffer) {
+                        if (buffer.length() > 0) {
+                            buffer.setLength(buffer.length() - 1);
+                            System.out.print("\b \b");
+                        }
                     }
                     continue;
                 }
                 else if (ch >= 32 && ch < BACKSPACE) {
                     // Valid char received, append it to the buffer.
                     char c = (char) ch;
-                    buffer.append(c);
-                    // Print the char to the terminal.
-                    System.out.print(c);
+                    synchronized (buffer) {
+                        buffer.append(c);
+                        // Print the char to the terminal.
+                        System.out.print(c);
+                    }
                     continue;
                 } else if (ch == NEW_LINE || ch == CARRIAGE_RETURN) {
                     // End of line '\n' received, process the command.
-                    buffer.append('\n');
-                    System.out.print(System.lineSeparator());
+                    synchronized (buffer) {
+                        buffer.append('\n');
+                        System.out.print(System.lineSeparator());
+                    }
                 }
 
-                if (buffer.length() > 0 && buffer.toString().endsWith("\n")) {
-                    // End of line '\n' received, process the command.
-                    String line = buffer.toString();
+                synchronized (buffer) {
+                    if (buffer.length() > 0 && buffer.toString().endsWith("\n")) {
+                        // End of line '\n' received, process the command.
+                        String line = buffer.toString();
 
-                    if (!line.trim().equals("\n"))
-                        System.out.printf("Command received: %s\n", line.replace("\n", ""));
-                    else {
-                        // Empty command, continue the loop.
-                        System.out.print(PROMPT_STRING);
-                        buffer.setLength(0);
-                        continue;
-                    }
-
-                    // Processing the command.
-                    Integer commandStatus;
-                    commandStatus = this.processCommand(line);
-                    if (commandStatus == -1) {
-                        // A critical error occurred, exit.
-                        running = false;
-                        exitStatus = -1;
-                        try {
-                            this.client.disconnectClient();
-                            System.out.println("Client disconnected successfully after a critical error in processing your command.");
-                        } catch (IllegalStateException ex) {
-                            exitStatus = -1;
-                            System.err.println("Error disconnecting the client after a critical error in processing your command.");
-                        } catch (IOException ex) {
-                            exitStatus = -1;
-                            System.err.println("I/O error in disconnecting the client after a critical error in processing your command.");
+                        if (!line.trim().equals("\n"))
+                            System.out.printf("Command received: %s\n", line.replace("\n", ""));
+                        else {
+                            // Empty command, continue the loop.
+                            System.out.print(PROMPT_STRING);
+                            buffer.setLength(0);
+                            continue;
                         }
-                        // Exit the loop at the next iteration.
-                        continue;
-                    }
-                    if (commandStatus == 0) {
-                        // Invalid command, continue.
-                        // Message already printed.
-                        System.out.print(PROMPT_STRING);
-                        buffer.setLength(0);
-                        continue;
-                    }
-                    if (commandStatus == 1) {
-                        // Request completed successfully, continue.
-                        // Message already printed.
-                        System.out.print(PROMPT_STRING);
-                        buffer.setLength(0);
-                        continue;
-                    }
-                    if (commandStatus == 2) {
-                        // Exit request received, exit.
-                        // NO ERROR, just an exit request.
-                        running = false;
-                        exitStatus = 0;
-                        try {
-                            this.client.disconnectClient();
-                            System.out.println("Client disconnected successfully after your exit request.");
-                        } catch (IllegalStateException ex) {
+
+                        // Processing the command.
+                        Integer commandStatus;
+                        commandStatus = this.processCommand(line);
+                        if (commandStatus == -1) {
+                            // A critical error occurred, exit.
+                            running = false;
                             exitStatus = -1;
-                            System.err.println("Error disconnecting the client after your exit request.");
-                        } catch (IOException ex) {
-                            exitStatus = -1;
-                            System.err.println("I/O error in disconnecting the client after your exit request.");
+                            try {
+                                this.client.disconnectClient();
+                                System.out.println("Client disconnected successfully after a critical error in processing your command.");
+                            } catch (IllegalStateException ex) {
+                                exitStatus = -1;
+                                System.err.println("Error disconnecting the client after a critical error in processing your command.");
+                            } catch (IOException ex) {
+                                exitStatus = -1;
+                                System.err.println("I/O error in disconnecting the client after a critical error in processing your command.");
+                            }
+                            // Exit the loop at the next iteration.
+                            continue;
                         }
-                        // Exit the loop at the next iteration.
-                        continue;
+                        if (commandStatus == 0) {
+                            // Invalid command, continue.
+                            // Message already printed.
+                            System.out.print(PROMPT_STRING);
+                            buffer.setLength(0);
+                            continue;
+                        }
+                        if (commandStatus == 1) {
+                            // Request completed successfully, continue.
+                            // Message already printed.
+                            System.out.print(PROMPT_STRING);
+                            buffer.setLength(0);
+                            continue;
+                        }
+                        if (commandStatus == 2) {
+                            // Exit request received, exit.
+                            // NO ERROR, just an exit request.
+                            running = false;
+                            exitStatus = 0;
+                            try {
+                                this.client.disconnectClient();
+                                System.out.println("Client disconnected successfully after your exit request.");
+                            } catch (IllegalStateException ex) {
+                                exitStatus = -1;
+                                System.err.println("Error disconnecting the client after your exit request.");
+                            } catch (IOException ex) {
+                                exitStatus = -1;
+                                System.err.println("I/O error in disconnecting the client after your exit request.");
+                            }
+                            // Exit the loop at the next iteration.
+                            continue;
+                        }
+
+                        // Reset buffer.
+                        buffer.setLength(0);
+
+                        // Print the prompt string.
+                        System.out.print(PROMPT_STRING);
+
                     }
-
-                    // Reset buffer.
-                    buffer.setLength(0);
-
-                    // Print the prompt string.
-                    System.out.print(PROMPT_STRING);
-
                 }
 
             }

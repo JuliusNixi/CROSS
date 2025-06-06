@@ -77,7 +77,7 @@ public class Client {
 
     // Thread for the CLI.
     // Static, I cannot have multiple instances of the CLI.
-    private static ClientCLIThread clientCLI = null;
+    protected static ClientCLIThread clientCLI = null;
 
     // Thread for responses from server.
     private ResponsesThread responsesThread = null;
@@ -99,6 +99,7 @@ public class Client {
         return this.executedOrders.contains(orderId);
 
     }
+
 
     /**
      *

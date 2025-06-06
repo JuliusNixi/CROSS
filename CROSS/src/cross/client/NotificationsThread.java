@@ -119,9 +119,11 @@ class NotificationsThread extends Thread {
                 }
                 attempts--;
             }
-            System.out.printf("\nServer notification ->\n\n");
-            System.out.println(notification.toString(orderId));
-            System.out.print("Client CLI -> ");
+            synchronized (Client.clientCLI.buffer) {
+                System.out.printf("\nServer notification ->\n\n");
+                System.out.println(notification.toString(orderId));
+                System.out.print("Client CLI -> " + Client.clientCLI.buffer.toString());
+            }
 
         }
 

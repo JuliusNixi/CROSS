@@ -90,47 +90,50 @@ class ResponsesThread extends Thread {
                     continue;
                 }
 
-                System.out.printf("\nServer response -> ");
-                switch (response.getType()) {
-                    // All these cases are for the user's data requests and handled in the same way.
-                    case REGISTER, LOGIN, UPDATE_CREDENTIALS, LOGOUT, CANCEL_ORDER -> {
-                        Integer code;
-                        String message;
-                        if (response.getType() == ClientActions.CANCEL_ORDER) {
-                            CancelResponse cancelResponse = (CancelResponse) response.getResponse();
-                            code = cancelResponse.getResponseCode().getCode();
-                            message = cancelResponse.getMessage();
-                        }else {
-                            UserResponse userResponse = (UserResponse) response.getResponse();
-                            code = userResponse.getResponseCode().getCode();
-                            message = userResponse.getMessage();
+                synchronized (Client.clientCLI.buffer) {
+                    System.out.printf("\nServer response -> ");
+                    switch (response.getType()) {
+                        // All these cases are for the user's data requests and handled in the same way.
+                        case REGISTER, LOGIN, UPDATE_CREDENTIALS, LOGOUT, CANCEL_ORDER -> {
+                            Integer code;
+                            String message;
+                            if (response.getType() == ClientActions.CANCEL_ORDER) {
+                                CancelResponse cancelResponse = (CancelResponse) response.getResponse();
+                                code = cancelResponse.getResponseCode().getCode();
+                                message = cancelResponse.getMessage();
+                            }else {
+                                UserResponse userResponse = (UserResponse) response.getResponse();
+                                code = userResponse.getResponseCode().getCode();
+                                message = userResponse.getMessage();
+                            }
+                            if (code == 100) {
+                                System.out.println("Code: " + code + " Message: " + message);
+                            } else {
+                                System.err.println("Code: " + code + " Message: " + message);
+                            }
                         }
-                        if (code == 100) {
-                            System.out.println("Code: " + code + " Message: " + message);
-                        } else {
-                            System.err.println("Code: " + code + " Message: " + message);
+                        // Limit and stop orders execution responses are also handled here for simplicity.
+                        // Since they have the same response format with only the orderId.
+                        case INSERT_MARKET_ORDER -> {
+                            ExecutionResponse executionResponse = (ExecutionResponse) response.getResponse();
+                            Number orderId = executionResponse.getOrderId();
+                            if (orderId.intValue() == -1) {
+                                System.err.println("Error. Order ID: " + orderId);
+                            } else {
+                                System.out.println("OK. Order ID: " + orderId);
+                                client.addExecutedOrder(Long.valueOf(orderId.longValue()));
+                            }
                         }
-                    }
-                    // Limit and stop orders execution responses are also handled here for simplicity.
-                    // Since they have the same response format with only the orderId.
-                    case INSERT_MARKET_ORDER -> {
-                        ExecutionResponse executionResponse = (ExecutionResponse) response.getResponse();
-                        Number orderId = executionResponse.getOrderId();
-                        if (orderId.intValue() == -1) {
-                            System.err.println("Error. Order ID: " + orderId);
-                        } else {
-                            System.out.println("OK. Order ID: " + orderId);
-                            client.addExecutedOrder(Long.valueOf(orderId.longValue()));
+                        case GET_PRICE_HISTORY -> {
+                            PriceHistoryResponse priceHistoryResponse = (PriceHistoryResponse) response.getResponse();
+                            System.out.println("\n" + priceHistoryResponse.toString());
                         }
+                        default -> System.err.println("The received response type got from the server is not valid.");
                     }
-                    case GET_PRICE_HISTORY -> {
-                        PriceHistoryResponse priceHistoryResponse = (PriceHistoryResponse) response.getResponse();
-                        System.out.println("\n" + priceHistoryResponse.toString());
-                    }
-                    default -> System.err.println("The received response type got from the server is not valid.");
-                }
 
-                System.out.print("Client CLI -> ");
+  
+                    System.out.print("Client CLI -> " + Client.clientCLI.buffer);
+                }
 
             }
         
